@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* ========== Design System Colors ========== */
+:root {
+  --primary: #11d4d4;
+  --navy: #0d1b1b;
+  --deep-green: #1a4d4d;
+  --green-custom: #4c9a9a;
+  --background-light: #f6f8f8;
+  --background-dark: #102222;
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+  --color-navy: var(--navy);
+  --color-deep-green: var(--deep-green);
+  --color-green-custom: var(--green-custom);
+  --color-background: var(--background-light);
+  --color-background-dark: var(--background-dark);
+}
+
+/* ========== Base Styles ========== */
+body {
+  font-family: 'Public Sans', 'Noto Sans KR', sans-serif;
+  background: var(--background-light);
+  color: var(--navy);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dark body {
+  background: var(--background-dark);
+  color: white;
+}
+
+/* ========== Custom Utilities ========== */
+.ios-shadow {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.floating-cta {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.ios-bottom-padding {
+  padding-bottom: env(safe-area-inset-bottom, 24px);
+}
+
+/* ========== Loading Animation ========== */
+.loading-dots:after {
+  content: '.';
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60% { content: '...'; }
+  80%, 100% { content: ''; }
+}
+
+/* ========== Material Icons ========== */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
