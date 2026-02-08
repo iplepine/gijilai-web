@@ -13,33 +13,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, currentAns
 
     const renderOptionContent = (value: number, label: string) => {
         let description = '';
-        let icon = '';
 
         if (isBARS) {
             if (value === 1) {
                 description = question.lowScoreDescription || '';
-                icon = '😨'; // Default icon for low intensity/hesitation
             } else if (value === 3) {
                 description = question.midScoreDescription || '';
-                icon = '🤔'; // Default icon for mid intensity/observation
             } else if (value === 5) {
                 description = question.highScoreDescription || '';
-                icon = '🤩'; // Default icon for high intensity/action
             }
         }
 
-        // Custom icons based on context/reversal could be added here, 
-        // but for now we stick to the requested simple mapping.
-
         return (
             <div className="flex items-center w-full">
-                {/* Icon Wrapper */}
-                {icon && (
-                    <div className="mr-4 text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
-                        {icon}
-                    </div>
-                )}
-
                 <div className="flex-1 text-left">
                     <div className="font-bold text-gray-800 text-sm mb-0.5">
                         {value}. {label}
