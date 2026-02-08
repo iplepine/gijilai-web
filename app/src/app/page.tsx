@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
@@ -7,9 +8,29 @@ import { FeatureCard } from '@/components/ui/FeatureCard';
 import { Icon } from '@/components/ui/Icon';
 
 export default function HomePage() {
+  const [showFloatingCTA, setShowFloatingCTA] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [showSampleModal, setShowSampleModal] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      // 스크롤 다운 시 숨김, 업 시 표시
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setShowFloatingCTA(false);
+      } else {
+        setShowFloatingCTA(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden pb-32">
-      <Navbar title="기질×사주 분석" />
+      <Navbar title="기질×사주 분석" showDarkModeToggle />
 
       {/* Hero Section */}
       <header className="px-5 pt-8 pb-6 flex flex-col items-center text-center">
@@ -65,12 +86,12 @@ export default function HomePage() {
 
         {/* CTA Buttons */}
         <div className="w-full space-y-3">
-          <Link href="/intake" className="block">
+          <Link href="/survey/intro" className="block">
             <Button variant="primary" size="lg" fullWidth badge="$1">
               지금 접수하고 리포트 받기
             </Button>
           </Link>
-          <Button variant="secondary" size="md" fullWidth>
+          <Button variant="secondary" size="md" fullWidth onClick={() => setShowSampleModal(true)}>
             샘플 리포트 미리보기
           </Button>
 
@@ -134,10 +155,67 @@ export default function HomePage() {
         </p>
       </footer>
 
+      {/* 샘플 리포트 모달 */}
+      {showSampleModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto ios-shadow">
+            {/* 헤더 */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-lg font-bold">샘플 리포트</h3>
+              <button onClick={() => setShowSampleModal(false)} className="p-2">
+                <Icon name="close" />
+              </button>
+            </div>
+
+            {/* 샘플 내용 */}
+            <div className="p-5 space-y-4">
+              {/* 성향 카드 */}
+              <div className="bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 rounded-xl p-4 text-center">
+                <p className="text-xs text-[var(--primary)] font-bold mb-1">MAIN ARCHETYPE</p>
+                <p className="text-xl font-black text-[var(--navy)] dark:text-white">열정 탐험가형</p>
+                <p className="text-xs text-gray-500 mt-2">화(火)의 에너지 | 높은 활동성</p>
+              </div>
+
+              {/* 궁합 */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon name="favorite" size="sm" className="text-[var(--primary)]" />
+                  <span className="text-sm font-bold">부모-자녀 궁합</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                    <div className="h-full bg-[var(--primary)] w-[85%]" />
+                  </div>
+                  <span className="text-sm font-bold text-[var(--primary)]">85%</span>
+                </div>
+              </div>
+
+              {/* 솔루션 미리보기 */}
+              <div className="space-y-3">
+                <p className="text-sm font-bold">맞춤 솔루션 예시</p>
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                  <p>✓ 에너지 발산 놀이 제안</p>
+                  <p>✓ 감정 조절 대화 스크립트</p>
+                  <p>✓ 환경 구성 가이드</p>
+                  <p className="text-gray-400">...외 12개 솔루션</p>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <Link href="/survey/intro" onClick={() => setShowSampleModal(false)}>
+                <Button variant="primary" size="md" fullWidth className="mt-4">
+                  내 아이 분석받기
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 bg-gradient-to-t from-[var(--background-light)] via-[var(--background-light)]/95 to-transparent dark:from-[var(--background-dark)] dark:via-[var(--background-dark)]/95 floating-cta">
+      <div className={`fixed bottom-0 left-0 right-0 z-[100] p-4 bg-gradient-to-t from-[var(--background-light)] via-[var(--background-light)]/95 to-transparent dark:from-[var(--background-dark)] dark:via-[var(--background-dark)]/95 floating-cta transition-transform duration-300 ${showFloatingCTA ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="max-w-md mx-auto">
-          <Link href="/intake">
+          <Link href="/survey/intro">
             <Button
               variant="primary"
               size="md"

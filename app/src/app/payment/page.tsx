@@ -70,7 +70,9 @@ export default function PaymentPage() {
               {LOADING_MESSAGES[loadingIndex].text}
               <span className="loading-dots" />
             </p>
-            <p className="text-xs text-gray-500">거의 다 준비되었습니다!</p>
+            <p className="text-xs text-gray-500">
+              {loadingIndex < 2 ? '약 10초 소요' : '거의 다 준비되었습니다!'}
+            </p>
           </div>
 
           {/* Progress Dots */}

@@ -1,16 +1,20 @@
 'use client';
 
 import { Icon } from '@/components/ui/Icon';
+import { DarkModeToggle } from '@/components/ui/DarkModeToggle';
 import { useRouter } from 'next/navigation';
+import { ReactNode } from 'react';
 
 interface NavbarProps {
   title: string;
   showBack?: boolean;
   rightIcon?: string;
   onRightClick?: () => void;
+  rightElement?: ReactNode;
+  showDarkModeToggle?: boolean;
 }
 
-export function Navbar({ title, showBack = false, rightIcon, onRightClick }: NavbarProps) {
+export function Navbar({ title, showBack = false, rightIcon, onRightClick, rightElement, showDarkModeToggle = false }: NavbarProps) {
   const router = useRouter();
 
   return (
@@ -30,7 +34,11 @@ export function Navbar({ title, showBack = false, rightIcon, onRightClick }: Nav
         {title}
       </h2>
       <div className="size-10 flex items-center justify-center">
-        {rightIcon ? (
+        {rightElement ? (
+          rightElement
+        ) : showDarkModeToggle ? (
+          <DarkModeToggle />
+        ) : rightIcon ? (
           <button onClick={onRightClick} className="text-[var(--navy)] dark:text-white">
             <Icon name={rightIcon} />
           </button>
