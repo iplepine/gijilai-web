@@ -8,10 +8,8 @@ export interface Question {
     category: string;
     facet?: string;
     reverse?: boolean;
-    // BARS descriptions
-    lowScoreDescription?: string; // Score 1
-    midScoreDescription?: string; // Score 3
-    highScoreDescription?: string; // Score 5
+    // BARS 5-step descriptions
+    choices?: string[]; // Array of 5 strings corresponding to score 1..5
 }
 
 export interface Answer {

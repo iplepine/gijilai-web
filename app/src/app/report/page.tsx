@@ -42,7 +42,8 @@ export default function ReportPage() {
       if (answers[q.id]) {
         const cat = q.category as keyof typeof scores;
         if (cat in scores) {
-          scores[cat] += answers[q.id];
+          const scoreValue = q.reverse ? (6 - answers[q.id]) : answers[q.id];
+          scores[cat] += scoreValue;
           counts[cat]++;
         }
       }

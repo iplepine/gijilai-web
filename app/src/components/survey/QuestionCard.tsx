@@ -12,29 +12,26 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, currentAns
     const isBARS = !!question.context;
 
     const renderOptionContent = (value: number, label: string) => {
-        let description = '';
-
-        if (isBARS) {
-            if (value === 1) {
-                description = question.lowScoreDescription || '';
-            } else if (value === 3) {
-                description = question.midScoreDescription || '';
-            } else if (value === 5) {
-                description = question.highScoreDescription || '';
-            }
+        // If choices array exists, use the text at index (value - 1)
+        if (question.choices && question.choices[value - 1]) {
+            return (
+                <div className="flex items-center w-full">
+                    <div className="flex-1 text-left">
+                        <div className="font-bold text-gray-800 text-sm mb-0.5">
+                            {value}. {question.choices[value - 1]}
+                        </div>
+                    </div>
+                </div>
+            );
         }
 
+        // Fallback for generic legacy questions if any
         return (
             <div className="flex items-center w-full">
                 <div className="flex-1 text-left">
                     <div className="font-bold text-gray-800 text-sm mb-0.5">
                         {value}. {label}
                     </div>
-                    {description && (
-                        <div className="text-xs text-gray-500 font-normal break-keep">
-                            {description}
-                        </div>
-                    )}
                 </div>
             </div>
         );
