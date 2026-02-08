@@ -48,9 +48,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, currentAns
     return (
         <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow-lg border border-gray-100 min-h-[500px] w-full max-w-md mx-auto animate-fadeIn">
             <div className="mb-6 text-center">
-                <span className="text-sm font-bold text-primary tracking-wider uppercase mb-1 block">
-                    {question.category} - {question.facet}
-                </span>
+
                 <h3 className="text-xl font-bold text-gray-900 leading-tight">
                     {isBARS ? question.context : question.text}
                 </h3>
