@@ -350,47 +350,232 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
 ];
 
 export const PARENT_QUESTIONS: Question[] = [
-    // TEMPORARY: Minimal set or placeholder for PARENT_QUESTIONS based on previous logic but adapting to 'choices' array structure.
-    // Since user didn't provide full Parent questions in the prompt, I will adapt the structure but keep content minimal/placeholder to allow build.
-    // In a real scenario I'd ask for the data. Here I'll synthesize from previous data.
+    // 자극 추구 (NS) - Adult Information
     {
         id: 21, type: 'PARENT', category: 'NS', facet: '탐색적 흥분',
         context: "새로운 취미나 일을 시작할 때",
         choices: [
-            "익숙한 것에서 편안함을 느낀다.",
-            "새로운 것은 시도하기 꺼려진다.",
-            "흥미가 생기면 이것저것 알아본다.",
-            "새로운 것에 도전하는게 즐겁다.",
-            "호기심이 생기면 앞뒤 안 가리고 시작한다."
+            "익숙한 방식이 편하고 새로운 시도는 꺼려진다.",
+            "굳이 새로운 것을 찾아다니지는 않는다.",
+            "흥미가 생기면 이것저것 알아보고 시도한다.",
+            "새로운 것에 도전하는 과정 자체가 즐겁다.",
+            "호기심이 생기면 앞뒤 안 가리고 일단 시작부터 한다."
         ]
     },
-    // ... (Repeating pattern for other parent questions to prevent build errors would be ideal, but for brevity/token limit I will cut short if allowed. 
-    // However, the report page logic expects iterating over PARENT_QUESTIONS. If I leave it empty/short, scores might be 0.
-    // I will include a representative subset or all 20 adapted.)
     {
         id: 22, type: 'PARENT', category: 'NS', facet: '충동성',
-        context: "쇼핑을 하거나 결정을 내릴 때",
-        choices: ["매우 신중하다.", "신중한 편이다.", "보통이다.", "빠른 결정을 한다.", "직관적으로 즉시 결정한다."]
+        context: "쇼핑을 하거나 중요한 결정을 내릴 때",
+        choices: [
+            "며칠 동안 꼼꼼하게 비교하고 신중하게 결정한다.",
+            "대체로 계획적으로 소비하고 결정한다.",
+            "가끔 충동적일 때도 있지만 큰 틀은 지킨다.",
+            "마음에 들면 계획에 없어도 사는 편이다.",
+            "직관적으로 '이거다!' 싶으면 즉시 실행에 옮긴다."
+        ]
     },
-    // ... Keeping it valid TS but reduced content for this turn.
-    // Use a loop generator like map/fill is not possible in static file.
-    // I will generate the rest programmatically or just simplified string arrays.
-    { id: 23, type: 'PARENT', category: 'NS', facet: '자유분방함', context: "여행 계획", choices: ["철저하다", "계획적이다", "유연하다", "즉흥적이다", "발길 닿는 대로 간다"] },
-    { id: 24, type: 'PARENT', category: 'HA', facet: '예기 불안', context: "미래 계획", choices: ["낙관적이다", "걱정 없다", "가끔 걱정한다", "자주 걱정한다", "매우 불안해한다"] },
-    { id: 25, type: 'PARENT', category: 'HA', facet: '비관적 전망', context: "새로운 도전", choices: ["성공 확신", "긍정적", "반반", "부정적", "실패 예감"] },
-    { id: 26, type: 'PARENT', category: 'RD', facet: '사회적 부착', context: "대인 관계", choices: ["독립적", "신경 안 씀", "보통", "친밀함 선호", "사람이 없으면 힘들다"] },
-    { id: 27, type: 'PARENT', category: 'RD', facet: '정서적 개방성', context: "슬픈 영화", choices: ["무덤덤", "별로", "가끔 눈물", "잘 운다", "펑펑 운다"] },
-    { id: 28, type: 'PARENT', category: 'P', facet: '과제 지속성', context: "지루한 일", choices: ["즉시 포기", "싫증", "참고 한다", "끈기 있다", "끝장을 본다"] },
-    { id: 29, type: 'PARENT', category: 'P', facet: '완벽주의', context: "일처리", choices: ["대충", "적당히", "기본만", "꼼꼼히", "티끌 하나 없이"] },
-    { id: 30, type: 'PARENT', category: 'NS', facet: '지루함', context: "반복 일상", choices: ["편안함", "안정", "가끔 지루", "답답함", "못 견딤"] },
-    { id: 31, type: 'PARENT', category: 'HA', facet: '피로도', context: "퇴근 후", choices: ["생생함", "여유 있음", "보통", "피곤", "녹초"] },
-    { id: 32, type: 'PARENT', category: 'RD', facet: '인정 욕구', context: "칭찬", choices: ["관심 없음", "감사", "좋음", "매우 좋음", "삶의 이유"] },
-    { id: 33, type: 'PARENT', category: 'P', facet: '좌절', context: "실패 시", choices: ["포기", "실망", "재도전", "오기", "무한 도전"] },
-    { id: 34, type: 'PARENT', category: 'NS', facet: '돈 관리', context: "소비 패턴", choices: ["저축", "절약", "필요 시 지출", "즐거움 소비", "탕진"] },
-    { id: 35, type: 'PARENT', category: 'HA', facet: '발표', context: "무대", choices: ["즐김", "당당", "긴장", "떨림", "공포"] },
-    { id: 36, type: 'PARENT', category: 'RD', facet: '공감', context: "친구 고민", choices: ["해결책", "듣기", "호응", "위로", "동화"] },
-    { id: 37, type: 'PARENT', category: 'P', facet: '야심', context: "목표", choices: ["안전", "현실적", "상향", "도전적", "불가능 도전"] },
-    { id: 38, type: 'PARENT', category: 'NS', facet: '규칙', context: "엄격한 곳", choices: ["편안", "준수", "답답", "일탈", "폭발"] },
-    { id: 39, type: 'PARENT', category: 'HA', facet: '걱정', context: "평소", choices: ["없음", "가끔", "보통", "자주", "항상"] },
-    { id: 40, type: 'PARENT', category: 'RD', facet: '표현', context: "애정", choices: ["안 함", "행동으로", "가끔", "자주", "매일"] },
+    {
+        id: 23, type: 'PARENT', category: 'NS', facet: '재정적 태도(무절제)',
+        context: "돈을 쓰거나 자원을 활용하는 태도",
+        choices: [
+            "미래를 위해 아끼고 저축하는 것이 최우선이다.",
+            "필요한 곳에는 쓰되 낭비는 하지 않는다.",
+            "가끔은 나를 위한 보상으로 과감하게 쓴다.",
+            "금전적인 것보다 현재의 경험과 즐거움이 중요하다.",
+            "지금 당장의 만족을 위해 아낌없이 투자하고 즐긴다."
+        ]
+    },
+    {
+        id: 24, type: 'PARENT', category: 'NS', facet: '지루함 민감성', // Disorderliness/Regimentation
+        context: "반복적인 일상을 보낼 때",
+        choices: [
+            "매일 똑같은 루틴에서 안정감과 편안함을 느낀다.",
+            "규칙적인 생활을 선호하며 큰 변화를 원치 않는다.",
+            "가끔은 소소한 변화나 이벤트가 필요하다.",
+            "단조로운 일상이 계속되면 답답함을 느낀다.",
+            "지루한 것을 못 견뎌서 항상 새로운 자극을 찾아다닌다."
+        ]
+    },
+    {
+        id: 25, type: 'PARENT', category: 'NS', facet: '자유분방함',
+        context: "여행이나 휴가를 보낼 때",
+        choices: [
+            "분 단위로 꼼꼼하게 계획을 세워야 마음이 편하다.",
+            "대략적인 일정은 미리 정하고 움직인다.",
+            "큰 틀만 짜고 상황에 맞춰 유동적으로 다닌다.",
+            "특별한 계획 없이 가서 정하는 것을 좋아한다.",
+            "발길 닿는 대로, 마음 내키는 대로 즉흥적인 여행을 즐긴다."
+        ]
+    },
+    // 위험 회피 (HA) - Adult
+    // High HA = High Anxiety/Caution. Low HA = Boldness/Optimism.
+    // Spec: 1=Low, 5=High usually. 
+    // If the text for 5 is "Bold", use reverse: true.
+    {
+        id: 26, type: 'PARENT', category: 'HA', facet: '예기 불안',
+        context: "미래의 불확실한 일을 앞두고",
+        choices: [
+            "\"어떻게든 잘 될 거야\"라며 낙관적으로 생각한다.",
+            "별로 걱정하지 않고 현재에 집중한다.",
+            "약간 신경 쓰이지만 준비하면 된다고 믿는다.",
+            "혹시 모를 나쁜 상황들에 대해 자꾸 생각하게 된다.",
+            "일어날 수 있는 최악의 시나리오를 상상하며 잠 못 이룬다."
+        ] // 1=Optimistic(Low HA), 5=Worried(High HA). No reverse needed if calculating typical HA score.
+    },
+    {
+        id: 27, type: 'PARENT', category: 'HA', facet: '불확실성에 대한 두려움',
+        context: "새로운 도전이나 변화가 필요할 때",
+        choices: [
+            "리스크를 감수하고서라도 도전하는 것이 흥분된다.",
+            "성공할 가능성을 보고 과감하게 뛰어든다.",
+            "돌다리도 두들겨 보고 건너는 편이다.",
+            "익숙하지 않은 일은 가급적 피하고 싶다.",
+            "실패할까 봐 두려워서 시도조차 하기 힘들다."
+        ]
+    },
+    {
+        id: 28, type: 'PARENT', category: 'HA', facet: '수줍음(사회적 위축)',
+        context: "낯선 사람들이 많은 모임에서",
+        choices: [
+            "먼저 다가가서 말을 걸고 분위기를 주도한다.",
+            "두루두루 사람들과 어울리는 것이 편하다.",
+            "아는 사람과 주로 대화하며 자리를 지킨다.",
+            "나서는 것이 부담스럽고 조용히 있고 싶다.",
+            "주목받는 것이 너무 싫고 빨리 자리를 피하고 싶다."
+        ]
+    },
+    {
+        id: 29, type: 'PARENT', category: 'HA', facet: '피로 용이성',
+        context: "하루 일과를 마치고 났을 때",
+        choices: [
+            "아직 에너지가 넘쳐서 친구를 만나거나 취미를 즐긴다.",
+            "적당히 피곤하지만 할 일을 더 할 수 있다.",
+            "휴식이 필요하지만 가벼운 활동은 가능하다.",
+            "지쳐서 아무것도 하고 싶지 않고 누워만 있고 싶다.",
+            "완전히 방전되어 회복하는 데 긴 시간이 필요하다."
+        ]
+    },
+    {
+        id: 30, type: 'PARENT', category: 'HA', facet: '걱정/근심',
+        context: "가족에게 연락이 늦게 올 때",
+        choices: [
+            "바쁜가 보다 하고 별로 신경 쓰지 않는다.",
+            "조금 기다려보다가 다시 연락해본다.",
+            "무슨 일이 생긴 건 아닌지 궁금해진다.",
+            "온갖 불길한 상상이 들어 안절부절못한다.",
+            "사고가 난 게 틀림없다고 생각하며 패닉에 빠진다."
+        ]
+    },
+    // 사회적 민감성 (RD) - Adult
+    // High RD = Warm, Sentimental, Dependent. Low RD = Aloof, Practical.
+    {
+        id: 31, type: 'PARENT', category: 'RD', facet: '정서적 개방성',
+        context: "슬픈 영화나 뉴스를 볼 때",
+        choices: [
+            "별다른 감정의 동요가 없거나 연출을 분석한다.",
+            "그렇구나 하고 넘기는 편이다.",
+            "마음이 아프고 공감이 간다.",
+            "종종 눈물이 나거나 감정에 젖어든다.",
+            "주인공에 완전히 이입되어 펑펑 울고 한동안 여운이 남는다."
+        ]
+    },
+    {
+        id: 32, type: 'PARENT', category: 'RD', facet: '사회적 부착',
+        context: "혼자 있는 시간 vs 사람들과 있는 시간",
+        choices: [
+            "혼자 일하거나 시간을 보내는 것이 훨씬 효율적이고 편하다.",
+            "가끔 사람들을 만나지만 혼자가 좋을 때가 많다.",
+            "적절히 균형을 맞추는 것이 좋다.",
+            "누군가와 함께 대화하고 교감할 때 에너지를 얻는다.",
+            "혼자 있으면 외롭고 불안해서 항상 사람을 찾는다."
+        ]
+    },
+    {
+        id: 33, type: 'PARENT', category: 'RD', facet: '인정 욕구(승인 의존)',
+        context: "타인에게 칭찬이나 인정을 받을 때",
+        choices: [
+            "남들의 평가보다 나 스스로의 만족이 중요하다.",
+            "고맙지만 크게 의식하지 않는다.",
+            "칭찬을 들으면 기분이 좋고 힘이 난다.",
+            "인정받기 위해 더 열심히 노력하게 된다.",
+            "타인의 인정이 내 존재 가치를 증명한다고 느낀다."
+        ]
+    },
+    {
+        id: 34, type: 'PARENT', category: 'RD', facet: '표현력',
+        context: "가족이나 연인에게 애정 표현을 할 때",
+        choices: [
+            "말보다는 행동이나 무뚝뚝한 챙김으로 대신한다.",
+            "쑥스러워서 표현을 잘 하지 못한다.",
+            "필요한 상황에서는 적절히 표현한다.",
+            "자주 사랑한다고 말하고 스킨십을 한다.",
+            "감정을 숨기지 않고 항상 풍부하게 표현한다."
+        ]
+    },
+    {
+        id: 35, type: 'PARENT', category: 'RD', facet: '공감 및 배려',
+        context: "친구가 힘든 고민을 털어놓을 때",
+        choices: [
+            "감정보다는 실질적인 해결책을 먼저 제시한다.",
+            "들어주긴 하지만 내 할 말이 더 생각난다.",
+            "적당히 맞장구치며 들어준다.",
+            "따뜻하게 위로하고 격려해준다.",
+            "내 일처럼 마음 아파하며 같이 울어준다."
+        ]
+    },
+    // 지속성 (P) - Adult
+    {
+        id: 36, type: 'PARENT', category: 'P', facet: '과제 지속성',
+        context: "어렵고 지루한 업무를 맡았을 때",
+        choices: [
+            "효율적이지 않으면 빨리 포기하거나 대충 처리한다.",
+            "하기 싫어서 자꾸 미루게 된다.",
+            "책임감 때문에 맡은 바는 해낸다.",
+            "힘들어도 끈기 있게 붙잡고 해결하려 한다.",
+            "끝을 볼 때까지 밤을 새워서라도 완벽하게 해낸다."
+        ]
+    },
+    {
+        id: 37, type: 'PARENT', category: 'P', facet: '완벽주의',
+        context: "집안일이나 일처리를 할 때",
+        choices: [
+            "사는 데 지장 없을 정도로만 대충 한다.",
+            "눈에 보이는 곳 위주로 정리한다.",
+            "기본적인 원칙은 지키며 산다.",
+            "깔끔하고 체계적으로 정돈되어야 마음이 편하다.",
+            "보이지 않는 곳까지 티끌 하나 없이 완벽해야 직성이 풀린다."
+        ]
+    },
+    {
+        id: 38, type: 'PARENT', category: 'P', facet: '야심(성취욕)',
+        context: "새로운 목표를 세울 때",
+        choices: [
+            "현재에 만족하며 안분지족하는 삶을 선호한다.",
+            "실현 가능한 안전한 목표를 세운다.",
+            "적당히 노력하면 이룰 수 있는 목표를 잡는다.",
+            "성장하기 위해 다소 높은 목표에 도전한다.",
+            "남들이 불가능하다고 해도 최고의 성과를 내기 위해 도전한다."
+        ]
+    },
+    {
+        id: 39, type: 'PARENT', category: 'P', facet: '좌절 내성',
+        context: "계획대로 일이 풀리지 않을 때",
+        choices: [
+            "\"안 되나 보다\" 하고 빠르게 단념하고 다른 길을 찾는다.",
+            "속상해서 한동안 의욕을 잃는다.",
+            "아쉽지만 재정비해서 다시 시도한다.",
+            "오기가 생겨서 될 때까지 다시 도전한다.",
+            "실패를 교훈 삼아 성공할 때까지 절대 포기하지 않는다."
+        ]
+    },
+    {
+        id: 40, type: 'PARENT', category: 'P', facet: '일관성(근면)',
+        context: "매일 해야 하는 귀찮은 일이 있을 때",
+        choices: [
+            "작심삼일로 끝나는 경우가 많다.",
+            "누가 시키지 않으면 꾸준히 하기 힘들다.",
+            "필요성을 느끼면 꾸준히 하려고 노력한다.",
+            "자신과의 약속은 웬만하면 지킨다.",
+            "아프거나 피곤해도 정해진 일과는 반드시 수행한다."
+        ]
+    },
 ];

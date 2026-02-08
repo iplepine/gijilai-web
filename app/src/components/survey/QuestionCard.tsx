@@ -56,7 +56,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, currentAns
                 </h3>
                 {isBARS && (
                     <p className="text-sm text-gray-400 mt-2">
-                        다음 상황에서 아이는 어떻게 행동하나요?
+                        {question.type === 'CHILD'
+                            ? "다음 상황에서 아이는 어떻게 행동하나요?"
+                            : question.type === 'PARENT'
+                                ? "다음 상황에서 나는 어떻게 행동하나요?"
+                                : "다음 상황에서 부모로서 어떻게 대처하나요?"
+                        }
                     </p>
                 )}
             </div>
