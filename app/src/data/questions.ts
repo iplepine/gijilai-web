@@ -1,6 +1,7 @@
 import { Question } from '../types/survey';
 
 export const CHILD_QUESTIONS: Question[] = [
+    // 자극 추구 (NS)
     {
         id: 1, type: 'CHILD', category: 'NS', facet: '새로운 자극 접근성',
         context: "처음 본 장난감을 줬을 때",
@@ -9,11 +10,11 @@ export const CHILD_QUESTIONS: Question[] = [
         highScoreDescription: "보자마자 달려들어 이리저리 만져본다."
     },
     {
-        id: 2, type: 'CHILD', category: 'NS', facet: '지루함 민감성',
-        context: "한 가지 놀이를 할 때",
-        lowScoreDescription: "한 가지 장난감을 가지고 오랫동안 진득하게 논다.",
-        midScoreDescription: "적당히 놀다가 다른 것에 관심을 보인다.",
-        highScoreDescription: "금방 실증을 내고 계속 새로운 것을 찾는다."
+        id: 2, type: 'CHILD', category: 'NS', facet: '지루함 민감성', // Or 'Change Seeking'? Keeping category/facet names consistent unless incorrect.
+        context: "외출 준비를 할 때",
+        lowScoreDescription: "늘 하던 순서가 아니면 거부감이 심하다.",
+        midScoreDescription: "가끔 투정을 부리지만 곧 잘 따라온다.",
+        highScoreDescription: "새로운 곳에 간다는 사실만으로 흥분한다."
     },
     {
         id: 3, type: 'CHILD', category: 'NS', facet: '활동 수준',
@@ -36,15 +37,15 @@ export const CHILD_QUESTIONS: Question[] = [
         midScoreDescription: "어느 정도 예측은 가능하나 조금씩 변한다.",
         highScoreDescription: "매일 규칙이 바뀌고 종잡을 수 없다."
     },
-    // HA (Harm Avoidance)
+    // 위험 회피 (HA) - Note: User marked (역채점) for 5 items. 
+    // Usually HA High Score = High Anxiety. But here 5 means "Low Anxiety/Boldness". So Reverse is needed.
     {
         id: 6, type: 'CHILD', category: 'HA', facet: '수줍음 및 불안',
-
         context: "낯선 어른이 말을 걸 때",
         lowScoreDescription: "부모 뒤로 숨어 한참 동안 얼굴도 안 본다.",
         midScoreDescription: "부모 곁에 붙어서 관찰하며 탐색한다.",
         highScoreDescription: "처음 본 사람에게도 웃으며 다가간다.",
-        reverse: true // Because 5 here means Low Anxiety
+        reverse: true
     },
     {
         id: 7, type: 'CHILD', category: 'HA', facet: '감각 역치',
@@ -55,7 +56,7 @@ export const CHILD_QUESTIONS: Question[] = [
         reverse: true
     },
     {
-        id: 8, type: 'CHILD', category: 'HA', facet: '변화 적응성',
+        id: 8, type: 'CHILD', category: 'HA', facet: '변화 적응성', // or '새 옷을 입혔을 때' facet
         context: "새 옷을 입혔을 때",
         lowScoreDescription: "까칠하거나 꽉 끼는 느낌에 매우 예민하다.",
         midScoreDescription: "처음엔 어색해하지만 금방 적응한다.",
@@ -71,14 +72,14 @@ export const CHILD_QUESTIONS: Question[] = [
         reverse: true
     },
     {
-        id: 10, type: 'CHILD', category: 'HA', facet: '피로 용이성',
+        id: 10, type: 'CHILD', category: 'HA', facet: '피로 용이성', // or 'Energy Level' - checking facet consistency
         context: "활동 후의 체력 상태",
         lowScoreDescription: "조금만 움직여도 금방 지쳐서 안아달라고 한다.",
         midScoreDescription: "적당히 놀고 나면 쉬고 싶어 한다.",
         highScoreDescription: "잠들기 직전까지 에너지가 넘쳐흐른다.",
         reverse: true
     },
-    // RD (Reward Dependence) - High Score = High RD (Socially sensitive)
+    // 사회적 민감성 (RD)
     {
         id: 11, type: 'CHILD', category: 'RD', facet: '사회적 보상 민감성',
         context: "부모가 칭찬해 줄 때",
@@ -103,7 +104,7 @@ export const CHILD_QUESTIONS: Question[] = [
     {
         id: 14, type: 'CHILD', category: 'RD', facet: '따뜻한 의사소통',
         context: "친구가 장난감을 뺏을 때",
-        lowScoreDescription: "그냥 주고 말거나 다른 것을 찾아 떠난다.", // Low attachment/fighting
+        lowScoreDescription: "그냥 주고 말거나 다른 것을 찾아 떠난다.",
         midScoreDescription: "당황해하며 부모에게 도움을 요청한다.",
         highScoreDescription: "같이 놀고 싶어 하며 서운한 기색을 내비친다."
     },
@@ -114,7 +115,7 @@ export const CHILD_QUESTIONS: Question[] = [
         midScoreDescription: "잘못했다는 걸 눈치채고 행동을 멈춘다.",
         highScoreDescription: "금방 위축되어 울먹이거나 눈치를 많이 본다."
     },
-    // P (Persistence) - High Score = High Persistence
+    // 지속성 (P)
     {
         id: 16, type: 'CHILD', category: 'P', facet: '과제 지속성',
         context: "어려운 퍼즐을 맞출 때",
@@ -137,7 +138,7 @@ export const CHILD_QUESTIONS: Question[] = [
         highScoreDescription: "시킨 일을 끝낼 때까지 멈추지 않는다."
     },
     {
-        id: 19, type: 'CHILD', category: 'P', facet: '좌절 내성',
+        id: 19, type: 'CHILD', category: 'P', facet: '좌절 내성', // or '실패했을 때의 태도'
         context: "실패했을 때의 태도",
         lowScoreDescription: "한 번 실패하면 다시는 안 하려고 한다.",
         midScoreDescription: "아쉬워하지만 다음에 하겠다고 미룬다.",
