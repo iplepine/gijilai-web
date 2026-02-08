@@ -2,11 +2,16 @@ export type SurveyType = 'CHILD' | 'PARENT' | 'PARENTING_STYLE';
 
 export interface Question {
     id: number;
-    text: string;
+    text?: string; // Legacy text or used as context title
+    context?: string; // BARS situation
     type: SurveyType;
-    category: string; // e.g., 'NS', 'HA', 'RD', 'P' or 'Efficacy', 'Autonomy', 'Responsiveness'
+    category: string;
     facet?: string;
-    reverse?: boolean; // True if the score needs to be reversed
+    reverse?: boolean;
+    // BARS descriptions
+    lowScoreDescription?: string; // Score 1
+    midScoreDescription?: string; // Score 3
+    highScoreDescription?: string; // Score 5
 }
 
 export interface Answer {

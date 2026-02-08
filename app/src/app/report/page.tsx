@@ -159,19 +159,57 @@ export default function ReportPage() {
     }
   };
 
-  // Simple Logic for BCI (Just average difference for demo)
+  // Simple Logic for BCI (Average difference)
   const bciScore = useMemo(() => {
-    if (!answers[1]) return 0; // Return 0 if no answers
+    if (!answers[1]) return 0;
     const diff =
       Math.abs(childScores.NS - parentScores.NS) +
       Math.abs(childScores.HA - parentScores.HA) +
       Math.abs(childScores.RD - parentScores.RD) +
       Math.abs(childScores.P - parentScores.P);
 
-    // Higher diff = lower fit score in this simple logic (100 - avg diff)
-    const avgDiff = diff / 4;
-    return Math.max(0, 100 - avgDiff);
+    // Average difference. 
+    // Spec says BCI = |C - P|. Since we normalized to 100, a diff of 100 is max.
+    // If we use raw scores (1-5), max diff is 4.
+    // Let's use the normalized scores (0-100) for resolution. Max diff is 100 per dimension.
+    // Average Diff = Total Diff / 4.
+    return diff / 4;
   }, [childScores, parentScores, answers]);
+
+  // 3D Dynamic Matching Logic
+  const analysisResult = useMemo(() => {
+    let type = 'NORMAL'; // NORMAL, MITIGATED, CRISIS
+    let message = '서로 다른 기질이지만, 부모님의 노력으로 균형을 맞춰가고 있습니다.';
+
+    // Thresholds (assuming normalized 0-100 scale)
+    // BCI >= 3.0 on 5-point scale => 60 on 100-point scale.
+    const isHighBCI = bciScore >= 40; // 2 points diff = 40. Strict: 60. Let's use 40 as "Noticeable".
+
+    // Specific Conflict: Child NS High vs Parent HA High
+    const isConflictPattern = childScores.NS >= 80 && parentScores.HA >= 80;
+
+    if (isHighBCI || isConflictPattern) {
+      // Check Mitigation (Autonomy >= 4 -> 80)
+      if (styleScores.Autonomy >= 80) {
+        type = 'MITIGATED';
+        message = '기질적인 차이가 크지만, 부모님의 높은 [자율성 지지] 덕분에 아이가 이를 건강하게 극복하고 있습니다. 훌륭한 양육 태도입니다!';
+      }
+      // Check Crisis (Responsiveness <= 2 -> 40)
+      else if (styleScores.Responsiveness <= 40) {
+        type = 'CRISIS';
+        message = '현재 기질적 갈등이 심화되고 있습니다. 부모님의 [정서적 반응성]을 높여 아이의 마음을 먼저 읽어주는 노력이 시급합니다.';
+      }
+      else {
+        message = '기질 차이로 인한 갈등 가능성이 있습니다. 서로의 다름을 인정하는 대화가 필요합니다.';
+      }
+    }
+    return { type, message };
+  }, [bciScore, childScores, parentScores, styleScores]);
+
+  // BCI color logic
+  const bciColor = bciScore < 20 ? 'text-green-600' : (bciScore < 50 ? 'text-blue-600' : 'text-red-500');
+  const bciBg = bciScore < 20 ? 'bg-green-500' : (bciScore < 50 ? 'bg-blue-500' : 'bg-red-500');
+  const bciLabel = bciScore < 20 ? '최상의 궁합' : (bciScore < 50 ? '안정적 조화' : '갈등 주의');
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -214,30 +252,32 @@ export default function ReportPage() {
           </p>
         </div>
 
-        {/* BCI Score */}
-        <div className="bg-white rounded-2xl p-6 shadow-md">
-          <h3 className="font-bold text-gray-800 mb-4">
-            🤝 부모-자녀 적합도 (BCI)
+        {/* BCI Score with Dynamic Analysis */}
+        <div className={`bg-white rounded-2xl p-6 shadow-md border-2 ${analysisResult.type === 'CRISIS' ? 'border-red-400' : (analysisResult.type === 'MITIGATED' ? 'border-green-400' : 'border-transparent')}`}>
+          <h3 className="font-bold text-gray-800 mb-4 flex justify-between">
+            <span>🤝 부모-자녀 적합도 (BCI)</span>
+            {analysisResult.type === 'MITIGATED' && <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Great!</span>}
+            {analysisResult.type === 'CRISIS' && <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">Warning</span>}
           </h3>
           <div className="relative pt-4 pb-2">
             <div className="flex mb-2 items-center justify-between">
               <div>
-                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
-                  안정적 조화
+                <span className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${bciScore < 50 ? 'bg-blue-200' : 'bg-red-200'} ${bciColor}`}>
+                  {bciLabel}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-xs font-semibold inline-block text-blue-600">
-                  {Math.round(bciScore)}점
+                <span className={`text-xs font-semibold inline-block ${bciColor}`}>
+                  충돌지수 {Math.round(bciScore)}점
                 </span>
               </div>
             </div>
-            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
-              <div style={{ width: `${bciScore}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-1000"></div>
+            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+              <div style={{ width: `${Math.min(100, bciScore)}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-1000 ${bciBg}`}></div>
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              서로 다른 기질이지만, 부모님의 '공감 능력'이 갈등을 잘 중재하고 계시네요. 아이의 에너지를 부정하기보다 안전하게 발산할 공간을 만들어주세요.
-            </p>
+            <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-700 leading-relaxed font-medium">
+              {analysisResult.message}
+            </div>
           </div>
         </div>
 
