@@ -30,37 +30,13 @@ ChartJS.register(
   LinearScale
 );
 
+import { TemperamentScorer } from '../../lib/TemperamentScorer';
+
 export default function ReportPage() {
   const answers = useSurveyStore((state) => state.answers);
 
-  // Helper to calculate scores
-  const calculateScores = (questions: typeof CHILD_QUESTIONS) => {
-    const scores = { NS: 0, HA: 0, RD: 0, P: 0 };
-    const counts = { NS: 0, HA: 0, RD: 0, P: 0 };
-
-    questions.forEach(q => {
-      if (answers[q.id]) {
-        const cat = q.category as keyof typeof scores;
-        if (cat in scores) {
-          const scoreValue = q.reverse ? (6 - answers[q.id]) : answers[q.id];
-          scores[cat] += scoreValue;
-          counts[cat]++;
-        }
-      }
-    });
-
-    // Normalize to 0-100
-    const normalized = {
-      NS: scores.NS > 0 ? Math.round((scores.NS / (counts.NS * 5)) * 100) : 0,
-      HA: scores.HA > 0 ? Math.round((scores.HA / (counts.HA * 5)) * 100) : 0,
-      RD: scores.RD > 0 ? Math.round((scores.RD / (counts.RD * 5)) * 100) : 0,
-      P: scores.P > 0 ? Math.round((scores.P / (counts.P * 5)) * 100) : 0,
-    }
-    return normalized;
-  };
-
-  const childScores = useMemo(() => calculateScores(CHILD_QUESTIONS), [answers]);
-  const parentScores = useMemo(() => calculateScores(PARENT_QUESTIONS), [answers]);
+  const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, answers), [answers]);
+  const parentScores = useMemo(() => TemperamentScorer.calculate(PARENT_QUESTIONS, answers), [answers]);
 
   // Parenting Style Scores
   const styleScores = useMemo(() => {
