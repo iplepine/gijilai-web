@@ -6,68 +6,143 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
-import { CBQ_QUESTIONS, ATQ_QUESTIONS, LIKERT_OPTIONS, NA_OPTION } from '@/lib/surveyQuestions';
+import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 
-type SurveyType = 'cbq' | 'atq';
+type SurveyModule = 'child' | 'parent' | 'parenting';
 
 export default function SurveyPage() {
   const router = useRouter();
-  const { intake, cbqResponses, atqResponses, setCbqResponse, setAtqResponse } = useAppStore();
+  const {
+    intake,
+    cbqResponses,
+    atqResponses,
+    parentingResponses,
+    setCbqResponse,
+    setAtqResponse,
+    setParentingResponse
+  } = useAppStore();
 
-  const [surveyType, setSurveyType] = useState<SurveyType>('cbq');
+  const [currentModule, setCurrentModule] = useState<SurveyModule>('child');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTransitionModal, setShowTransitionModal] = useState(false);
+  const [transitionType, setTransitionType] = useState<'toParent' | 'toParenting' | 'finish' | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
 
-  // 먼저 필요한 값들 계산
-  const questions = surveyType === 'cbq' ? CBQ_QUESTIONS : ATQ_QUESTIONS;
-  const responses = surveyType === 'cbq' ? cbqResponses : atqResponses;
-  const setResponse = surveyType === 'cbq' ? setCbqResponse : setAtqResponse;
+  // 현재 모듈에 따른 질문 목록과 응답 상태 가져오기
+  const getModuleData = useCallback(() => {
+    switch (currentModule) {
+      case 'child':
+        return {
+          questions: CHILD_QUESTIONS,
+          responses: cbqResponses,
+          setResponse: setCbqResponse,
+          title: '아이 기질',
+          color: 'var(--primary)',
+          nextModule: 'parent' as SurveyModule
+        };
+      case 'parent':
+        return {
+          questions: PARENT_QUESTIONS,
+          responses: atqResponses,
+          setResponse: setAtqResponse,
+          title: '부모 기질',
+          color: '#FFB5A7', // Soft Coral/Earth tone
+          nextModule: 'parenting' as SurveyModule
+        };
+      case 'parenting':
+        return {
+          questions: PARENTING_STYLE_QUESTIONS,
+          responses: parentingResponses,
+          setResponse: setParentingResponse,
+          title: '양육 태도',
+          color: '#A8D5BA', // Soft Green
+          nextModule: null
+        };
+    }
+  }, [currentModule, cbqResponses, atqResponses, parentingResponses, setCbqResponse, setAtqResponse, setParentingResponse]);
 
+  const { questions, responses, setResponse, title, color } = getModuleData();
   const currentQuestion = questions[currentIndex];
-  const currentAnswer = responses[currentQuestion?.id];
+  const currentAnswer = responses[String(currentQuestion?.id)];
 
-  const totalQuestions = CBQ_QUESTIONS.length + ATQ_QUESTIONS.length;
-  const answeredCount = Object.keys(cbqResponses).length + Object.keys(atqResponses).length;
-  const progress = (answeredCount / totalQuestions) * 100;
-
-  const isLastCbq = surveyType === 'cbq' && currentIndex === CBQ_QUESTIONS.length - 1;
-  const isLastAtq = surveyType === 'atq' && currentIndex === ATQ_QUESTIONS.length - 1;
+  // 진행률 계산
+  const totalQuestions = CHILD_QUESTIONS.length + PARENT_QUESTIONS.length + PARENTING_STYLE_QUESTIONS.length;
+  const answeredCount =
+    Object.keys(cbqResponses).length +
+    Object.keys(atqResponses).length +
+    Object.keys(parentingResponses).length;
+  const progress = Math.min(100, Math.round((answeredCount / totalQuestions) * 100));
 
   const goToNext = useCallback(() => {
-    if (isLastCbq) {
-      setShowTransitionModal(true);
-    } else if (isLastAtq) {
-      router.push('/payment');
-    } else {
+    if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
+    } else {
+      // 모듈 완료
+      if (currentModule === 'child') {
+        setTransitionType('finish');
+        setShowTransitionModal(true);
+      } else {
+        // 원래 로직 유지 (확장 대비 - 현재는 사용 안 함)
+        if (currentModule === 'parent') {
+          setTransitionType('toParenting');
+          setShowTransitionModal(true);
+        } else {
+          setTransitionType('finish');
+          setShowTransitionModal(true);
+        }
+      }
     }
-  }, [isLastCbq, isLastAtq, router]);
+  }, [currentIndex, questions.length, currentModule]);
 
-  const handleSelect = useCallback((value: number) => {
-    setResponse(currentQuestion?.id, value);
-    if (value !== 0) {
-      setTimeout(() => goToNext(), 250);
-    }
-  }, [setResponse, currentQuestion?.id, goToNext]);
+  const handleSelect = useCallback((idx: number) => {
+    // idx is 0-4 (array index), convert to 1-5 score
+    const score = idx + 1;
+    setResponse(String(currentQuestion.id), score);
 
-  const handleNA = useCallback(() => {
-    setResponse(currentQuestion?.id, 0);
-    setTimeout(() => goToNext(), 250);
+    // Auto advance with delay
+    setTimeout(() => {
+      goToNext();
+    }, 300);
   }, [setResponse, currentQuestion?.id, goToNext]);
 
   const handlePrev = useCallback(() => {
-    if (currentIndex === 0 && surveyType === 'atq') {
-      setSurveyType('cbq');
-      setCurrentIndex(CBQ_QUESTIONS.length - 1);
-    } else if (currentIndex > 0) {
+    if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
-    } else if (currentIndex === 0 && surveyType === 'cbq') {
-      setShowExitModal(true);
+    } else {
+      // 모듈 간 뒤로가기
+      if (currentModule === 'parent') {
+        setCurrentModule('child');
+        setCurrentIndex(CHILD_QUESTIONS.length - 1);
+      } else if (currentModule === 'parenting') {
+        setCurrentModule('parent');
+        setCurrentIndex(PARENT_QUESTIONS.length - 1);
+      } else {
+        setShowExitModal(true);
+      }
     }
-  }, [currentIndex, surveyType]);
+  }, [currentIndex, currentModule]);
 
-  // 페이지 이탈 시 경고
+  const handleTransitionConfirm = () => {
+    setShowTransitionModal(false);
+    if (transitionType === 'toParent') {
+      setCurrentModule('parent');
+      setCurrentIndex(0);
+      window.scrollTo(0, 0);
+    } else if (transitionType === 'toParenting') {
+      setCurrentModule('parenting');
+      setCurrentIndex(0);
+      window.scrollTo(0, 0);
+    } else if (transitionType === 'finish') {
+      router.push('/payment'); // or /result
+    }
+    setTransitionType(null);
+  };
+
+  const handleExit = () => {
+    router.push('/');
+  };
+
+  // Prevent accidental close
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (answeredCount > 0) {
@@ -79,206 +154,171 @@ export default function SurveyPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [answeredCount]);
 
-  // 키보드 숫자키 입력 지원
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (showTransitionModal || showExitModal) return;
-
-      const key = e.key;
-      if (key >= '1' && key <= '7') {
-        handleSelect(parseInt(key));
-      }
-      if ((key === '0' || key === 'n' || key === 'N') && surveyType === 'cbq') {
-        handleNA();
-      }
-      if (key === 'ArrowLeft') {
-        handlePrev();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showTransitionModal, showExitModal, surveyType, handleSelect, handleNA, handlePrev]);
-
-  const handleTransitionConfirm = () => {
-    setShowTransitionModal(false);
-    setSurveyType('atq');
-    setCurrentIndex(0);
-  };
-
-  const handleExit = () => {
-    router.push('/intake');
-  };
+  if (!currentQuestion) return <div>Loading...</div>;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col">
-      <Navbar title="기질 설문" showBack />
+    <div className="relative flex min-h-screen w-full flex-col bg-slate-50 dark:bg-slate-900">
+      <Navbar title={title} showBack onBackClick={handlePrev} />
 
-      {/* Progress Bar */}
-      <div className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
-        {/* 섹션 탭 */}
-        <div className="flex gap-2 mb-3">
-          <div className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all ${
-            surveyType === 'cbq'
-              ? 'bg-[var(--primary)] text-[var(--navy)]'
-              : Object.keys(cbqResponses).length === CBQ_QUESTIONS.length
-                ? 'bg-green-100 text-green-600'
-                : 'bg-gray-100 text-gray-400'
-          }`}>
-            {Object.keys(cbqResponses).length === CBQ_QUESTIONS.length && surveyType === 'atq' ? '✓ ' : ''}
-            1. 아이 기질
-          </div>
-          <div className={`flex-1 text-center py-2 rounded-lg text-xs font-bold transition-all ${
-            surveyType === 'atq'
-              ? 'bg-[var(--primary)] text-[var(--navy)]'
-              : 'bg-gray-100 text-gray-400'
-          }`}>
-            2. 부모 기질
-          </div>
-        </div>
+      {/* Progress Bar & Module Tabs */}
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-[56px] z-10">
+        <div className="px-4 py-3">
+          {/* Module Indicators (Hidden for single module mode) */}
+          {/* 
+          <div className="flex gap-2 mb-3">
+             {['child', 'parent', 'parenting'].map((mod, idx) => {
+               const isActive = currentModule === mod;
+               const isCompleted = 
+                 (mod === 'child' && currentModule !== 'child') ||
+                 (mod === 'parent' && currentModule === 'parenting');
+               
+               let label = '';
+               if (mod === 'child') label = '1. 아이';
+               if (mod === 'parent') label = '2. 부모';
+               if (mod === 'parenting') label = '3. 양육';
 
-        {/* 상세 진행률 */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-gray-600">
-            {surveyType === 'cbq' ? '아이' : '부모'} 문항 {currentIndex + 1} / {questions.length}
-          </span>
-          <span className="text-xs text-[var(--primary)] font-bold">{Math.round(progress)}%</span>
-        </div>
-        <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[var(--primary)] transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+               return (
+                 <div 
+                   key={mod}
+                   className={`flex-1 text-center py-1.5 rounded-full text-[11px] font-bold transition-all ${
+                     isActive 
+                       ? 'bg-primary text-white shadow-md' 
+                       : isCompleted
+                         ? 'bg-green-100 text-green-700'
+                         : 'bg-slate-100 text-slate-400'
+                   }`}
+                 >
+                   {isCompleted && <span className="mr-1">✓</span>}
+                   {label}
+                 </div>
+               );
+             })}
+          </div>
+          */}
+
+          <div className="flex items-center justify-between mb-1.5 px-1">
+            <span className="text-xs font-semibold text-slate-500">
+              문항 {currentIndex + 1} <span className="text-slate-300">/</span> {questions.length}
+            </span>
+            <span className="text-xs font-bold text-primary">{Math.round(((currentIndex + 1) / questions.length) * 100)}%</span>
+          </div>
+          <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Question */}
-      <div className="flex-1 px-5 py-8">
-        <div className="mb-8">
-          {/* 이미 답변한 문항 표시 */}
-          {currentAnswer !== undefined && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-600 text-[11px] font-bold mb-3">
-              <Icon name="check_circle" size="sm" />
-              답변 완료 (수정 가능)
-            </div>
-          )}
-          {surveyType === 'cbq' && (
-            <p className="text-xs text-[var(--green-custom)] mb-2">
-              {intake.childName || '아이'}의 지난 6개월 행동을 떠올려 주세요
-            </p>
-          )}
-          {surveyType === 'atq' && (
-            <p className="text-xs text-[var(--green-custom)] mb-2">본인(부모)의 평소 모습을 떠올려 주세요</p>
-          )}
-          <h2 className="text-xl font-bold text-[var(--navy)] dark:text-white leading-relaxed">
-            {currentQuestion?.text}
+      {/* Question Content */}
+      <div className="flex-1 px-5 py-6 max-w-2xl mx-auto w-full pb-24">
+        {/* Context Card */}
+        <div className="mb-6 animate-fade-in-up">
+          <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold mb-3">
+            {currentModule === 'child' ? `${intake.childName || '아이'}의 행동` :
+              currentModule === 'parent' ? '나(부모)의 성향' : '양육 상황'}
+          </div>
+
+          <h2 className="text-[17px] font-bold text-slate-800 dark:text-white leading-relaxed whitespace-pre-line">
+            <span className="text-primary mr-1">Q.</span>
+            {currentQuestion.context}
           </h2>
         </div>
 
-        {/* Likert Scale - 숫자 버튼 한 줄 */}
-        <div className="space-y-4">
-          {/* 점수 버튼 */}
-          <div className="flex gap-2 justify-between">
-            {LIKERT_OPTIONS.map((option) => (
+        {/* Choices (BARS) */}
+        <div className="space-y-3">
+          {currentQuestion.choices?.map((choice, idx) => {
+            const score = idx + 1; // 1-based score
+            const isSelected = currentAnswer === score;
+
+            return (
               <button
-                key={option.value}
-                onClick={() => handleSelect(option.value)}
-                className={`flex-1 aspect-square max-w-12 rounded-xl text-lg font-bold transition-all ${
-                  currentAnswer === option.value
-                    ? 'bg-[var(--primary)] text-[var(--navy)] scale-110 shadow-lg shadow-[var(--primary)]/30'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 hover:border-[var(--primary)] hover:text-[var(--primary)]'
-                }`}
+                key={idx}
+                onClick={() => handleSelect(idx)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative overflow-hidden group ${isSelected
+                  ? 'border-primary bg-primary/5 shadow-md scale-[1.01]'
+                  : 'border-white dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
               >
-                {option.value}
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className={`
+                    w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors
+                    ${isSelected ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-primary/20 group-hover:text-primary'}
+                  `}>
+                    {idx + 1}
+                  </div>
+                  <span className={`text-[15px] leading-snug ${isSelected ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-slate-300'}`}>
+                    {choice}
+                  </span>
+                </div>
+
+                {/* Selection Ripple/Fill Effect could go here */}
               </button>
-            ))}
-          </div>
-
-          {/* 라벨 */}
-          <div className="flex justify-between text-xs text-gray-500 px-1">
-            <span>전혀 아님</span>
-            <span>보통</span>
-            <span>매우 그럼</span>
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="p-4 bg-[var(--background-light)] dark:bg-[var(--background-dark)] border-t border-gray-100 dark:border-gray-800">
-        <div className="max-w-md mx-auto flex gap-3">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={handlePrev}
-            className="w-24"
-          >
-            {currentIndex === 0 && surveyType === 'cbq' ? '나가기' : '이전'}
+      {/* Bottom Navigation (Safe Area) */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-4 pb-8 z-20">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          <Button variant="ghost" size="sm" onClick={handlePrev} className="text-slate-400 hover:text-slate-600">
+            <Icon name="arrow_back" size="sm" className="mr-1" /> 이전
           </Button>
-          {/* CBQ에서는 "해당 없음", ATQ에서는 빈 공간 */}
-          {surveyType === 'cbq' ? (
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth
-              onClick={handleNA}
-              className={currentAnswer === 0 ? 'ring-2 ring-gray-400' : ''}
-            >
-              해당 없음
-            </Button>
-          ) : (
-            <div className="flex-1" />
-          )}
+
+          {/* Skip / Next could go here if needed, but we auto-advance */}
+          <div className="text-[10px] text-slate-300">
+            Aina Garden Temperament Test
+          </div>
         </div>
       </div>
 
-      {/* 이탈 확인 모달 */}
-      {showExitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full ios-shadow space-y-4">
+      {/* Transition Modal */}
+      {showTransitionModal && transitionType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl transform transition-all scale-100">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
-                <Icon name="warning" size="lg" className="text-orange-500" />
+              <div className="w-20 h-20 mx-auto mb-6 bg-green-50 rounded-full flex items-center justify-center">
+                <span className="text-4xl">
+                  {transitionType === 'toParent' ? '🌱' :
+                    transitionType === 'toParenting' ? '🏡' : '🎉'}
+                </span>
               </div>
-              <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white mb-2">
-                설문을 중단하시겠어요?
+
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                {transitionType === 'toParent' ? '아이 기질 검사 완료!' :
+                  transitionType === 'toParenting' ? '부모 기질 검사 완료!' : '모든 검사가 끝났어요!'}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                지금까지 입력한 내용은 저장되어 있어요.
-                <br />
-                나중에 이어서 진행할 수 있습니다.
+
+              <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                {transitionType === 'toParent' ? (
+                  <>이제 <strong>부모님(본인)</strong>의 기질을 알아볼까요?<br />아이와 얼마나 잘 맞는지 분석해드려요.</>
+                ) : transitionType === 'toParenting' ? (
+                  <>마지막으로 <strong>평소 양육 스타일</strong>을 체크할게요.<br />구체적인 육아 솔루션이 제공됩니다.</>
+                ) : (
+                  <>수고하셨습니다!<br />이제 우리 가족만의 <strong>특별한 정원</strong>을 보러 가볼까요?</>
+                )}
               </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" size="md" fullWidth onClick={() => setShowExitModal(false)}>
-                계속하기
-              </Button>
-              <Button variant="primary" size="md" fullWidth onClick={handleExit}>
-                나가기
+
+              <Button size="lg" fullWidth onClick={handleTransitionConfirm} className="rounded-2xl py-4 text-lg shadow-lg shadow-primary/30">
+                {transitionType === 'finish' ? '결과 보러 가기' : '다음 단계로'}
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CBQ → ATQ 전환 모달 */}
-      {showTransitionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full ios-shadow space-y-4">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-[var(--primary)]/10 rounded-full flex items-center justify-center">
-                <Icon name="family_restroom" size="lg" className="text-[var(--primary)]" />
-              </div>
-              <h3 className="text-lg font-bold text-[var(--navy)] dark:text-white mb-2">
-                아이 설문 완료! 🎉
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                이제 <strong>부모님(본인)</strong>의 기질을 확인할 차례예요.
-                <br />
-                부모-자녀 궁합 분석에 사용됩니다.
-              </p>
+      {/* Exit Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-xs w-full shadow-xl">
+            <h3 className="text-lg font-bold text-center mb-2">잠깐! 나가시겠어요?</h3>
+            <p className="text-sm text-center text-slate-500 mb-6">진행 중인 내용은 저장되지만,<br />완료하지 않으면 결과를 볼 수 없어요.</p>
+            <div className="flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setShowExitModal(false)}>계속 하기</Button>
+              <Button variant="ghost" fullWidth onClick={handleExit} className="text-red-500 bg-red-50 hover:bg-red-100">그만두기</Button>
             </div>
-            <Button variant="primary" size="md" fullWidth onClick={handleTransitionConfirm}>
-              부모 설문 시작하기
-            </Button>
           </div>
         </div>
       )}

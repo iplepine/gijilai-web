@@ -2,28 +2,57 @@
 
 /* ========== Design System Colors ========== */
 :root {
-  --primary: #11d4d4;
+  /* Legacy Colors (keeping for safe migration) */
+  --primary: #2D6A4F;
+  /* Updated to new primary */
   --navy: #0d1b1b;
   --deep-green: #1a4d4d;
   --green-custom: #4c9a9a;
-  --background-light: #f6f8f8;
-  --background-dark: #102222;
+
+  /* New Design System Colors */
+  --accent: #40916C;
+  --earth-brown: #8B5E3C;
+  --soft-leaf: #D8F3DC;
+  --warm-beige: #F5EBE0;
+  --nurture-ring: #E9EDC9;
+  --soil-beige: #EAD7C3;
+
+  --background-light: #FDFCF9;
+  --background-dark: #1A2F23;
 }
 
 @theme inline {
+  /* Legacy Map */
   --color-primary: var(--primary);
   --color-navy: var(--navy);
   --color-deep-green: var(--deep-green);
   --color-green-custom: var(--green-custom);
-  --color-background: var(--background-light);
-  --color-background-dark: var(--background-dark);
+
+  /* New Design System Map (Requested) */
+  --color-primary: #2D6A4F;
+  --color-accent: #40916C;
+  --color-background-light: #FDFCF9;
+  --color-background-dark: #1A2F23;
+  --color-earth-brown: #8B5E3C;
+  --color-soft-leaf: #D8F3DC;
+  --color-warm-beige: #F5EBE0;
+  --color-nurture-ring: #E9EDC9;
+  --color-soil-beige: #EAD7C3;
+
+  /* Fonts */
+  --font-display: 'Lexend', 'Noto Sans KR', sans-serif;
+  --font-sans: 'Noto Sans KR', sans-serif;
+
+  /* Border Radius */
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
 }
 
 /* ========== Base Styles ========== */
 body {
-  font-family: 'Public Sans', 'Noto Sans KR', sans-serif;
-  background: var(--background-light);
-  color: var(--navy);
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--garden-cream);
+  color: var(--garden-brown);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -33,32 +62,50 @@ body {
 }
 
 /* ========== Custom Utilities ========== */
-.ios-shadow {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+.watercolor-bg {
+  background: radial-gradient(circle at top right, #F3D7CA 0%, transparent 40%),
+    radial-gradient(circle at bottom left, #A1C398 0%, transparent 40%);
+  opacity: 0.15;
+  filter: blur(60px);
 }
 
-.floating-cta {
-  padding-bottom: env(safe-area-inset-bottom);
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.ios-bottom-padding {
-  padding-bottom: env(safe-area-inset-bottom, 24px);
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* ========== Loading Animation ========== */
-.loading-dots:after {
-  content: '.';
-  animation: dots 1.5s steps(5, end) infinite;
-}
-
-@keyframes dots {
-  0%, 20% { content: '.'; }
-  40% { content: '..'; }
-  60% { content: '...'; }
-  80%, 100% { content: ''; }
-}
-
-/* ========== Material Icons ========== */
+/* Material Icons Settings */
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+
+.fill-1 {
+  font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+/* New Home Design Utilities */
+.outer-soil-blob {
+  border-radius: 60% 40% 70% 30% / 40% 60% 35% 65%;
+}
+
+.inner-profile-circle {
+  border-radius: 40% 60% 30% 50% / 50% 40% 35% 65%;
+}
+
+/* Smoother, flatter river stone look with larger bottom-right */
+.pebble-shape {
+  border-radius: 40% 40% 70% 30% / 40% 60% 35% 65%;
+}
+
+.solution-shadow {
+  box-shadow: 0 20px 25px -5px rgba(45, 106, 79, 0.15), 0 8px 10px -6px rgba(45, 106, 79, 0.1);
+}
+
+.floating-label {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
 }

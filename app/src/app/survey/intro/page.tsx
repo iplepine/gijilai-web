@@ -46,7 +46,7 @@ export default function IntroPage() {
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-gray-100 text-sm text-gray-400">
-                    <p>마인드 가드너</p>
+                    <p>Aina Garden</p>
                 </div>
             </div>
         </div>

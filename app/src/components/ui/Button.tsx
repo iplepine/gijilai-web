@@ -3,7 +3,7 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'kakao';
+  variant?: 'primary' | 'secondary' | 'kakao' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   icon?: ReactNode;
   iconRight?: ReactNode;
@@ -42,6 +42,10 @@ export function Button({
     `,
     kakao: `
       bg-[#FEE500] text-[#3c1e1e]
+    `,
+    ghost: `
+      bg-transparent text-[var(--navy)] dark:text-white
+      hover:bg-gray-100 dark:hover:bg-gray-800
     `,
   };
 

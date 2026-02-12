@@ -1,254 +1,465 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/layout/Navbar';
-import { Button } from '@/components/ui/Button';
-import { FeatureCard } from '@/components/ui/FeatureCard';
-import { Icon } from '@/components/ui/Icon';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db';
+import { GardenState } from '@/types/gardening';
+import { TemperamentScorer } from '@/lib/TemperamentScorer';
+import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
+import { CHILD_QUESTIONS } from '@/data/questions';
 
 export default function HomePage() {
-  const [showFloatingCTA, setShowFloatingCTA] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [showSampleModal, setShowSampleModal] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [children, setChildren] = useState<ChildProfile[]>([]);
+  const [reports, setReports] = useState<ReportData[]>([]);
+  const [latestSurvey, setLatestSurvey] = useState<SurveyData | null>(null);
+  const [parentSurvey, setParentSurvey] = useState<SurveyData | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [showSurveyIntro, setShowSurveyIntro] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Gardening State
+  // Gardening State
+  const [garden, setGarden] = useState<GardenState>({
+    level: 1,
+    exp: 0,
+    maxExp: 100,
+    streak: 0,
+    theme: '' as any, // Placeholder until real data
+    plantType: '' as any, // Placeholder until real data
+    stage: '' as any // Placeholder until real data
+  });
+  // Daily Action Checklist State
+  const [dailyActions, setDailyActions] = useState({
+    eyeContact: false,
+    praise: false,
+    skinship: false
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  // Derived Temperament
+  const temperamentInfo = (() => {
+    if (!latestSurvey || !latestSurvey.answers) return null;
+    const answers = latestSurvey.answers as Record<number, number>;
+    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, answers);
+    return TemperamentClassifier.analyze(scores);
+  })();
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      // 스크롤 다운 시 숨김, 업 시 표시
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setShowFloatingCTA(false);
-      } else {
-        setShowFloatingCTA(true);
+    async function fetchData() {
+      if (!user) {
+        setLoading(false);
+        return;
       }
-      setLastScrollY(currentScrollY);
-    };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+      try {
+        const data = await db.getDashboardData(user.id);
+        setProfile(data.profile);
+        setChildren(data.children);
+        setReports(data.reports);
+        setLatestSurvey(data.latestSurvey);
+        setParentSurvey(data.parentSurvey);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [user]);
+
+  useEffect(() => {
+    if (!loading && user && children.length === 0) {
+      router.replace('/settings/child/new');
+    }
+  }, [loading, user, children, router]);
+
+  const toggleAction = (key: keyof typeof dailyActions) => {
+    setDailyActions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleProfileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !mainChild) return;
+
+    try {
+      setUploading(true);
+      const imageUrl = await db.uploadChildAvatar(file);
+      await db.updateChildProfile(mainChild.id, { image_url: imageUrl });
+
+      // Update local state immediately
+      setChildren(prev => prev.map(child =>
+        child.id === mainChild.id ? { ...child, image_url: imageUrl } : child
+      ));
+    } catch (error) {
+      console.error('Failed to update profile image:', error);
+      alert('이미지 업로드에 실패했습니다.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-light">
+        <div className="text-primary text-xl font-bold animate-pulse">Aina Garden...</div>
+      </div>
+    );
+  }
+
+  // Not logged in state
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background-light p-6 text-center">
+        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+          <span className="material-icons-round text-primary text-4xl">local_florist</span>
+        </div>
+        <h1 className="text-2xl font-bold mb-3 text-slate-800 font-display">아이나 가든</h1>
+        <p className="text-slate-500 mb-8 leading-relaxed">
+          아이의 타고난 기질(씨앗)을 이해하고<br />
+          부모의 사랑(토양)으로 꽃피우는 정원
+        </p>
+        <Link href="/login" className="w-full max-w-xs">
+          <button className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+            시작하기
+          </button>
+        </Link>
+      </div>
+    );
+  }
+
+  // No children state - Redirecting
+  if (!loading && user && children.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-light">
+        <div className="text-primary text-lg font-medium animate-pulse">아이 정보를 등록하러 이동합니다...</div>
+      </div>
+    );
+  }
+
+  const mainChild = children[0];
+  const childName = mainChild?.name || "우리 아이";
+
+  // Calculate age string
+  const ageString = mainChild?.birth_date ? (() => {
+    const birth = new Date(mainChild.birth_date);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - birth.getTime());
+    // const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
+    return `${mainChild.birth_date.replaceAll('-', '.')} (${months}개월)`;
+  })() : "생일 정보 없음";
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden pb-32">
-      <Navbar title="기질×사주 분석" showDarkModeToggle />
+    <div className="min-h-screen bg-background-light text-slate-800 font-sans pb-32">
+      <main className="w-full max-w-md mx-auto flex flex-col">
+        {/* Header */}
+        <header className="w-full px-6 pt-10 pb-4 flex justify-between items-center bg-transparent">
+          <h1 className="text-xl font-bold tracking-tight text-primary font-display">아이나 가든</h1>
+          <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-primary/5 active:scale-95 transition-transform">
+            <span className="material-icons-round text-primary text-xl">notifications</span>
+          </button>
+        </header>
 
-      {/* Hero Section */}
-      <header className="px-5 pt-8 pb-6 flex flex-col items-center text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--deep-green)] dark:text-[var(--primary)] text-[11px] font-bold mb-4">
-          <Icon name="verified" size="sm" className="font-bold" />
-          SCIENTIFIC & TRADITIONAL
-        </div>
+        {/* Double Circle Profile Section */}
+        <section className="w-full px-4 mb-10 mt-4">
+          <div className="relative w-full flex flex-col items-center">
+            <div className="relative w-[340px] h-[340px] flex items-center justify-center">
+              {/* Outer Soil Blob */}
+              <div className="outer-soil-blob absolute inset-0 bg-soil-beige/50 border border-earth-brown/10"></div>
 
-        {/* Title */}
-        <h1 className="text-[var(--navy)] dark:text-white text-[28px] font-black leading-tight tracking-tight mb-4">
-          아이 기질 × 사주 통합 분석
-          <br />
-          <span className="text-[var(--primary)]">우리 가족을 위한 맞춤 양육 가이드</span>
-        </h1>
+              {/* Inner Profile Circle */}
+              <div className="inner-profile-circle w-56 h-56 bg-white shadow-xl shadow-primary/5 border border-primary/5 flex flex-col items-center justify-center relative z-10 overflow-hidden p-5 transition-colors group">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+                <div
+                  className="w-20 h-20 rounded-full border-2 border-soft-leaf shadow-inner overflow-hidden mb-3 bg-gray-100 flex items-center justify-center relative cursor-pointer"
+                  onClick={handleProfileClick}
+                >
+                  {uploading ? (
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : null}
+                  {mainChild?.image_url ? (
+                    <img src={mainChild.image_url} alt={childName} className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
+                  ) : (
+                    <span className="material-icons-round text-gray-300 text-4xl group-hover:text-gray-400 transition-colors">face</span>
+                  )}
+                  {/* Edit Overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
+                    <span className="material-icons-round text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm">edit</span>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <h2 className="text-lg font-bold text-slate-800 leading-tight flex items-center justify-center gap-1">
+                    {childName}
+                    {!mainChild && <Link href="/settings/child/new"><span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-1">+ 등록</span></Link>}
+                  </h2>
+                  <div className="flex flex-col items-center mt-1">
+                    <div className="flex items-center gap-1 text-primary">
+                      <span className="material-symbols-outlined text-[16px] font-bold">
+                        {temperamentInfo ? 'visibility' : 'help_outline'}
+                      </span>
+                      <span className="text-[13px] font-bold relative z-20">
+                        {temperamentInfo ? temperamentInfo.label : <span className="text-gray-400 font-medium">어떤 씨앗일까요?</span>}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium tracking-tighter mt-0.5">{ageString}</p>
+                  </div>
+                </div>
+              </div>
 
-        {/* Subtitle */}
-        <p className="text-gray-600 dark:text-gray-400 text-base font-medium leading-relaxed mb-8">
-          10분 설문으로 전문 상담센터 수준의
-          <br />
-          리포트를 받아보세요.
-        </p>
-
-        {/* Hero Image */}
-        <div className="w-full relative rounded-2xl overflow-hidden aspect-[4/3] mb-8 ios-shadow">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url("https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=800&auto=format&fit=crop&q=80")`,
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 gap-4 w-full mb-8">
-          <FeatureCard
-            icon="psychology"
-            title="과학적 기질 진단"
-            description="CBQ 기반 정교한 심리 분석"
-          />
-          <FeatureCard
-            icon="auto_awesome"
-            title="전통 명리 솔루션"
-            description="타고난 기운과 성향의 조화"
-          />
-          <FeatureCard
-            icon="auto_graph"
-            title="맞춤 훈육 가이드"
-            description="상담센터 수준의 상세 솔루션"
-          />
-        </div>
-
-        {/* CTA Buttons */}
-        <div className="w-full space-y-3">
-          <Link href="/survey/intro" className="block">
-            <Button variant="primary" size="lg" fullWidth badge="$1">
-              지금 접수하고 리포트 받기
-            </Button>
-          </Link>
-          <Button variant="secondary" size="md" fullWidth onClick={() => setShowSampleModal(true)}>
-            샘플 리포트 미리보기
-          </Button>
-
-          {/* Social Proof */}
-          <div className="pt-2">
-            <p className="text-[13px] text-gray-600 dark:text-gray-400 font-medium flex items-center justify-center gap-1.5">
-              <Icon name="group" size="sm" className="text-[var(--primary)]" />
-              이미 12,430명의 부모님이 리포트를 확인했습니다
-            </p>
-            <p className="text-[11px] text-gray-400 mt-2 uppercase tracking-tight">
-              CBQ, Goodness of Fit 이론 기반
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {/* Stats Section */}
-      <section className="bg-gray-50 dark:bg-gray-900/40 py-10 px-5">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3">
-            <p className="text-2xl font-black text-[var(--navy)] dark:text-white">12K+</p>
-            <p className="text-[10px] text-gray-500 uppercase font-bold">누적 분석</p>
-          </div>
-          <div className="text-center p-3 border-x border-gray-200 dark:border-gray-800">
-            <p className="text-2xl font-black text-[var(--navy)] dark:text-white">98%</p>
-            <p className="text-[10px] text-gray-500 uppercase font-bold">만족도</p>
-          </div>
-          <div className="text-center p-3">
-            <p className="text-2xl font-black text-[var(--navy)] dark:text-white">4.9</p>
-            <p className="text-[10px] text-gray-500 uppercase font-bold">평균 평점</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section className="py-12 px-5">
-        <h2 className="text-xl font-black mb-6 text-center">부모님들의 실제 후기</h2>
-        <div className="flex flex-col gap-4">
-          <ReviewCard
-            content="아이의 고집이 왜 센지 몰랐는데, 사주와 기질을 동시에 분석해보니 비로소 이해가 갔어요. 알려주신 훈육법대로 하니 아이와의 마찰이 확 줄었습니다."
-            author="김지현 님 (5세 여아)"
-          />
-          <ReviewCard
-            content="남편과 아이의 궁합이 왜 안 맞는지 늘 궁금했는데, 에너지 레벨 차이라는 걸 알고 나니 중재가 수월해졌어요."
-            author="박서연 님 (4세 남아)"
-          />
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 px-5 text-center bg-gray-50 dark:bg-transparent">
-        <div className="flex justify-center gap-8 mb-6 opacity-40">
-          <Icon name="verified_user" size="lg" />
-          <Icon name="lock" size="lg" />
-          <Icon name="credit_card" size="lg" />
-        </div>
-        <p className="text-[11px] text-gray-400 leading-relaxed">
-          © 2024 기질과 사주 육아 코칭. All rights reserved.
-          <br />
-          본 분석 결과는 육아 참고용이며 의학적 진단을 대체할 수 없습니다.
-        </p>
-      </footer>
-
-      {/* 샘플 리포트 모달 */}
-      {showSampleModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto ios-shadow">
-            {/* 헤더 */}
-            <div className="sticky top-0 bg-white dark:bg-gray-800 p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="text-lg font-bold">샘플 리포트</h3>
-              <button onClick={() => setShowSampleModal(false)} className="p-2">
-                <Icon name="close" />
-              </button>
+              <div className="absolute bottom-6 z-20 flex flex-col items-center gap-1">
+                <div className="bg-[#fff9f0]/90 backdrop-blur-sm px-5 py-2 pebble-shape border border-earth-brown/10 flex items-center gap-1.5 shadow-sm floating-label">
+                  <span className="material-symbols-outlined text-earth-brown text-base">layers</span>
+                  <span className="text-[11px] font-bold text-earth-brown">
+                    양육자 기질: {parentSurvey ? (
+                      <span>따뜻한 토양</span> // 실제 데이터 연동 시 parentSurvey.result 등으로 변경 필요
+                    ) : (
+                      temperamentInfo ? (
+                        <Link href="/survey?type=PARENT" className="underline hover:text-earth-brown/80 cursor-pointer">어떤 흙일까요?</Link>
+                      ) : (
+                        <span className="text-earth-brown/50" onClick={() => alert("아이의 기질을 먼저 알아보세요!")}>어떤 흙일까요?</span>
+                      )
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* 샘플 내용 */}
-            <div className="p-5 space-y-4">
-              {/* 성향 카드 */}
-              <div className="bg-gradient-to-br from-[var(--primary)]/10 to-[var(--primary)]/5 rounded-xl p-4 text-center">
-                <p className="text-xs text-[var(--primary)] font-bold mb-1">MAIN ARCHETYPE</p>
-                <p className="text-xl font-black text-[var(--navy)] dark:text-white">열정 탐험가형</p>
-                <p className="text-xs text-gray-500 mt-2">화(火)의 에너지 | 높은 활동성</p>
-              </div>
+            {/* Insight Message */}
+            <p className="text-[13px] text-slate-500 text-center px-10 leading-relaxed mt-8 break-keep">
+              {temperamentInfo ? (
+                <>
+                  {childName}의 {temperamentInfo.label} 기질은 부모님의 따뜻한 지지 속에서<br />
+                  <span className="text-primary font-bold">멋진 강점으로 피어납니다.</span>
+                </>
+              ) : (
+                <>
+                  아직 아이의 기질을 잘 모르시나요?<br />
+                  <button
+                    onClick={() => setShowSurveyIntro(true)}
+                    className="mt-4 w-full bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse-subtle"
+                  >
+                    <span className="material-icons-round text-lg">psychology</span>
+                    <span>기질 테스트 시작하기</span>
+                  </button>
+                </>
+              )}
+            </p>
+          </div>
+        </section>
 
-              {/* 궁합 */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon name="favorite" size="sm" className="text-[var(--primary)]" />
-                  <span className="text-sm font-bold">부모-자녀 궁합</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                    <div className="h-full bg-[var(--primary)] w-[85%]" />
-                  </div>
-                  <span className="text-sm font-bold text-[var(--primary)]">85%</span>
-                </div>
-              </div>
 
-              {/* 솔루션 미리보기 */}
-              <div className="space-y-3">
-                <p className="text-sm font-bold">맞춤 솔루션 예시</p>
-                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                  <p>✓ 에너지 발산 놀이 제안</p>
-                  <p>✓ 감정 조절 대화 스크립트</p>
-                  <p>✓ 환경 구성 가이드</p>
-                  <p className="text-gray-400">...외 12개 솔루션</p>
-                </div>
-              </div>
 
-              {/* CTA */}
-              <Link href="/survey/intro" onClick={() => setShowSampleModal(false)}>
-                <Button variant="primary" size="md" fullWidth className="mt-4">
-                  내 아이 분석받기
-                </Button>
-              </Link>
+        {/* Premium Promo Card (Replaces Daily Mission) */}
+
+        <section className="w-full px-4 mb-8">
+          <div className="bg-gradient-to-br from-primary to-[#1A4D4D] text-white rounded-[2rem] p-6 relative overflow-hidden shadow-lg shadow-primary/20">
+            {/* Background Decorative */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-8 -mb-8 blur-lg"></div>
+
+            <div className="relative z-10">
+              <div className="inline-block bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold mb-3 backdrop-blur-sm">
+                PREMIUM
+              </div>
+              <h3 className="text-xl font-bold leading-tight font-display mb-2">
+                우리 아이 맞춤<br />양육 솔루션 받기
+              </h3>
+              <p className="text-xs opacity-90 mb-6 leading-relaxed">
+                기질 분석을 통해 매일 제공되는<br />
+                전문 코칭과 미션을 받아보세요.
+              </p>
+              <button
+                onClick={() => alert("프리미엄 구독 페이지로 이동합니다.")}
+                className="w-full bg-white text-primary font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                <span>지금 시작하기</span>
+                <span className="material-icons-round text-sm">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+
+        {/* Guide Section (Static for now, could be dynamic) */}
+        {temperamentInfo && (
+          <section className="w-full px-4 mb-8">
+            <div className="flex items-center gap-2 mb-4 px-2">
+              <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-sm">lightbulb</span>
+              </div>
+              <h3 className="font-bold text-lg text-slate-800 font-display">기질 맞춤 가이드</h3>
+            </div>
+            <div className="bg-warm-beige/30 border-l-4 border-primary rounded-[1.25rem] p-5 relative w-full">
+              <p className="text-[13px] font-bold text-slate-800 mb-2 italic break-keep">
+                "{childName}는 '{temperamentInfo.label}' 기질을 가지고 있어 새로운 변화에 익숙해질 시간이 필요해요."
+              </p>
+              <p className="text-[11px] text-slate-500 leading-relaxed break-keep">
+                처음에는 엄마 아빠가 먼저 시범을 보여주세요. 아이가 흥미를 느낄 때까지 충분히 기다려 주는 것이 가장 효과적입니다.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Daily Actions Checklist (Replacement for Stats) */}
+        <section className="w-full px-4 mb-24">
+          <div className="flex items-center gap-2 mb-4 px-2">
+            <div className="w-6 h-6 bg-accent/10 rounded-full flex items-center justify-center">
+              <span className="material-symbols-outlined text-accent text-sm">check_circle</span>
+            </div>
+            <h3 className="font-bold text-lg text-slate-800 font-display">오늘의 실천</h3>
+          </div>
+
+          <div className="space-y-3">
+            {/* Eye Contact */}
+            <div
+              className={`flex items-center justify-between p-4 rounded-[1.25rem] border transition-all cursor-pointer ${dailyActions.eyeContact ? 'bg-soft-leaf/30 border-accent/20' : 'bg-white border-slate-50 shadow-sm'}`}
+              onClick={() => toggleAction('eyeContact')}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`material-icons-round text-xl ${dailyActions.eyeContact ? 'text-accent' : 'text-slate-300'}`}>visibility</span>
+                <span className={`font-bold text-sm ${dailyActions.eyeContact ? 'text-slate-800' : 'text-slate-600'}`}>아이 눈 바라보기</span>
+              </div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${dailyActions.eyeContact ? 'bg-accent border-accent' : 'border-slate-200'}`}>
+                {dailyActions.eyeContact && <span className="material-icons-round text-white text-sm">check</span>}
+              </div>
+            </div>
+
+            {/* Praise */}
+            <div
+              className={`flex items-center justify-between p-4 rounded-[1.25rem] border transition-all cursor-pointer ${dailyActions.praise ? 'bg-soft-leaf/30 border-accent/20' : 'bg-white border-slate-50 shadow-sm'}`}
+              onClick={() => toggleAction('praise')}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`material-icons-round text-xl ${dailyActions.praise ? 'text-accent' : 'text-slate-300'}`}>thumb_up</span>
+                <span className={`font-bold text-sm ${dailyActions.praise ? 'text-slate-800' : 'text-slate-600'}`}>구체적으로 칭찬하기</span>
+              </div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${dailyActions.praise ? 'bg-accent border-accent' : 'border-slate-200'}`}>
+                {dailyActions.praise && <span className="material-icons-round text-white text-sm">check</span>}
+              </div>
+            </div>
+
+            {/* Skinship */}
+            <div
+              className={`flex items-center justify-between p-4 rounded-[1.25rem] border transition-all cursor-pointer ${dailyActions.skinship ? 'bg-soft-leaf/30 border-accent/20' : 'bg-white border-slate-50 shadow-sm'}`}
+              onClick={() => toggleAction('skinship')}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`material-icons-round text-xl ${dailyActions.skinship ? 'text-accent' : 'text-slate-300'}`}>favorite</span>
+                <span className={`font-bold text-sm ${dailyActions.skinship ? 'text-slate-800' : 'text-slate-600'}`}>따뜻하게 안아주기</span>
+              </div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${dailyActions.skinship ? 'bg-accent border-accent' : 'border-slate-200'}`}>
+                {dailyActions.skinship && <span className="material-icons-round text-white text-sm">check</span>}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Debug: Reset Data Button */}
+      <div className="flex justify-center mt-8 mb-20 opacity-30 hover:opacity-100 transition-opacity">
+        <button
+          onClick={async () => {
+            if (!user || !window.confirm("정말 모든 데이터를 초기화하시겠습니까? (복구 불가)")) return;
+            try {
+              await db.resetUserData(user.id);
+              alert("모든 데이터가 초기화되었습니다.");
+              window.location.reload();
+            } catch (e) {
+              console.error(e);
+              alert("초기화 실패");
+            }
+          }}
+          className="text-xs text-red-500 underline"
+        >
+          [Debug] 모든 데이터 초기화
+        </button>
+      </div>
+
+      {/* Survey Intro Modal */}
+      {showSurveyIntro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSurveyIntro(false)}></div>
+          <div className="relative bg-[#FAFCFA] dark:bg-[#1A2E1A] w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mb-5 animate-bounce-subtle">
+                <span className="material-icons-round text-4xl text-[#2E7D32]">psychology</span>
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3 font-display">
+                어떤 씨앗일까요?
+              </h3>
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-8 break-keep">
+                아이의 타고난 기질을 알면<br />
+                더 지혜롭게 사랑할 수 있습니다.<br />
+                <br />
+                약 3분 정도 소요되는 간단한 테스트로<br />
+                우리 아이만의 특별한 씨앗을 발견해보세요.
+              </p>
+
+              <div className="w-full space-y-3">
+                <button
+                  onClick={() => router.push('/survey')}
+                  className="w-full bg-[#2E7D32] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#2E7D32]/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <span>테스트 시작하기</span>
+                  <span className="material-icons-round text-sm">arrow_forward</span>
+                </button>
+                <button
+                  onClick={() => setShowSurveyIntro(false)}
+                  className="w-full py-3 text-slate-400 text-sm font-medium hover:text-slate-600 transition-colors"
+                >
+                  나중에 하기
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating CTA */}
-      <div className={`fixed bottom-0 left-0 right-0 z-[100] p-4 bg-gradient-to-t from-[var(--background-light)] via-[var(--background-light)]/95 to-transparent dark:from-[var(--background-dark)] dark:via-[var(--background-dark)]/95 floating-cta transition-transform duration-300 ${showFloatingCTA ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="max-w-md mx-auto">
-          <Link href="/survey/intro">
-            <Button
-              variant="primary"
-              size="md"
-              fullWidth
-              badge="$1"
-              iconRight={<Icon name="arrow_forward" size="sm" />}
-            >
-              분석 시작하기
-            </Button>
+      {/* Inline Bottom Navigation (As per new design request) */}
+      <nav className="fixed bottom-6 left-0 right-0 z-50 px-6 pointer-events-none">
+        <div className="bg-white/90 backdrop-blur-xl rounded-full shadow-2xl border border-primary/5 px-4 py-3 flex justify-around items-center max-w-sm mx-auto pointer-events-auto">
+          <Link href="/" className="flex flex-col items-center justify-center text-primary min-w-[64px]">
+            <span className="material-icons-round text-2xl">home</span>
+            <span className="text-[9px] font-bold mt-0.5">홈</span>
+          </Link>
+          <Link href="/garden" className="flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-colors min-w-[64px]">
+            <span className="material-icons-round text-2xl">local_florist</span>
+            <span className="text-[9px] font-bold mt-0.5">나의 정원</span>
+          </Link>
+          <Link href="/coaching" className="flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-colors min-w-[64px]">
+            <span className="material-icons-round text-2xl">auto_stories</span>
+            <span className="text-[9px] font-bold mt-0.5">코칭</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-colors min-w-[64px]">
+            <span className="material-icons-round text-2xl">person</span>
+            <span className="text-[9px] font-bold mt-0.5">프로필</span>
           </Link>
         </div>
-      </div>
-    </div>
-  );
-}
+      </nav>
 
-function ReviewCard({ content, author }: { content: string; author: string }) {
-  return (
-    <div className="p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 ios-shadow">
-      <div className="flex gap-0.5 text-[var(--primary)] mb-3">
-        {[...Array(5)].map((_, i) => (
-          <Icon key={i} name="star" size="sm" />
-        ))}
-      </div>
-      <p className="text-[14px] leading-relaxed text-gray-700 dark:text-gray-300 mb-4 font-medium">
-        "{content}"
-      </p>
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center">
-          <Icon name="person" size="sm" className="text-[var(--primary)]" />
-        </div>
-        <span className="text-xs font-bold">{author}</span>
-      </div>
+      {/* Decorative Background Elements */}
+      <div className="fixed -bottom-20 -left-20 w-80 h-80 bg-soft-leaf/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+      <div className="fixed top-1/2 -right-20 w-64 h-64 bg-warm-beige/20 rounded-full blur-[80px] pointer-events-none z-0"></div>
     </div>
   );
 }

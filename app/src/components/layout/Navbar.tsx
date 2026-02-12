@@ -8,20 +8,21 @@ import { ReactNode } from 'react';
 interface NavbarProps {
   title: string;
   showBack?: boolean;
+  onBackClick?: () => void;
   rightIcon?: string;
   onRightClick?: () => void;
   rightElement?: ReactNode;
   showDarkModeToggle?: boolean;
 }
 
-export function Navbar({ title, showBack = false, rightIcon, onRightClick, rightElement, showDarkModeToggle = false }: NavbarProps) {
+export function Navbar({ title, showBack = false, onBackClick, rightIcon, onRightClick, rightElement, showDarkModeToggle = false }: NavbarProps) {
   const router = useRouter();
 
   return (
     <nav className="sticky top-0 z-50 flex items-center bg-[var(--background-light)]/90 dark:bg-[var(--background-dark)]/90 backdrop-blur-xl p-4 justify-between border-b border-gray-100 dark:border-gray-800">
       <div className="size-10 flex items-center justify-center">
         {showBack ? (
-          <button onClick={() => router.back()} className="text-[var(--navy)] dark:text-white">
+          <button onClick={() => onBackClick ? onBackClick() : router.back()} className="text-[var(--navy)] dark:text-white">
             <Icon name="arrow_back_ios" />
           </button>
         ) : (

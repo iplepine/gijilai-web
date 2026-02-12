@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,16 +28,19 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;900&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
           rel="stylesheet"
         />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
         {/* Material Symbols */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased min-h-screen" suppressHydrationWarning>
+      <body className="antialiased min-h-screen relative font-sans text-slate-800" suppressHydrationWarning>
+        {/* Background handled by globals.css body style */}
+
         {/* 다크모드 초기화 스크립트 */}
         <script
           dangerouslySetInnerHTML={{
@@ -50,9 +54,11 @@ export default function RootLayout({
             `,
           }}
         />
-        <div className="max-w-md mx-auto min-h-screen bg-[var(--background-light)] dark:bg-[var(--background-dark)]">
-          {children}
-        </div>
+        <AuthProvider>
+          <div className="max-w-md mx-auto min-h-screen bg-background-light dark:bg-background-dark">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

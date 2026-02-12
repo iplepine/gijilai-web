@@ -1,6 +1,6 @@
-# 기질×사주 통합 분석 엔진 설계서
+# 기질 분석 엔진 설계서
 
-> 과학적 기질 분석(CBQ/ATQ)과 전통 사주 명리학의 융합 로직
+> 과학적 기질 분석(CBQ/ATQ) 기반 분석 로직
 
 ---
 
@@ -319,166 +319,9 @@ const classifyFitType = (
 
 ---
 
-## 6. 사주 명리학 분석 엔진
 
-### 6.1 만세력 변환
 
-- 입력: 생년월일시 + 출생지역 (서머타임 보정)
-- 출력: 사주팔자 (년주, 월주, 일주, 시주 = 8글자)
-- 연동: 만세력 API
 
-### 6.2 오행(五行) 분석
-
-| 오행 | 상징 | 과다 시 |
-|------|------|---------|
-| **목(木)** | 성장, 창의성, 호기심 | 분노, 고집 |
-| **화(火)** | 열정, 표현력, 활달함 | 감정 기복, 충동성 |
-| **토(土)** | 중재, 성실, 포용력 | 게으름, 생각 과부하 |
-| **금(金)** | 절제, 원칙, 결단력 | 냉정함, 위축 |
-| **수(水)** | 유연성, 지혜, 침착함 | 두려움, 우울감 |
-
-### 6.3 십신(十神) 분석
-
-| 십신 | 의미 | 기질 연관성 |
-|------|------|-------------|
-| **비겁** (비견/겁재) | 자아의 힘, 독립성 | 또래 경쟁심 |
-| **식상** (식신/상관) | 표현 에너지, 창의성 | Surgency ↑ |
-| **재성** (편재/정재) | 현실적 목표 지향 | Effortful Control (목표 지속) |
-| **관성** (편관/정관) | 규율, 명예 | Inhibitory Control ↑ |
-| **인성** (편인/정인) | 수용, 학습, 사색 | Perceptual Sensitivity ↑ |
-
-### 6.4 데이터 구조
-
-```typescript
-interface SajuAnalysis {
-  // 사주팔자
-  fourPillars: {
-    year: { stem: string; branch: string };
-    month: { stem: string; branch: string };
-    day: { stem: string; branch: string };
-    hour: { stem: string; branch: string };
-  };
-
-  // 오행 분포 (가중치 적용)
-  elements: {
-    wood: number;   // 목
-    fire: number;   // 화
-    earth: number;  // 토
-    metal: number;  // 금
-    water: number;  // 수
-  };
-
-  // 십신 분포
-  tenGods: {
-    bigyup: number;    // 비겁
-    siksang: number;   // 식상
-    jaesung: number;   // 재성
-    gwansung: number;  // 관성
-    insung: number;    // 인성
-  };
-
-  // 용신 (보완이 필요한 오행)
-  yongsin: 'wood' | 'fire' | 'earth' | 'metal' | 'water';
-
-  // 일간 (본질)
-  dayStem: string;
-}
-```
-
----
-
-## 7. 기질 × 사주 통합 분석 로직
-
-### 7.1 통합 엔진 (Hybrid Logic)
-
-두 데이터의 일관성/상충을 분석하여 입체적 해석 제공
-
-#### 3단계 프로세스
-
-1. **일관성 검증** (Consistency Check)
-   - 기질 + 사주 모두 같은 방향 → 핵심 성향으로 확정
-   - 솔루션 비중 90%
-
-2. **잠재력 발견** (Latent Talent Discovery)
-   - 현재 기질은 낮으나 사주상 잠재력 → 발달 가능성 제시
-
-3. **위험 구간 경고** (Risk Mitigation)
-   - 양쪽 모두 부정적 신호 → 강력한 주의 가이드
-
-### 7.2 매핑 테이블
-
-| 기질 차원 | 사주 오행/십신 | 통합 성향 키워드 |
-|-----------|----------------|------------------|
-| 높은 Surgency | 화(火)↑, 식상 강함 | **[열정 탐험가]**: 발산 필수 |
-| 낮은 Effortful Control | 토(土)↓, 금(金)↓ | **[자유로운 영혼]**: 구조화된 환경 필요 |
-| 높은 Negative Affect | 수(水) 과다, 편관 강함 | **[세심한 사색가]**: 강압적 훈육 금지 |
-| 높은 Perceptual Sensitivity | 인성↑, 목(木) 적절 | **[예술적 영재형]**: 심미적 환경 중요 |
-
-### 7.3 통합 분석 구현
-
-```typescript
-interface IntegratedAnalysis {
-  // 통합 성향 타입
-  integratedType: string;  // "열정 탐험가", "세심한 사색가" 등
-
-  // 일관성 수준
-  consistency: 'high' | 'medium' | 'low';
-
-  // 핵심 메시지
-  coreInsight: string;
-
-  // 잠재력
-  latentTalents: string[];
-
-  // 위험 구간
-  riskAreas: string[];
-
-  // 솔루션 방향성
-  solutionDirection: 'expression' | 'structure' | 'support' | 'balance';
-}
-
-const integrateAnalysis = (
-  temperament: TemperamentScores,
-  saju: SajuAnalysis
-): IntegratedAnalysis => {
-  const analysis: IntegratedAnalysis = {
-    integratedType: '',
-    consistency: 'medium',
-    coreInsight: '',
-    latentTalents: [],
-    riskAreas: [],
-    solutionDirection: 'balance'
-  };
-
-  // 외향성 + 화(火) + 식상 조합
-  if (temperament.surgency >= 60 && saju.elements.fire > 25 && saju.tenGods.siksang > 20) {
-    analysis.integratedType = '열정 탐험가';
-    analysis.consistency = 'high';
-    analysis.coreInsight = '에너지를 발산해야 직성이 풀리는 타입. 억제보다 발산이 성장의 핵심입니다.';
-    analysis.solutionDirection = 'expression';
-  }
-
-  // 높은 부정적 정서 + 수(水) 과다 + 편관
-  if (temperament.negativeAffect >= 60 && saju.elements.water > 30 && saju.tenGods.gwansung > 25) {
-    analysis.integratedType = '세심한 사색가';
-    analysis.consistency = 'high';
-    analysis.coreInsight = '정서적 압박에 매우 민감합니다. 강압적 훈육 시 심리적 타격이 극심합니다.';
-    analysis.solutionDirection = 'support';
-    analysis.riskAreas.push('자존감 급격히 낮아질 우려 - 칭찬 위주 양육 필수');
-  }
-
-  // 잠재력 발견: 현재 의도적 통제 낮으나 사주상 정인+금 있음
-  if (temperament.effortfulControl < 45 && saju.tenGods.insung > 20 && saju.elements.metal > 20) {
-    analysis.latentTalents.push(
-      '현재는 산만해 보일 수 있으나 본래 정적인 학습 잠재력이 큽니다. 기다려주는 양육이 효과적입니다.'
-    );
-  }
-
-  return analysis;
-};
-```
-
----
 
 ## 8. 솔루션 엔진
 
@@ -499,7 +342,7 @@ interface Solution {
   title: string;
   description: string;
   targetTemperament: string[];  // 해당 기질 조건
-  targetSaju: string[];         // 해당 사주 조건
+
   ageRange: [number, number];   // 개월 수 범위
   priority: number;             // 우선순위 (1-10)
 }
@@ -511,7 +354,7 @@ const sampleSolutions: Solution[] = [
     title: '에너지 발산 놀이',
     description: '15분간의 장애물 달리기 후 5분간의 스트레칭으로 에너지를 갈무리해주세요.',
     targetTemperament: ['surgency_high'],
-    targetSaju: ['fire_high', 'siksang_high'],
+
     ageRange: [36, 84],
     priority: 9
   },
@@ -520,7 +363,7 @@ const sampleSolutions: Solution[] = [
     title: '감정 수용 대화법',
     description: '"뚝 그쳐!" 대신 "마음이 이만큼이나 아팠구나, 엄마가 네 옆에 있어"라고 5초간 말없이 안아주세요.',
     targetTemperament: ['negativeAffect_high'],
-    targetSaju: ['water_high'],
+
     ageRange: [24, 84],
     priority: 10
   },
@@ -529,7 +372,7 @@ const sampleSolutions: Solution[] = [
     title: '집중력 향상 환경',
     description: '시각적 자극을 줄이기 위해 장난감장을 불투명한 문으로 가리고, 작업 영역에는 한 번에 하나의 물건만 올려두세요.',
     targetTemperament: ['effortfulControl_low'],
-    targetSaju: ['earth_low', 'metal_low'],
+
     ageRange: [36, 144],
     priority: 8
   }
@@ -542,8 +385,7 @@ const sampleSolutions: Solution[] = [
 const prioritizeSolutions = (
   solutions: Solution[],
   temperament: TemperamentScores,
-  saju: SajuAnalysis,
-  childAgeMonths: number,
+
   parentConcerns: string[]  // 부모가 선택한 양육 고민
 ): Solution[] => {
   return solutions
@@ -588,6 +430,6 @@ const prioritizeSolutions = (
 |--------|------|
 | Frontend | React/Next.js + PWA + Chart.js |
 | Backend | Python FastAPI 또는 Node.js |
-| 사주 분석 | 만세력 API 연동 |
+
 | 결제 | Stripe / 카카오페이 |
 | 저장소 | PostgreSQL + Redis (캐시) |

@@ -1,6 +1,6 @@
 # 디자인 가이드
 
-> 디자인 예시: `docs/design_example/` 폴더 참조
+> 디자인 예시: `./design_example/` 폴더 참조
 
 ---
 

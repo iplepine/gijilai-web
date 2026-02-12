@@ -12,8 +12,10 @@ interface AppState {
   surveyProgress: number;
   cbqResponses: Record<string, number>;
   atqResponses: Record<string, number>;
+  parentingResponses: Record<string, number>; // Added parenting responses
   setCbqResponse: (questionId: string, score: number) => void;
   setAtqResponse: (questionId: string, score: number) => void;
+  setParentingResponse: (questionId: string, score: number) => void; // Added action
   setSurveyProgress: (progress: number) => void;
 
   // Analysis Result
@@ -54,6 +56,7 @@ export const useAppStore = create<AppState>()(
       surveyProgress: 0,
       cbqResponses: {},
       atqResponses: {},
+      parentingResponses: {}, // Initial state
       setCbqResponse: (questionId, score) =>
         set((state) => ({
           cbqResponses: { ...state.cbqResponses, [questionId]: score },
@@ -63,6 +66,12 @@ export const useAppStore = create<AppState>()(
           atqResponses: { ...state.atqResponses, [questionId]: score },
         })),
       setSurveyProgress: (progress) => set({ surveyProgress: progress }),
+
+
+      setParentingResponse: (questionId, score) =>
+        set((state) => ({
+          parentingResponses: { ...state.parentingResponses, [questionId]: score },
+        })),
 
       // Analysis
       analysisResult: null,
@@ -79,6 +88,7 @@ export const useAppStore = create<AppState>()(
           surveyProgress: 0,
           cbqResponses: {},
           atqResponses: {},
+          parentingResponses: {},
           analysisResult: null,
           isPaid: false,
         }),
@@ -89,6 +99,7 @@ export const useAppStore = create<AppState>()(
         intake: state.intake,
         cbqResponses: state.cbqResponses,
         atqResponses: state.atqResponses,
+        parentingResponses: state.parentingResponses,
         surveyProgress: state.surveyProgress,
       }),
     }

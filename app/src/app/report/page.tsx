@@ -193,7 +193,7 @@ export default function ReportPage() {
       {/* Header */}
       <div className="bg-primary text-white p-6 pb-24 rounded-b-[40px] shadow-lg relative" style={{ backgroundColor: '#6C5CE7' }}>
         <h1 className="text-2xl font-bold text-center mb-2">분석 결과</h1>
-        <p className="text-center opacity-90">마인드 가드너가 분석한 우리 가족 리포트</p>
+        <p className="text-center opacity-90">Aina Garden이 분석한 우리 가족 리포트</p>
       </div>
 
       <div className="max-w-md mx-auto px-4 -mt-16 space-y-6">
