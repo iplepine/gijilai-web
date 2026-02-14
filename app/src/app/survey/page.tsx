@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -10,8 +10,11 @@ import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/
 
 type SurveyModule = 'child' | 'parent' | 'parenting';
 
-export default function SurveyPage() {
+function SurveyContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get('type'); // 'CHILD' | 'PARENT' | 'STYLE'
+
   const {
     intake,
     cbqResponses,
@@ -22,11 +25,16 @@ export default function SurveyPage() {
     setParentingResponse
   } = useAppStore();
 
-  const [currentModule, setCurrentModule] = useState<SurveyModule>('child');
+  const [currentModule, setCurrentModule] = useState<SurveyModule>(() => {
+    if (typeParam === 'PARENT') return 'parent';
+    if (typeParam === 'STYLE') return 'parenting';
+    return 'child';
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTransitionModal, setShowTransitionModal] = useState(false);
   const [transitionType, setTransitionType] = useState<'toParent' | 'toParenting' | 'finish' | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   // 현재 모듈에 따른 질문 목록과 응답 상태 가져오기
   const getModuleData = useCallback(() => {
@@ -77,13 +85,19 @@ export default function SurveyPage() {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // 모듈 완료 시 모달 없이 바로 분석 로딩 진입
-      setIsCalculating(true);
-      setTimeout(() => {
-        router.push('/report');
-      }, 3000);
+      // Current module finished
+      if (currentModule === 'child') {
+        setTransitionType('toParent');
+        setShowTransitionModal(true);
+      } else if (currentModule === 'parent') {
+        setTransitionType('toParenting');
+        setShowTransitionModal(true);
+      } else {
+        setTransitionType('finish');
+        setShowTransitionModal(true);
+      }
     }
-  }, [currentIndex, questions.length, router]);
+  }, [currentIndex, questions.length, currentModule]);
 
   const handleSelect = useCallback((idx: number) => {
     // idx is 0-4 (array index), convert to 1-5 score
@@ -148,8 +162,6 @@ export default function SurveyPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [answeredCount]);
-
-  const [isCalculating, setIsCalculating] = useState(false);
 
   if (!currentQuestion && !isCalculating) return <div>Loading...</div>;
 
@@ -354,5 +366,17 @@ export default function SurveyPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SurveyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <SurveyContent />
+    </Suspense>
   );
 }
