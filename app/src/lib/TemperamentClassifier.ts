@@ -43,7 +43,7 @@ export class TemperamentClassifier {
         let soil = {
             label: "비옥한 숲 토양",
             desc: "어떤 씨앗도 편안하게 받아주는 안정적인 바탕",
-            detail: "부모님의 넓은 수용성과 안정적인 정서가 큰 강점이에요. 아이가 실패를 두려워하지 않고 마음껏 뿌리를 뻗을 수 있는 든든하고 따뜻한 영양분을 제공하고 있습니다."
+            detail: "보호자님의 넓은 수용성과 안정적인 정서가 큰 강점이에요. 아이가 실패를 두려워하지 않고 마음껏 뿌리를 뻗을 수 있는 든든하고 따뜻한 영양분을 제공하고 있습니다."
         };
 
         if (parentScores.HA >= 60) {
@@ -60,6 +60,24 @@ export class TemperamentClassifier {
             };
         }
 
-        return { ...plant, seed, soil };
+        // 4. Harmony Dynamics (Relationship Insight)
+        const diffs = [
+            { key: 'NS', label: '에너지의 속도', diff: Math.abs(NS - parentScores.NS), desc: "아이의 질주하려는 자유로움과 보호자님의 신중한 제동이 만나는 지점에서 정원의 다이내믹이 발생합니다." },
+            { key: 'HA', label: '안전의 거리', diff: Math.abs(HA - parentScores.HA), desc: "세상을 향한 아이의 발걸음과 보호자님이 생각하는 안전한 경계 사이의 거리를 조율하는 과정에 있습니다." },
+            { key: 'RD', label: '마음의 온도', diff: Math.abs(RD - parentScores.RD), desc: "감정을 표현하고 보상을 주고받는 서로의 방식이 정원 전체의 온도를 결정하는 중요한 열쇠가 됩니다." },
+            { key: 'P', label: '성취의 호흡', diff: Math.abs(P - parentScores.P), desc: "한 가지에 몰입하는 아이의 호흡과 이를 지켜보며 응원하는 보호자님의 리듬이 하모니를 이루어가는 단계입니다." }
+        ];
+        const majorDiff = diffs.sort((a, b) => b.diff - a.diff)[0];
+
+        return {
+            ...plant,
+            seed,
+            soil,
+            harmony: {
+                title: majorDiff.label,
+                desc: majorDiff.desc,
+                score: majorDiff.diff
+            }
+        };
     }
 }

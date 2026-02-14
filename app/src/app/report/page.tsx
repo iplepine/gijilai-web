@@ -247,95 +247,108 @@ export default function ReportPage() {
           </section>
         )}
 
-        {/* Child Temperament Card (Free Contents) - Main Archetype */}
-        <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-6">
-          <div className="w-full aspect-square relative rounded-[2.5rem] overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-yellow-400/5 to-transparent"></div>
-            <div className="absolute inset-0 flex items-center justify-center text-9xl drop-shadow-2xl">
+        {/* Phase 1: Archetype Discovery (The Sprout) */}
+        <div className="bg-white dark:bg-slate-800 rounded-[3.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-8 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-secondary to-primary"></div>
+
+          <div className="w-48 h-48 relative flex items-center justify-center">
+            <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-20"></div>
+            <div className="absolute inset-4 bg-primary/20 rounded-full animate-pulse opacity-30"></div>
+            <div className="relative text-8xl drop-shadow-2xl z-10">
               {childType.emoji}
             </div>
           </div>
 
-          <div className="space-y-6 px-4 pb-4">
-            {/* Hierarchy 1 & 2: Brief Summary */}
-            <div className="flex justify-center gap-8">
-              <div className="space-y-1">
-                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">토양</span>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">{childType.soil.label}</p>
-              </div>
-              <div className="w-[1px] h-8 bg-slate-100 dark:bg-slate-700 mt-2"></div>
-              <div className="space-y-1">
-                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">씨앗</span>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">{childType.seed.label}</p>
-              </div>
+          <div className="space-y-4 px-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-900 font-black text-[10px] text-slate-500 uppercase tracking-widest">
+              Current Manifestation
             </div>
-
             <div className="space-y-2">
-              <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">발견된 새싹의 종류</span>
-              <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
+              <h2 className="text-4xl font-black text-slate-900 dark:text-white leading-tight">
                 {childType.label}
               </h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep">
+              <p className="text-slate-500 dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4 font-medium">
                 {childType.desc}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Free Report Deep Analysis: Seed & Soil (Ready for Free User) */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Soil Detail */}
-          <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-7 shadow-xl border border-slate-50 dark:border-slate-800 space-y-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+        {/* Phase 2: Relationship Foundation (Soil VS Seed) */}
+        <div className="space-y-4">
+          <h3 className="px-4 text-[13px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+            <Icon name="diversity_3" size="sm" /> 정원의 탄생: 토양과 씨앗
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Soil Card */}
+            <section className="bg-gradient-to-br from-white to-orange-50/30 dark:from-slate-800 dark:to-orange-900/10 rounded-[2.5rem] p-6 shadow-xl border border-orange-100/50 dark:border-orange-900/20 relative group">
+              <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-4">
                 <Icon name="eco" size="sm" />
               </div>
-              <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">보호자가 일군 토양</span>
-                <h4 className="text-lg font-black text-slate-800 dark:text-white">{childType.soil.label}</h4>
-              </div>
-            </div>
-            <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
-              {childType.soil.detail}
-            </p>
-          </section>
+              <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">Protector's Soil</span>
+              <h4 className="text-md font-black text-slate-800 dark:text-white mb-2">{childType.soil.label}</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-slate-800/95 flex items-center rounded-[2.5rem]">
+                {childType.soil.desc}
+              </p>
+            </section>
 
-          {/* Seed Detail */}
-          <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-7 shadow-xl border border-slate-50 dark:border-slate-800 space-y-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+            {/* Seed Card */}
+            <section className="bg-gradient-to-br from-white to-teal-50/30 dark:from-slate-800 dark:to-teal-900/10 rounded-[2.5rem] p-6 shadow-xl border border-teal-100/50 dark:border-teal-900/20 relative group">
+              <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4">
                 <Icon name="star" size="sm" />
               </div>
-              <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">아이의 타고난 씨앗</span>
-                <h4 className="text-lg font-black text-slate-800 dark:text-white">{childType.seed.label}</h4>
-              </div>
-            </div>
-            <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
-              {childType.seed.detail}
-            </p>
-          </section>
+              <span className="text-[9px] font-black text-teal-400 uppercase tracking-widest block mb-1">Child's Seed</span>
+              <h4 className="text-md font-black text-slate-800 dark:text-white mb-2">{childType.seed.label}</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-slate-800/95 flex items-center rounded-[2.5rem]">
+                {childType.seed.desc}
+              </p>
+            </section>
+          </div>
         </div>
 
-        {/* Detailed Analysis Section (Paid or Scrollable) */}
+        {/* Phase 3: Harmony Dynamics (The "Why") */}
+        <section className="bg-slate-900 dark:bg-white rounded-[3rem] p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-16 -mt-16"></div>
+          <div className="relative z-10 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Garden Dynamics</span>
+                <h3 className="text-2xl font-black text-white dark:text-slate-900">"{childType.harmony.title}"</h3>
+              </div>
+              <div className="w-14 h-14 rounded-full bg-white/10 dark:bg-slate-100 flex items-center justify-center border border-white/20 dark:border-slate-200">
+                <Icon name="psychology" className="text-primary" />
+              </div>
+            </div>
+            <p className="text-slate-300 dark:text-slate-600 text-[14px] leading-relaxed break-keep font-medium">
+              {childType.harmony.desc}
+            </p>
+            <div className="pt-4 flex items-center gap-4 text-[11px] font-bold text-slate-500 italic">
+              <div className="flex-1 h-[1px] bg-slate-800 dark:bg-slate-200"></div>
+              <span>Relationship Insights</span>
+              <div className="flex-1 h-[1px] bg-slate-800 dark:bg-slate-200"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Phase 4: Scientific Indicators (The Evidence) */}
         <div className="space-y-8">
           {/* Radar Chart Section */}
           <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-8">
             <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-              <Icon name="analytics" className="text-primary" /> 씨앗 프로파일 지표
+              <Icon name="analytics" className="text-primary" /> 기질 분석 데이터
             </h3>
             <div className="h-64 relative">
               <Radar data={radarData} options={radarOptions} />
             </div>
             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-              * 보호자가 일군 **토양** 위에서 아이라는 **씨앗**이 **새싹**을 틔웠습니다. 장차 어떤 **꽃**으로 피어날지 그 조화를 분석합니다.
+              * 보호자가 일군 **토양** 위에서 아이라는 **씨앗**이 만나 <br />어떤 **새싹**을 틔웠는지 그 데이터 지표를 보여줍니다.
             </div>
           </div>
 
           {/* GHI Section */}
           <div className={`bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border-2 transition-all ${analysisResult.type === 'CRISIS' ? 'border-rose-400' : (analysisResult.type === 'MITIGATED' ? 'border-teal-400' : 'border-transparent')}`}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-black text-slate-800 dark:text-white text-lg">정원 조화 지수 (GHI)</h3>
+              <h3 className="font-black text-slate-800 dark:text-white text-lg">조화 지수 (GHI)</h3>
               <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${ghiScore < 40 ? 'bg-teal-100 text-teal-600' : 'bg-rose-100 text-rose-600'}`}>
                 {ghiLabel}
               </span>
@@ -344,7 +357,7 @@ export default function ReportPage() {
             <div className="space-y-6">
               <div className="relative">
                 <div className="flex justify-between items-end mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Harmony Index</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Similarity Gap</span>
                   <span className={`text-2xl font-black ${ghiColor}`}>{Math.round(ghiScore)}</span>
                 </div>
                 <div className="h-3 w-full bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
@@ -354,18 +367,18 @@ export default function ReportPage() {
                   />
                 </div>
               </div>
-              <p className="text-[14px] text-slate-600 dark:text-slate-300 leading-relaxed break-keep font-medium">
-                {analysisResult.message}
-              </p>
             </div>
           </div>
 
           {/* Parenting Style Section */}
           <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6">
-            <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-              <Icon name="eco" className="text-green-500" /> 양육의 햇살과 영양 점검
-            </h3>
-            <div className="h-56">
+            <div className="flex items-center justify-between">
+              <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
+                <Icon name="tune" className="text-green-500" /> 양육의 햇살과 영양
+              </h3>
+              <span className="text-[10px] font-bold text-slate-400">Current Support Level</span>
+            </div>
+            <div className="h-48">
               <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
             </div>
           </div>
