@@ -82,7 +82,7 @@ export default function ReportPage() {
         pointRadius: 4,
       },
       {
-        label: '가드너의 거울 (Mirror)',
+        label: '정원의 환경 (Weather)',
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
         backgroundColor: 'rgba(255, 107, 107, 0.1)',
         borderColor: '#FF6B6B',
@@ -290,7 +290,7 @@ export default function ReportPage() {
               <Radar data={radarData} options={radarOptions} />
             </div>
             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-              * 가드너(부모)의 거울과 아이의 씨앗이 가진 차이가 클수록 세밀한 돌봄이 필요하지만,<br />양육의 햇살(스타일)로 충분히 조화로운 성장이 가능합니다.
+              * 부모의 기질이 만드는 정원의 **날씨(환경)**와 아이의 **씨앗**이 가진 차이를 이해하면,<br />양육의 햇살(스타일)로 더욱 건강한 성장이 가능합니다.
             </div>
           </div>
 
