@@ -242,15 +242,28 @@ export default function SurveyPage() {
       <div className="flex-1 px-5 py-6 max-w-2xl mx-auto w-full pb-24">
         {/* Context Card */}
         <div className="mb-6 animate-fade-in-up">
-          <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold mb-3">
-            {currentModule === 'child' ? `${intake.childName || '아이'}의 행동` :
-              currentModule === 'parent' ? '나(부모)의 성향' : '양육 상황'}
+          <div className="flex items-center justify-between mb-3">
+            <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+              {currentModule === 'child' ? `${intake.childName || '아이'}의 행동` :
+                currentModule === 'parent' ? '나(부모)의 성향' : '양육 상황'}
+            </div>
+            {/* Helpful Hint */}
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <span className="material-icons-round text-slate-400 text-[14px]">info</span>
+              <span className="text-[10px] font-medium text-slate-500">가장 비슷한 반응을 선택해 주세요</span>
+            </div>
           </div>
 
-          <h2 className="text-[17px] font-bold text-slate-800 dark:text-white leading-relaxed whitespace-pre-line">
+          <h2 className="text-[17px] font-bold text-slate-800 dark:text-white leading-relaxed whitespace-pre-line mb-4">
             <span className="text-primary mr-1">Q.</span>
             {currentQuestion.context}
           </h2>
+
+          <div className="p-4 bg-warm-beige/30 border border-warm-beige/50 rounded-2xl">
+            <p className="text-[12px] text-slate-500 leading-relaxed break-keep">
+              <span className="font-bold text-slate-600">Tip:</span> 제시된 상황이 우리 아이와 완벽히 똑같지 않더라도, <strong>평소 모습이나 가장 가까운 느낌</strong>의 보기를 골라주시면 정확한 분석에 도움이 됩니다!
+            </p>
+          </div>
         </div>
 
         {/* Choices (BARS) */}
