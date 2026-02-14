@@ -20,6 +20,7 @@ export default function HomePage() {
   const [parentSurvey, setParentSurvey] = useState<SurveyData | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showSurveyIntro, setShowSurveyIntro] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Gardening State
@@ -75,13 +76,10 @@ export default function HomePage() {
   }, [user]);
 
   useEffect(() => {
-    // 자동 리다이렉트 비활성화 - 사용자가 홈에서 등록 유도 카드를 볼 수 있게 함
-    /*
     if (!loading && user && children.length === 0) {
-      router.replace('/settings/child/new');
+      setShowOnboarding(true);
     }
-    */
-  }, [loading, user, children, router]);
+  }, [loading, user, children]);
 
   const toggleAction = (key: keyof typeof dailyActions) => {
     setDailyActions(prev => ({ ...prev, [key]: !prev[key] }));
@@ -228,11 +226,12 @@ export default function HomePage() {
                     <div className="space-y-1">
                       <p className="text-sm font-bold text-slate-400">아직 등록된<br />아이가 없어요</p>
                     </div>
-                    <Link href="/settings/child/new">
-                      <button className="text-[11px] font-bold bg-primary text-white px-4 py-1.5 rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all">
-                        아이 등록하기
-                      </button>
-                    </Link>
+                    <button
+                      onClick={() => setShowOnboarding(true)}
+                      className="text-[11px] font-bold bg-primary text-white px-4 py-1.5 rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                    >
+                      아이 등록하기
+                    </button>
                   </div>
                 )}
               </div>
@@ -251,7 +250,7 @@ export default function HomePage() {
                           <span className="text-earth-brown/30">테스트 대기 중</span>
                         )
                       ) : (
-                        <span className="text-earth-brown/30">아이 먼저 등록</span>
+                        <span className="text-earth-brown/30" onClick={() => setShowOnboarding(true)}>아이 먼저 등록</span>
                       )
                     )}
                   </span>
@@ -283,13 +282,14 @@ export default function HomePage() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-slate-400">아이를 등록하고 맞춤형 정원을 가꿔보세요!</p>
-                  <Link href="/settings/child/new" className="block">
-                    <button className="w-full bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
-                      <span className="material-icons-round text-lg">child_care</span>
-                      <span>첫 아이 등록하기</span>
-                    </button>
-                  </Link>
+                  <p className="text-slate-400 italic">아이를 등록하고 맞춤형 정원을 가꿔보세요!</p>
+                  <button
+                    onClick={() => setShowOnboarding(true)}
+                    className="w-full bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="material-icons-round text-lg">child_care</span>
+                    <span>첫 아이 등록하기</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -424,6 +424,78 @@ export default function HomePage() {
         </button>
       </div>
 
+      {/* Onboarding Modal - Show if no children registered */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"></div>
+          <div className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-500">
+            {/* Background Decor */}
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
+
+            <div className="relative z-10 p-8 flex flex-col items-center">
+              {/* Logo / Mascot Area */}
+              <div className="w-24 h-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mb-8 rotate-3 shadow-inner">
+                <span className="text-5xl animate-bounce-subtle">🌱</span>
+              </div>
+
+              <div className="text-center space-y-3 mb-10">
+                <h3 className="text-2xl font-black text-slate-800 dark:text-white font-display break-keep">
+                  반가워요!<br />이제 정원을 가꿔볼까요?
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep px-4">
+                  아이의 <strong>타고난 기질(씨앗)</strong>을 이해하고,<br />
+                  부모님의 <strong>사랑(토양)</strong>으로 아름답게<br />
+                  피어나는 과정을 함께 도와드릴게요.
+                </p>
+              </div>
+
+              {/* Value Props */}
+              <div className="w-full space-y-4 mb-10">
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0">
+                    <span className="text-lg">🧬</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">과학적 기질 분석</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">타고난 성향을 정확히 파악합니다.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0">
+                    <span className="text-lg">💬</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">맞춤형 대화 처방</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">아이의 신호를 올바르게 통역해드려요.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <div className="w-full">
+                <button
+                  onClick={() => {
+                    setShowOnboarding(false);
+                    router.push('/settings/child/new');
+                  }}
+                  className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+                >
+                  <span className="text-lg">아이 정보 등록하기</span>
+                  <span className="material-icons-round text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </button>
+                <button
+                  onClick={() => setShowOnboarding(false)}
+                  className="w-full py-4 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors mt-2"
+                >
+                  나중에 둘러볼게요
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Survey Intro Modal */}
       {showSurveyIntro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -466,7 +538,7 @@ export default function HomePage() {
 
       {/* Inline Bottom Navigation (As per new design request) */}
       <nav className="fixed bottom-6 left-0 right-0 z-50 px-6 pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-xl rounded-full shadow-2xl border border-primary/5 px-4 py-3 flex justify-around items-center max-w-sm mx-auto pointer-events-auto">
+        <div className={`bg-white/90 backdrop-blur-xl rounded-full shadow-2xl border border-primary/5 px-4 py-3 flex justify-around items-center max-w-sm mx-auto pointer-events-auto transition-opacity ${showOnboarding ? 'opacity-20' : 'opacity-100'}`}>
           <Link href="/" className="flex flex-col items-center justify-center text-primary min-w-[64px]">
             <span className="material-icons-round text-2xl">home</span>
             <span className="text-[9px] font-bold mt-0.5">홈</span>
