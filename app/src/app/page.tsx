@@ -235,13 +235,20 @@ export default function HomePage() {
                         {childName}
                       </h2>
                       <div className="flex flex-col items-center mt-1">
-                        <div className="flex items-center gap-1 text-primary">
-                          <span className="material-symbols-outlined text-[16px] font-bold">
-                            {temperamentInfo ? 'visibility' : 'help_outline'}
-                          </span>
-                          <span className="text-[13px] font-bold relative z-20">
-                            {temperamentInfo ? temperamentInfo.label : <span className="text-gray-400 font-medium">어떤 씨앗일까요?</span>}
-                          </span>
+                        <div className="flex flex-col items-center gap-1 text-primary">
+                          <div className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[16px] font-bold">
+                              {temperamentInfo ? 'visibility' : 'help_outline'}
+                            </span>
+                            <span className="text-[13px] font-bold relative z-20">
+                              {temperamentInfo ? temperamentInfo.label : <span className="text-gray-400 font-medium">어떤 씨앗일까요?</span>}
+                            </span>
+                          </div>
+                          {temperamentInfo && (
+                            <div className="bg-primary/5 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/10">
+                              {temperamentInfo.seed.label}
+                            </div>
+                          )}
                         </div>
                         <p className="text-[10px] text-slate-400 font-medium tracking-tighter mt-0.5">{ageString}</p>
                       </div>
@@ -293,7 +300,8 @@ export default function HomePage() {
                 <>
                   {temperamentInfo ? (
                     <p>
-                      {childName}의 {temperamentInfo.label} 기질은 부모님의 따뜻한 지지 속에서<br />
+                      {childName}의 <span className="font-bold text-slate-700">{temperamentInfo.seed.label}</span>에서 돋아난<br />
+                      <span className="text-primary font-bold">{temperamentInfo.label}</span> 기질은 부모님의 따뜻한 지지 속에서<br />
                       <span className="text-primary font-bold">멋진 강점으로 피어납니다.</span>
                     </p>
                   ) : (
