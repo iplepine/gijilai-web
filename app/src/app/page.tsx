@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useAppStore } from '@/store/useAppStore'; // Add this line
+import { useAppStore } from '@/store/useAppStore';
 import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
@@ -42,23 +42,47 @@ export default function HomePage() {
     praise: false,
     skinship: false
   });
-
   const [loading, setLoading] = useState(true);
 
+  // Derived Child Profile (DB first, then local intake store)
+  const mainChild = useMemo(() => {
+    if (children[0]) return children[0];
+    if (intake.childName) {
+      return {
+        id: 'temporary-intake-id',
+        name: intake.childName,
+        birth_date: intake.birthDate,
+        gender: (intake.gender || 'MALE').toUpperCase(),
+        image_url: null,
+      } as any as ChildProfile;
+    }
+    return null;
+  }, [children, intake]);
+
+  const childName = mainChild?.name || "우리 아이";
+
   // Derived Temperament (Parent = Soil, Child = Seed + Plant)
-  const temperamentInfo = (() => {
-    if (!latestSurvey || !latestSurvey.answers) return null;
-    const answers = latestSurvey.answers as Record<number, number>;
-    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, answers);
+  const temperamentInfo = useMemo(() => {
+    // Check local store responses first for immediate feedback
+    const childAnswers = Object.keys(cbqResponses).length > 0
+      ? cbqResponses
+      : (latestSurvey?.answers as Record<string, number>);
+
+    if (!childAnswers) return null;
+    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, childAnswers as any);
 
     // Parent scores for soil context (defaults if not surveyed yet)
     let parentScores = { NS: 50, HA: 50, RD: 50, P: 50 };
-    if (parentSurvey && parentSurvey.answers) {
-      parentScores = TemperamentScorer.calculate(CHILD_QUESTIONS, parentSurvey.answers as any);
+    const parentAnswers = Object.keys(atqResponses).length > 0
+      ? atqResponses
+      : (parentSurvey?.answers as Record<string, number>);
+
+    if (parentAnswers) {
+      parentScores = TemperamentScorer.calculate(CHILD_QUESTIONS, parentAnswers as any);
     }
 
     return TemperamentClassifier.analyze(scores, parentScores);
-  })();
+  }, [cbqResponses, atqResponses, latestSurvey, parentSurvey]);
 
   useEffect(() => {
     async function fetchData() {
@@ -85,10 +109,11 @@ export default function HomePage() {
   }, [user]);
 
   useEffect(() => {
-    if (!loading && user && children.length === 0) {
+    // Only show onboarding if no child is registered in DB AND no intake info in local store
+    if (!loading && user && children.length === 0 && !intake.childName) {
       setShowOnboarding(true);
     }
-  }, [loading, user, children]);
+  }, [loading, user, children, intake.childName]);
 
   const toggleAction = (key: keyof typeof dailyActions) => {
     setDailyActions(prev => ({ ...prev, [key]: !prev[key] }));
@@ -149,15 +174,10 @@ export default function HomePage() {
     );
   }
 
-  const mainChild = children[0] || null;
-  const childName = mainChild?.name || "우리 아이";
-
   // Calculate age string
   const ageString = mainChild?.birth_date ? (() => {
     const birth = new Date(mainChild.birth_date);
     const today = new Date();
-    const diffTime = Math.abs(today.getTime() - birth.getTime());
-    // const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
     return `${mainChild.birth_date.replaceAll('-', '.')} (${months}개월)`;
   })() : "생일 정보 없음";
