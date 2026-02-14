@@ -4,22 +4,22 @@ export class TemperamentClassifier {
         const highThreshold = 60;
         const lowThreshold = 40;
 
-        // 1. Seed Type (Current Manifestation - Child TCI)
+        // 1. Sprout (Current Manifestation - Child TCI)
         let plant = { label: "무한한 잠재력의 새싹", emoji: "🌱", desc: "도처에 싹을 틔울 준비가 된 생명력 넘치는 상태예요." };
 
         if (NS >= highThreshold) {
-            if (HA >= highThreshold) plant = { label: "섬세한 아티스트 씨앗", emoji: "🎨", desc: "호기심은 많지만 조심스럽게 영역을 넓혀가는 중이에요." };
-            else if (RD >= highThreshold) plant = { label: "다정한 분위기 메이커 씨앗", emoji: "💖", desc: "사람들을 향해 향기를 퍼뜨리며 활짝 피어났어요." };
-            else plant = { label: "에너지 넘치는 탐험 씨앗", emoji: "🦁", desc: "거침없이 하늘을 향해 가지를 뻗는 중이에요." };
+            if (HA >= highThreshold) plant = { label: "섬세한 아티스트 새싹", emoji: "🎨", desc: "호기심은 많지만 조심스럽게 영역을 넓혀가는 중이에요." };
+            else if (RD >= highThreshold) plant = { label: "다정한 분위기 메이커 새싹", emoji: "💖", desc: "사람들을 향해 온기를 전하며 활발하게 자라고 있어요." };
+            else plant = { label: "에너지 넘치는 탐험 새싹", emoji: "🦁", desc: "정원을 역동적으로 탐색하며 생명력을 뿜어내는 중이에요." };
         } else if (HA >= highThreshold) {
-            plant = { label: "신중한 관찰자 씨앗", emoji: "🦉", desc: "외부 자극에 민감하게 반응하며 자신을 보호하고 관찰해요." };
+            plant = { label: "신중한 관찰자 새싹", emoji: "🦉", desc: "외부 자극에 민감하게 반응하며 자신을 보호하고 관찰해요." };
         } else if (RD >= highThreshold) {
-            plant = { label: "따뜻한 평화주의자 씨앗", emoji: "🕊️", desc: "모두와 조화롭게 어우러지는 다정한 아이예요." };
+            plant = { label: "따뜻한 평화주의자 새싹", emoji: "🕊️", desc: "모두와 조화롭게 어우러지는 다정한 아이예요." };
         } else if (P >= highThreshold) {
-            plant = { label: "단단한 노력가 씨앗", emoji: "🌳", desc: "비바람에도 흔들리지 않고 깊게 뿌리를 내리고 있어요." };
+            plant = { label: "단단한 노력가 새싹", emoji: "🌳", desc: "비바람에도 흔들리지 않고 묵묵히 제 자리를 지키고 있어요." };
         }
 
-        // 2. Seed Nature (Innate Nature - Child Proxy for Chess & Thomas)
+        // 2. Seed (Innate Nature - Child Proxy for Chess & Thomas)
         let seed = { label: "둥근 씨앗", desc: "어디서든 유연하게 적응하는 씨앗" };
         if (NS >= 65 && HA >= 65) {
             seed = { label: "뾰족 씨앗", desc: "자기만의 개성이 뚜렷하고 조건이 섬세한 씨앗" };

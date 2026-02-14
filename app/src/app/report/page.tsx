@@ -73,7 +73,7 @@ export default function ReportPage() {
     labels: ['자극 추구', '위험 회피', '사회적 민감성', '지속성'],
     datasets: [
       {
-        label: '아이의 씨앗 (Seed)',
+        label: '아이의 새싹 (Sprout)',
         data: [childScores.NS, childScores.HA, childScores.RD, childScores.P],
         backgroundColor: 'rgba(78, 205, 196, 0.2)',
         borderColor: '#4ECDC4',
@@ -282,7 +282,7 @@ export default function ReportPage() {
 
               {/* Hierarchy 3: Plant (Current Expression) */}
               <div className="space-y-2">
-                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">발견된 씨앗의 종류</span>
+                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">발견된 새싹의 종류</span>
                 <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
                   {childType.label}
                 </h2>
@@ -305,7 +305,7 @@ export default function ReportPage() {
               <Radar data={radarData} options={radarOptions} />
             </div>
             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-              * 보호자가 일군 **토양** 위에서 아이라는 **씨앗**이 장차 어떤 **꽃**으로 피어날지 그 조화를 분석합니다.
+              * 보호자가 일군 **토양** 위에서 아이라는 **씨앗**이 **새싹**을 틔웠습니다. 장차 어떤 **꽃**으로 피어날지 그 조화를 분석합니다.
             </div>
           </div>
 
