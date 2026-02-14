@@ -247,52 +247,75 @@ export default function ReportPage() {
           </section>
         )}
 
-        {/* Child Temperament Card (Free Contents Start) - Ecosystem Hierarchy: Soil -> Seed -> Plant */}
-        {!isPaid && (
-          <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-6">
-            <div className="w-full aspect-square relative rounded-[2.5rem] overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-yellow-400/5 to-transparent"></div>
-              <div className="absolute inset-0 flex items-center justify-center text-9xl drop-shadow-2xl">
-                {childType.emoji}
-              </div>
-            </div>
-
-            <div className="space-y-6 px-4 pb-4">
-              {/* Hierarchy 1: Soil (Parent) */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">보호자가 일군 토양</span>
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">"{childType.soil.label}"</h3>
-                  <p className="text-[11px] text-slate-400">{childType.soil.desc}</p>
-                </div>
-              </div>
-
-              <div className="w-12 h-[1px] bg-slate-100 dark:bg-slate-800 mx-auto"></div>
-
-              {/* Hierarchy 2: Seed (Child Nature) */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">아이의 타고난 씨앗</span>
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">"{childType.seed.label}"</h3>
-                  <p className="text-[11px] text-slate-400">{childType.seed.desc}</p>
-                </div>
-              </div>
-
-              <div className="w-12 h-[1px] bg-slate-100 dark:bg-slate-800 mx-auto"></div>
-
-              {/* Hierarchy 3: Plant (Current Expression) */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">발견된 새싹의 종류</span>
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
-                  {childType.label}
-                </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep">
-                  {childType.desc}
-                </p>
-              </div>
+        {/* Child Temperament Card (Free Contents) - Main Archetype */}
+        <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-6">
+          <div className="w-full aspect-square relative rounded-[2.5rem] overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-yellow-400/5 to-transparent"></div>
+            <div className="absolute inset-0 flex items-center justify-center text-9xl drop-shadow-2xl">
+              {childType.emoji}
             </div>
           </div>
-        )}
+
+          <div className="space-y-6 px-4 pb-4">
+            {/* Hierarchy 1 & 2: Brief Summary */}
+            <div className="flex justify-center gap-8">
+              <div className="space-y-1">
+                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">토양</span>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">{childType.soil.label}</p>
+              </div>
+              <div className="w-[1px] h-8 bg-slate-100 dark:bg-slate-700 mt-2"></div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">씨앗</span>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">{childType.seed.label}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">발견된 새싹의 종류</span>
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                {childType.label}
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep">
+                {childType.desc}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Free Report Deep Analysis: Seed & Soil (Ready for Free User) */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Soil Detail */}
+          <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-7 shadow-xl border border-slate-50 dark:border-slate-800 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                <Icon name="eco" size="sm" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">보호자가 일군 토양</span>
+                <h4 className="text-lg font-black text-slate-800 dark:text-white">{childType.soil.label}</h4>
+              </div>
+            </div>
+            <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
+              {childType.soil.detail}
+            </p>
+          </section>
+
+          {/* Seed Detail */}
+          <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-7 shadow-xl border border-slate-50 dark:border-slate-800 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                <Icon name="star" size="sm" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">아이의 타고난 씨앗</span>
+                <h4 className="text-lg font-black text-slate-800 dark:text-white">{childType.seed.label}</h4>
+              </div>
+            </div>
+            <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
+              {childType.seed.detail}
+            </p>
+          </section>
+        </div>
 
         {/* Detailed Analysis Section (Paid or Scrollable) */}
         <div className="space-y-8">
