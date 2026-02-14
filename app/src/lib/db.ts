@@ -125,13 +125,27 @@ export const db = {
 
     // --- Storage ---
     uploadChildAvatar: async (file: File) => {
-        const fileExt = file.name.split('.').pop();
+        let uploadData: File | Blob = file;
+
+        // 브라우저 환경에서만 리사이징 수행
+        if (typeof window !== 'undefined') {
+            try {
+                const { resizeImage } = await import('@/lib/imageUtils');
+                uploadData = await resizeImage(file, 800, 800, 0.8);
+            } catch (e) {
+                console.warn('Failed to resize image, uploading original:', e);
+            }
+        }
+
+        const fileExt = 'jpg'; // 리사이징 후 jpeg로 변환됨
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `child-avatars/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(filePath, file);
+            .upload(filePath, uploadData, {
+                contentType: 'image/jpeg'
+            });
 
         if (uploadError) throw uploadError;
 
