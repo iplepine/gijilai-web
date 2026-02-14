@@ -73,7 +73,7 @@ export default function ReportPage() {
     labels: ['자극 추구', '위험 회피', '사회적 민감성', '지속성'],
     datasets: [
       {
-        label: '아이 기질',
+        label: '아이의 씨앗 (Seed)',
         data: [childScores.NS, childScores.HA, childScores.RD, childScores.P],
         backgroundColor: 'rgba(78, 205, 196, 0.2)',
         borderColor: '#4ECDC4',
@@ -82,7 +82,7 @@ export default function ReportPage() {
         pointRadius: 4,
       },
       {
-        label: '부모 기질',
+        label: '가드너의 거울 (Mirror)',
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
         backgroundColor: 'rgba(255, 107, 107, 0.1)',
         borderColor: '#FF6B6B',
@@ -128,7 +128,7 @@ export default function ReportPage() {
     ]
   };
 
-  // Simple Logic for BCI
+  // Garden Harmony Index (GHI) Logic
   const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -149,7 +149,7 @@ export default function ReportPage() {
     }
   };
 
-  const bciScore = useMemo(() => {
+  const ghiScore = useMemo(() => {
     const diff =
       Math.abs(childScores.NS - parentScores.NS) +
       Math.abs(childScores.HA - parentScores.HA) +
@@ -161,13 +161,13 @@ export default function ReportPage() {
   const analysisResult = useMemo(() => {
     let type = 'NORMAL';
     let message = '서로 다른 기질이지만, 부모님의 노력으로 균형을 맞춰가고 있습니다.';
-    const isHighBCI = bciScore >= 40;
+    const isHighGHI = ghiScore >= 40;
     const isConflictPattern = childScores.NS >= 70 && parentScores.HA >= 70;
 
-    if (isHighBCI || isConflictPattern) {
+    if (isHighGHI || isConflictPattern) {
       if (styleScores.Autonomy >= 70) {
         type = 'MITIGATED';
-        message = '기질적인 차이가 크지만, 부모님의 높은 [자율성 지지] 덕분에 아이가 이를 건강하게 극복하고 있습니다.';
+        message = '기질적인 차이가 크지만, 부모님의 높은 [자율성 지지] 덕분을 통해 아이가 이를 건강하게 극복하고 있습니다.';
       } else if (styleScores.Responsiveness <= 50) {
         type = 'CRISIS';
         message = '현재 기질적 갈등이 심화되고 있습니다. 아이의 마음을 먼저 읽어주는 [정서적 반응성]을 높이는 노력이 필요합니다.';
@@ -176,11 +176,11 @@ export default function ReportPage() {
       }
     }
     return { type, message };
-  }, [bciScore, childScores, parentScores, styleScores]);
+  }, [ghiScore, childScores, parentScores, styleScores]);
 
-  const bciColor = bciScore < 25 ? 'text-teal-600' : (bciScore < 55 ? 'text-indigo-600' : 'text-rose-500');
-  const bciBg = bciScore < 25 ? 'bg-teal-500' : (bciScore < 55 ? 'bg-indigo-500' : 'bg-rose-500');
-  const bciLabel = bciScore < 25 ? '안정적 조화' : (bciScore < 55 ? '균형 잡힌 관계' : '주의 깊은 관찰 필요');
+  const ghiColor = ghiScore < 25 ? 'text-teal-600' : (ghiScore < 55 ? 'text-indigo-600' : 'text-rose-500');
+  const ghiBg = ghiScore < 25 ? 'bg-teal-500' : (ghiScore < 55 ? 'bg-indigo-500' : 'bg-rose-500');
+  const ghiLabel = ghiScore < 25 ? '안정적 조화' : (ghiScore < 55 ? '균형 잡힌 관계' : '주의 깊은 관찰 필요');
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans">
@@ -249,18 +249,30 @@ export default function ReportPage() {
 
         {/* Child Temperament Card (Free Contents Start) */}
         {!isPaid && (
-          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-4 shadow-xl border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center">
-            <div className="w-full aspect-square relative rounded-[2rem] overflow-hidden mb-6">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20"></div>
-              <div className="absolute inset-0 flex items-center justify-center text-8xl">
+          <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-6">
+            <div className="w-full aspect-square relative rounded-[2.5rem] overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-yellow-400/5 to-transparent"></div>
+              <div className="absolute inset-0 flex items-center justify-center text-9xl drop-shadow-2xl">
                 {childType.emoji}
               </div>
             </div>
-            <div className="px-4 pb-4 space-y-2">
-              <h2 className="text-2xl font-black text-slate-800 dark:text-white">
-                "{childType.label}"
-              </h2>
-              <p className="text-slate-500 text-sm leading-relaxed px-4 break-keep">
+
+            <div className="space-y-4 px-4 pb-4">
+              <div className="space-y-1">
+                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">아이의 바탕(토양)</span>
+                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">"{childType.soil.label}"</h3>
+              </div>
+
+              <div className="w-8 h-1 bg-slate-100 dark:bg-slate-800 mx-auto rounded-full"></div>
+
+              <div className="space-y-2">
+                <span className="text-[11px] font-black text-secondary uppercase tracking-[0.2em]">잠재된 씨앗</span>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
+                  {childType.label}
+                </h2>
+              </div>
+
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep">
                 {childType.desc}
               </p>
             </div>
@@ -272,35 +284,35 @@ export default function ReportPage() {
           {/* Radar Chart Section */}
           <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-8">
             <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-              <Icon name="analytics" className="text-primary" /> 기질 프로파일 지표
+              <Icon name="analytics" className="text-primary" /> 씨앗 프로파일 지표
             </h3>
             <div className="h-64 relative">
               <Radar data={radarData} options={radarOptions} />
             </div>
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic">
-              * 점선(부모)과 실선(아이)의 차이가 클수록 갈등 가능성이 높지만,<br />양육 태도로 충분히 조화로운 성장이 가능합니다.
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
+              * 가드너(부모)의 거울과 아이의 씨앗이 가진 차이가 클수록 세밀한 돌봄이 필요하지만,<br />양육의 햇살(스타일)로 충분히 조화로운 성장이 가능합니다.
             </div>
           </div>
 
-          {/* BCI Section */}
+          {/* GHI Section */}
           <div className={`bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border-2 transition-all ${analysisResult.type === 'CRISIS' ? 'border-rose-400' : (analysisResult.type === 'MITIGATED' ? 'border-teal-400' : 'border-transparent')}`}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-black text-slate-800 dark:text-white text-lg">교감 지수 (BCI)</h3>
-              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${bciScore < 40 ? 'bg-teal-100 text-teal-600' : 'bg-rose-100 text-rose-600'}`}>
-                {bciLabel}
+              <h3 className="font-black text-slate-800 dark:text-white text-lg">정원 조화 지수 (GHI)</h3>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${ghiScore < 40 ? 'bg-teal-100 text-teal-600' : 'bg-rose-100 text-rose-600'}`}>
+                {ghiLabel}
               </span>
             </div>
 
             <div className="space-y-6">
               <div className="relative">
                 <div className="flex justify-between items-end mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Difference Index</span>
-                  <span className={`text-2xl font-black ${bciColor}`}>{Math.round(bciScore)}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Harmony Index</span>
+                  <span className={`text-2xl font-black ${ghiColor}`}>{Math.round(ghiScore)}</span>
                 </div>
                 <div className="h-3 w-full bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
                   <div
-                    style={{ width: `${Math.min(100, bciScore)}%` }}
-                    className={`h-full transition-all duration-1000 ease-out ${bciBg}`}
+                    style={{ width: `${Math.min(100, ghiScore)}%` }}
+                    className={`h-full transition-all duration-1000 ease-out ${ghiBg}`}
                   />
                 </div>
               </div>
@@ -313,7 +325,7 @@ export default function ReportPage() {
           {/* Parenting Style Section */}
           <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6">
             <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-              <Icon name="eco" className="text-green-500" /> 나의 양육 토양 점검
+              <Icon name="eco" className="text-green-500" /> 양육의 햇살과 영양 점검
             </h3>
             <div className="h-56">
               <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
