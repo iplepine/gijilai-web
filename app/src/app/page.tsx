@@ -179,7 +179,7 @@ export default function HomePage() {
     const birth = new Date(mainChild.birth_date);
     const today = new Date();
     const months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
-    return `${mainChild.birth_date.replaceAll('-', '.')} (${months}개월)`;
+    return `${months}개월`;
   })() : "생일 정보 없음";
 
   return (
