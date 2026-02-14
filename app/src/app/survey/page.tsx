@@ -91,10 +91,10 @@ function SurveyContent() {
         setTransitionType('toParent');
         setShowTransitionModal(true);
       } else if (currentModule === 'parent') {
-        // 부모 기질 검사 완료 시 즉시 분석 중 로딩 화면으로 진입 (리포트에서 양육 설문 유도)
+        // 부모 기질 검사 완료 시 즉시 분석 중 로딩 화면으로 진입 (리포트에서 부모 탭 활성화)
         setIsCalculating(true);
         setTimeout(() => {
-          router.push('/report');
+          router.push('/report?tab=parent');
         }, 3000);
       } else {
         // 마지막 양육 태도 검사 완료 시 분석 중 로딩 화면으로 즉시 진입

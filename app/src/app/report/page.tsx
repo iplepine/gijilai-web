@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useMemo, useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 import {
@@ -37,10 +37,21 @@ ChartJS.register(
   LinearScale
 );
 
-export default function ReportPage() {
+function ReportContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
   const [activeTab, setActiveTab] = useState<'child' | 'parent'>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, isPaid } = useAppStore();
+
+  useEffect(() => {
+    if (tabParam === 'parent') {
+      setActiveTab('parent');
+    } else if (tabParam === 'child') {
+      setActiveTab('child');
+    }
+  }, [tabParam]);
 
   const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any), [cbqResponses]);
   const parentScores = useMemo(() => TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any), [atqResponses]);
@@ -507,5 +518,17 @@ export default function ReportPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <ReportContent />
+    </Suspense>
   );
 }
