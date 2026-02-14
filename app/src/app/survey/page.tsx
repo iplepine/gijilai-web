@@ -35,6 +35,7 @@ function SurveyContent() {
   const [transitionType, setTransitionType] = useState<'toParent' | 'toParenting' | 'finish' | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
 
   // 현재 모듈에 따른 질문 목록과 응답 상태 가져오기
   const getModuleData = useCallback(() => {
@@ -91,31 +92,34 @@ function SurveyContent() {
         setTransitionType('toParent');
         setShowTransitionModal(true);
       } else if (currentModule === 'parent') {
-        // 부모 기질 검사 완료 시 즉시 분석 중 로딩 화면으로 진입 (리포트에서 부모 탭 활성화)
+        // 부모 기질 검사 완료 시 즉시 분석 중 로딩 화면으로 진입
         setIsCalculating(true);
         setTimeout(() => {
           router.push('/report?tab=parent');
-        }, 3000);
-      } else {
-        // 마지막 양육 태도 검사 완료 시 분석 중 로딩 화면으로 즉시 진입
+        }, 2000); // 3초에서 2초로 약간 단축하여 체감 속도 개선
+      } else if (currentModule === 'parenting') {
+        // 마지막 양육 태도 검사 완료 시 분석 중 로딩 화면으로 진입
         setIsCalculating(true);
         setTimeout(() => {
           router.push('/report');
-        }, 3000);
+        }, 2000);
       }
     }
   }, [currentIndex, questions.length, currentModule, router]);
 
   const handleSelect = useCallback((idx: number) => {
-    // idx is 0-4 (array index), convert to 1-5 score
+    if (isCalculating || isAdvancing) return; // 분석 중이거나 다음 문항으로 넘어가는 중이면 클릭 방지
+
     const score = idx + 1;
     setResponse(String(currentQuestion.id), score);
+    setIsAdvancing(true);
 
     // Auto advance with delay
     setTimeout(() => {
       goToNext();
+      setIsAdvancing(false);
     }, 300);
-  }, [setResponse, currentQuestion?.id, goToNext]);
+  }, [setResponse, currentQuestion?.id, goToNext, isCalculating, isAdvancing]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
@@ -148,6 +152,17 @@ function SurveyContent() {
     router.push('/');
   };
 
+  // URL 파라미터와 현재 모듈 동기화
+  useEffect(() => {
+    if (typeParam === 'PARENT' && currentModule !== 'parent') {
+      setCurrentModule('parent');
+      setCurrentIndex(0);
+    } else if (typeParam === 'STYLE' && currentModule !== 'parenting') {
+      setCurrentModule('parenting');
+      setCurrentIndex(0);
+    }
+  }, [typeParam, currentModule]);
+
   // Prevent accidental close
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -160,11 +175,10 @@ function SurveyContent() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [answeredCount]);
 
-  if (!currentQuestion && !isCalculating) return <div>Loading...</div>;
-
+  // 1. 계산 중(로딩) 화면 최우선 렌더링
   if (isCalculating) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white dark:bg-slate-900 px-10 text-center">
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white dark:bg-slate-900 px-10 text-center z-[100]">
         <div className="relative w-32 h-32 mb-8">
           <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -184,6 +198,13 @@ function SurveyContent() {
       </div>
     );
   }
+
+  // 2. 질문 데이터 로딩 체크
+  if (!currentQuestion) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-slate-50 dark:bg-slate-900">
@@ -241,7 +262,10 @@ function SurveyContent() {
       </div>
 
       {/* Question Content */}
-      <div className="flex-1 px-5 py-6 max-w-2xl mx-auto w-full pb-24">
+      <div
+        key={`${currentModule}-${currentIndex}`}
+        className="flex-1 px-5 py-6 max-w-2xl mx-auto w-full pb-24 animate-fade-in"
+      >
         {/* Context Card */}
         <div className="mb-6 animate-fade-in-up">
           <div className="flex items-center justify-between mb-3">
