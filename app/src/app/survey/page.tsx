@@ -133,7 +133,11 @@ export default function SurveyPage() {
       setCurrentIndex(0);
       window.scrollTo(0, 0);
     } else if (transitionType === 'finish') {
-      router.push('/payment'); // or /result
+      setIsCalculating(true);
+      // 3초간 분석 애니메이션 노출 후 이동
+      setTimeout(() => {
+        router.push('/report');
+      }, 3000);
     }
     setTransitionType(null);
   };
@@ -154,7 +158,30 @@ export default function SurveyPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [answeredCount]);
 
-  if (!currentQuestion) return <div>Loading...</div>;
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  if (!currentQuestion && !isCalculating) return <div>Loading...</div>;
+
+  if (isCalculating) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white dark:bg-slate-900 px-10 text-center">
+        <div className="relative w-32 h-32 mb-8">
+          <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl animate-bounce">🌱</span>
+          </div>
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 animate-pulse">
+          {intake.childName || '아이'}의 씨앗을 분석하고 있어요...
+        </h2>
+        <p className="text-slate-500 dark:text-slate-400 leading-relaxed break-keep">
+          기질 데이터를 바탕으로 우리 아이에게 딱 맞는<br />
+          맞춤형 정원을 가꾸고 있습니다. 잠시만 기다려주세요.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-slate-50 dark:bg-slate-900">
