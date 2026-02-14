@@ -40,7 +40,7 @@ This API endpoint generates a personalized temperament report based on TCI score
 ### Success Response (200 OK)
 \`\`\`json
 {
-  "report": "# 🌿 [민수] 정원을 위한 가드닝 리포트\n\n## 🌸 가드너님, 오늘 하루도..."
+  "report": "# 🌿 [민수] 정원을 위한 가드닝 리포트\n\n## 🌸 보호자님, 오늘 하루도..."
 }
 \`\`\`
 

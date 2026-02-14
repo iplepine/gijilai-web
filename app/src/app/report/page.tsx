@@ -82,7 +82,7 @@ export default function ReportPage() {
         pointRadius: 4,
       },
       {
-        label: '가드너의 토양 (Soil)',
+        label: '보호자의 토양 (Soil)',
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
         backgroundColor: 'rgba(255, 107, 107, 0.1)',
         borderColor: '#FF6B6B',
@@ -260,7 +260,7 @@ export default function ReportPage() {
             <div className="space-y-6 px-4 pb-4">
               {/* Hierarchy 1: Soil (Parent) */}
               <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">가드너가 일군 토양</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">보호자가 일군 토양</span>
                 <div className="flex flex-col">
                   <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">"{childType.soil.label}"</h3>
                   <p className="text-[11px] text-slate-400">{childType.soil.desc}</p>
@@ -305,7 +305,7 @@ export default function ReportPage() {
               <Radar data={radarData} options={radarOptions} />
             </div>
             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-              * 가드너(부모)가 일군 **토양** 위에서 아이라는 **씨앗**이 만나 <br />현재 어떤 **식물**로 피어났는지 그 조화를 분석합니다.
+              * 보호자가 일군 **토양** 위에서 아이라는 **씨앗**이 만나 <br />현재 어떤 **식물**로 피어났는지 그 조화를 분석합니다.
             </div>
           </div>
 
