@@ -179,7 +179,10 @@ export default function HomePage() {
     const birth = new Date(mainChild.birth_date);
     const today = new Date();
     const months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
-    return `${months}개월`;
+    if (months < 36) return `${months}개월`;
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    return remainingMonths === 0 ? `만 ${years}세` : `만 ${years}세 (${remainingMonths}개월)`;
   })() : "생일 정보 없음";
 
   return (
