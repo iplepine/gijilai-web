@@ -6,11 +6,33 @@ import { useAppStore } from '@/store/useAppStore';
 
 export default function IntroPage() {
     const router = useRouter();
-    const resetAll = useAppStore((state) => state.resetAll);
+    const { resetAll, setCbqResponse, setAtqResponse, setParentingResponse, setSurveyProgress } = useAppStore();
 
     const startSurvey = () => {
         resetAll();
         router.push('/survey');
+    };
+
+    const startWithRandomData = () => {
+        resetAll();
+
+        // 아이 기질 (1-20)
+        for (let i = 1; i <= 20; i++) {
+            setCbqResponse(i.toString(), Math.floor(Math.random() * 5) + 1);
+        }
+        // 부모 기질 (21-40)
+        for (let i = 21; i <= 40; i++) {
+            setAtqResponse(i.toString(), Math.floor(Math.random() * 5) + 1);
+        }
+        // 양육 태도 (41-50)
+        for (let i = 41; i <= 50; i++) {
+            setParentingResponse(i.toString(), Math.floor(Math.random() * 5) + 1);
+        }
+
+        setSurveyProgress(100);
+        router.push('/survey'); // Then it will likely redirect to report or allow finishing
+        // Actually, let's go straight to report to see results
+        router.push('/report');
     };
 
     return (
@@ -42,6 +64,13 @@ export default function IntroPage() {
                         style={{ backgroundColor: '#6C5CE7' }}
                     >
                         지금 바로 시작하기
+                    </button>
+                    {/* Test Button */}
+                    <button
+                        onClick={startWithRandomData}
+                        className="mt-4 w-full text-slate-400 text-xs font-medium underline underline-offset-4 hover:text-primary transition-colors"
+                    >
+                        [개발용] 랜덤 데이터로 결과 확인하기
                     </button>
                 </div>
 
