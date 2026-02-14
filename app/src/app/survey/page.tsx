@@ -176,11 +176,13 @@ function SurveyContent() {
           </div>
         </div>
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 animate-pulse">
-          검사 결과 분석 중...
+          {currentModule === 'child' ? '아이 기질 분석 중...' : '우리의 정원 분석 중...'}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 leading-relaxed break-keep">
-          {intake.childName || '아이'}의 소중한 답변을 바탕으로<br />
-          딱 맞는 <strong>기질 맞춤형 정원</strong>을 가꾸고 있습니다.
+          {currentModule === 'child'
+            ? <>{intake.childName || '아이'}의 소중한 답변을 바탕으로<br />딱 맞는 <strong>기질 맞춤형 정원</strong>을 가꾸고 있습니다.</>
+            : <>아이와 부모님의 기질이 만나는<br /><strong>아름다운 하모니</strong>를 정원에 담아내고 있습니다.</>
+          }
         </p>
       </div>
     );
