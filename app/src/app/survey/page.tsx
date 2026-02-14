@@ -87,17 +87,24 @@ function SurveyContent() {
     } else {
       // Current module finished
       if (currentModule === 'child') {
+        // 아이 기질 완료 시에만 부모 기질 안내 다이얼로그 노출 (핵심 컨텍스트 전환)
         setTransitionType('toParent');
         setShowTransitionModal(true);
       } else if (currentModule === 'parent') {
-        setTransitionType('toParenting');
-        setShowTransitionModal(true);
+        // 부모 기질 검사 완료 시 즉시 분석 중 로딩 화면으로 진입 (리포트에서 양육 설문 유도)
+        setIsCalculating(true);
+        setTimeout(() => {
+          router.push('/report');
+        }, 3000);
       } else {
-        setTransitionType('finish');
-        setShowTransitionModal(true);
+        // 마지막 양육 태도 검사 완료 시 분석 중 로딩 화면으로 즉시 진입
+        setIsCalculating(true);
+        setTimeout(() => {
+          router.push('/report');
+        }, 3000);
       }
     }
-  }, [currentIndex, questions.length, currentModule]);
+  }, [currentIndex, questions.length, currentModule, router]);
 
   const handleSelect = useCallback((idx: number) => {
     // idx is 0-4 (array index), convert to 1-5 score
@@ -133,16 +140,6 @@ function SurveyContent() {
       setCurrentModule('parent');
       setCurrentIndex(0);
       window.scrollTo(0, 0);
-    } else if (transitionType === 'toParenting') {
-      setCurrentModule('parenting');
-      setCurrentIndex(0);
-      window.scrollTo(0, 0);
-    } else if (transitionType === 'finish') {
-      setIsCalculating(true);
-      // 3초간 분석 애니메이션 노출 후 이동
-      setTimeout(() => {
-        router.push('/report');
-      }, 3000);
     }
     setTransitionType(null);
   };

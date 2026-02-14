@@ -69,6 +69,10 @@ export default function ReportPage() {
   const childType = useMemo(() => TemperamentClassifier.analyze(childScores, parentScores), [childScores, parentScores]);
   const prescription = useMemo(() => PRESCRIPTION_DATA[childType.label] || PRESCRIPTION_DATA["무한한 잠재력의 새싹"], [childType]);
 
+  const isStyleSurveyComplete = useMemo(() => {
+    return PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
+  }, [parentingResponses]);
+
   const radarData = {
     labels: ['자극 추구', '위험 회피', '사회적 민감성', '지속성'],
     datasets: [
@@ -371,15 +375,41 @@ export default function ReportPage() {
           </div>
 
           {/* Parenting Style Section */}
-          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6 relative overflow-hidden">
+            <div className="flex items-center justify-between relative z-10">
               <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
                 <Icon name="tune" className="text-green-500" /> 양육의 햇살과 영양
               </h3>
-              <span className="text-[10px] font-bold text-slate-400">Current Support Level</span>
+              {isStyleSurveyComplete && <span className="text-[10px] font-bold text-slate-400">Current Support Level</span>}
             </div>
-            <div className="h-48">
-              <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
+
+            <div className="relative z-10">
+              {isStyleSurveyComplete ? (
+                <div className="h-48">
+                  <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
+                </div>
+              ) : (
+                <div className="py-6 px-4 bg-green-50/50 dark:bg-slate-900/50 rounded-3xl border border-green-100 dark:border-slate-700 text-center space-y-4">
+                  <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                    <span className="text-2xl">☀️</span>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-white">나의 양육 스타일은 어떤가요?</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed break-keep">
+                      기질에 딱 맞는 [양육 처방전]을 완성하기 위해<br />
+                      평소 부모님의 양육 태도를 확인해 보세요.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => router.push('/survey?type=STYLE')}
+                    size="sm"
+                    variant="primary"
+                    className="rounded-xl px-6 bg-green-500 hover:bg-green-600 border-none shadow-lg shadow-green-200"
+                  >
+                    양육 태도 확인하기
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
