@@ -77,22 +77,13 @@ export default function SurveyPage() {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
-      // 모듈 완료
-      if (currentModule === 'child') {
-        setTransitionType('finish');
-        setShowTransitionModal(true);
-      } else {
-        // 원래 로직 유지 (확장 대비 - 현재는 사용 안 함)
-        if (currentModule === 'parent') {
-          setTransitionType('toParenting');
-          setShowTransitionModal(true);
-        } else {
-          setTransitionType('finish');
-          setShowTransitionModal(true);
-        }
-      }
+      // 모듈 완료 시 모달 없이 바로 분석 로딩 진입
+      setIsCalculating(true);
+      setTimeout(() => {
+        router.push('/report');
+      }, 3000);
     }
-  }, [currentIndex, questions.length, currentModule]);
+  }, [currentIndex, questions.length, router]);
 
   const handleSelect = useCallback((idx: number) => {
     // idx is 0-4 (array index), convert to 1-5 score
@@ -173,11 +164,11 @@ export default function SurveyPage() {
           </div>
         </div>
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 animate-pulse">
-          {intake.childName || '아이'}의 씨앗을 분석하고 있어요...
+          검사 결과 분석 중...
         </h2>
         <p className="text-slate-500 dark:text-slate-400 leading-relaxed break-keep">
-          기질 데이터를 바탕으로 우리 아이에게 딱 맞는<br />
-          맞춤형 정원을 가꾸고 있습니다. 잠시만 기다려주세요.
+          {intake.childName || '아이'}의 소중한 답변을 바탕으로<br />
+          딱 맞는 <strong>기질 맞춤형 정원</strong>을 가꾸고 있습니다.
         </p>
       </div>
     );
