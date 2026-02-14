@@ -235,7 +235,7 @@ export default function HomePage() {
                     </div>
                     <div className="text-center">
                       <h2 className="text-lg font-bold text-slate-800 leading-tight">
-                        {childName}
+                        {childName} <span className="text-sm font-medium text-slate-400 ml-0.5">({ageString})</span>
                       </h2>
                       <div className="flex flex-col items-center mt-1">
                         <div className="flex flex-col items-center gap-1 text-primary">
@@ -253,7 +253,6 @@ export default function HomePage() {
                             </div>
                           )}
                         </div>
-                        <p className="text-[10px] text-slate-400 font-medium tracking-tighter mt-0.5">{ageString}</p>
                       </div>
                     </div>
                   </>
