@@ -4,7 +4,7 @@ export const CHILD_QUESTIONS: Question[] = [
     // 자극 추구 (NS)
     {
         id: 1, type: 'CHILD', category: 'NS', facet: '새로운 자극 접근성',
-        context: "처음 본 장난감을 줬을 때",
+        context: "처음 보는 장난감을 선물했을 때, 우리 아이는?",
         choices: [
             "무서워하거나 아예 만지려 하지 않는다.",
             "만지지 않고 멀리서 가만히 지켜만 본다.",
@@ -15,7 +15,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 2, type: 'CHILD', category: 'NS', facet: '지루함 민감성',
-        context: "외출 준비를 할 때",
+        context: "가족과 함께 외출 준비를 할 때, 우리 아이는?",
         choices: [
             "늘 하던 순서가 아니면 강하게 거부하며 울음을 터뜨린다.",
             "새로운 곳에 가는 것을 다소 부담스러워하며 머뭇거린다.",
@@ -26,7 +26,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 3, type: 'CHILD', category: 'NS', facet: '활동 수준',
-        context: "놀이터에서의 움직임",
+        context: "놀이터에 갔을 때, 우리 아이의 움직임은?",
         choices: [
             "벤치나 부모 옆에 앉아 조용히 노는 것을 선호한다.",
             "아주 천천히 움직이며 조심스럽게 주변을 살핀다.",
@@ -37,7 +37,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 4, type: 'CHILD', category: 'NS', facet: '충동성',
-        context: "간식을 기다려야 할 때",
+        context: "맛있는 간식을 기다려야 할 때, 우리 아이는?",
         choices: [
             "\"이따 줄게\"라고 하면 전혀 보채지 않고 차분히 기다린다.",
             "한두 번 물어보지만 부모의 지시를 잘 따른다.",
@@ -48,7 +48,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 5, type: 'CHILD', category: 'NS', facet: '자유분방함',
-        context: "규칙적인 생활 패턴",
+        context: "식사나 수면 등 규칙적인 생활을 할 때, 우리 아이는?",
         choices: [
             "매일 정해진 시간에 정확히 행동하며 규칙이 매우 엄격하다.",
             "대부분 일정한 시간에 반응하며 큰 변화가 없다.",
@@ -60,7 +60,7 @@ export const CHILD_QUESTIONS: Question[] = [
     // 위험 회피 (HA) - Reverse scoring noted for items where high score behavior = low anxiety
     {
         id: 6, type: 'CHILD', category: 'HA', facet: '수줍음 및 불안',
-        context: "낯선 어른이 말을 걸 때",
+        context: "낯선 어른이 다가와 말을 걸 때, 우리 아이는?",
         choices: [
             "부모 뒤로 숨어 한참 동안 얼굴도 보여주지 않는다.",
             "부모 다리를 꽉 잡고 경계하는 눈빛으로 쳐다본다.",
@@ -72,7 +72,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 7, type: 'CHILD', category: 'HA', facet: '감각 역치',
-        context: "갑자기 큰 소리가 났을 때",
+        context: "집 근처에서 갑자기 큰 소리가 났을 때, 우리 아이는?",
         choices: [
             "깜짝 놀라며 공포를 느끼고 비명을 지르거나 얼어붙는다.",
             "즉시 부모에게 달려와 안기며 무서워한다.",
@@ -84,7 +84,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 8, type: 'CHILD', category: 'HA', facet: '변화 적응성',
-        context: "새 옷을 입혔을 때",
+        context: "평소 입지 않던 새 옷을 입혔을 때, 우리 아이는?",
         choices: [
             "까칠하거나 꽉 끼는 느낌을 참지 못하고 당장 벗으려 한다.",
             "평소 입던 옷이 아니면 한참 동안 불편해하며 징징댄다.",
@@ -96,7 +96,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 9, type: 'CHILD', category: 'HA', facet: '위험 감지',
-        context: "높은 곳에 올라갈 때",
+        context: "놀이터 기구 등 높은 곳에 올라갈 때, 우리 아이는?",
         choices: [
             "다칠까 봐 매우 무서워하며 시도조차 하지 않으려 한다.",
             "매우 천천히 움직이며 부모의 손을 놓지 않는다.",
@@ -108,7 +108,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 10, type: 'CHILD', category: 'HA', facet: '피로 용이성',
-        context: "활동 후의 체력 상태",
+        context: "신나게 놀고 난 뒤, 우리 아이의 체력 상태는?",
         choices: [
             "조금만 신체 활동을 해도 금방 지쳐서 안아달라고 보챈다.",
             "금세 하품을 하거나 자리에 누워 쉬고 싶어 한다.",
@@ -121,7 +121,7 @@ export const CHILD_QUESTIONS: Question[] = [
     // 사회적 민감성 (RD)
     {
         id: 11, type: 'CHILD', category: 'RD', facet: '사회적 보상 민감성',
-        context: "부모가 칭찬해 줄 때",
+        context: "부모님께 기분 좋은 칭찬을 들었을 때, 우리 아이는?",
         choices: [
             "칭찬해도 무덤덤하게 반응하며 자기가 하던 일을 계속한다.",
             "슬쩍 미소만 짓고 다시 놀이에 집중한다.",
@@ -132,7 +132,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 12, type: 'CHILD', category: 'RD', facet: '정서적 감수성',
-        context: "옆의 친구가 울고 있을 때",
+        context: "옆에 있는 친구가 서럽게 울고 있을 때, 우리 아이는?",
         choices: [
             "전혀 신경 쓰지 않고 혼자서 계속 논다.",
             "왜 우는지 한 번 쳐다보고 다시 자기 일에 집중한다.",
@@ -143,7 +143,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 13, type: 'CHILD', category: 'RD', facet: '관계 지향성',
-        context: "부모와 떨어져 놀 때",
+        context: "부모님과 잠시 떨어져 혼자 놀 때, 우리 아이는?",
         choices: [
             "혼자서도 아주 오랫동안 깊이 몰입해서 잘 논다.",
             "가끔 부모가 있는지 확인만 하고 혼자 노는 것을 즐긴다.",
@@ -154,7 +154,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 14, type: 'CHILD', category: 'RD', facet: '따뜻한 의사소통',
-        context: "친구가 장난감을 뺏을 때",
+        context: "친구가 내가 놀던 장난감을 뺏으려 할 때, 우리 아이는?",
         choices: [
             "절대 뺏기지 않으려 움켜쥐고 고집을 부린다.",
             "부모가 중재해야만 겨우 빌려주거나 나눠준다.",
@@ -165,7 +165,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 15, type: 'CHILD', category: 'RD', facet: '타인 의존성',
-        context: "부모가 엄한 표정을 지을 때",
+        context: "부모님이 단호하고 엄한 표정을 지으실 때, 우리 아이는?",
         choices: [
             "표정이 무서워도 눈 하나 깜짝 안 하고 자기 고집을 피운다.",
             "잘못을 인지하지만 크게 위축되지 않고 행동을 수정한다.",
@@ -177,7 +177,7 @@ export const CHILD_QUESTIONS: Question[] = [
     // 지속성 (P)
     {
         id: 16, type: 'CHILD', category: 'P', facet: '과제 지속성',
-        context: "어려운 퍼즐을 맞출 때",
+        context: "잘 안 풀리는 어려운 퍼즐에 도전할 때, 우리 아이는?",
         choices: [
             "조금만 안 맞춰져도 짜증을 내며 블록을 던져버린다.",
             "금방 포기하고 다른 쉬운 장난감으로 옮겨간다.",
@@ -188,7 +188,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 17, type: 'CHILD', category: 'P', facet: '주의 집중력',
-        context: "주변이 소란스러운 곳에서",
+        context: "주변이 시끌벅적하고 소란스러운 곳에서, 우리 아이는?",
         choices: [
             "작은 소음에도 금방 고개를 돌려 쳐다보고 딴짓을 한다.",
             "주변 상황에 관심이 많아 자기가 하던 일을 자주 멈춘다.",
@@ -199,7 +199,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 18, type: 'CHILD', category: 'P', facet: '근면성',
-        context: "심부름이나 약속 이행",
+        context: "부모님과의 약속이나 작은 심부름을 할 때, 우리 아이는?",
         choices: [
             "보상이 없으면 아예 시작도 안 하려 하거나 금방 잊는다.",
             "부모가 옆에서 계속 잔소리를 해야 마지못해 한다.",
@@ -210,7 +210,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 19, type: 'CHILD', category: 'P', facet: '좌절 내성',
-        context: "실패했을 때의 태도",
+        context: "공놀이나 게임에서 졌을 때(실패했을 때), 우리 아이는?",
         choices: [
             "한 번 실패하면 다시는 그 활동을 하지 않으려 한다.",
             "속상해하며 다른 놀이로 주의를 돌린다.",
@@ -221,7 +221,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 20, type: 'CHILD', category: 'P', facet: '완벽주의 경향',
-        context: "취침 전 루틴(책 읽기 등)",
+        context: "잠자기 전 책 읽기 같은 정해진 약속을 할 때, 우리 아이는?",
         choices: [
             "하다가 졸리면 그냥 책을 덮고 잠이 든다.",
             "정해진 양보다 적게 해도 크게 개의치 않는다.",
@@ -272,7 +272,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     // BUT the store expects 10 items for scoring. I'll maintain the old questions for id 44-50 but update them to have 'choices' (converting their old descriptions).
     {
         id: 44, type: 'PARENTING_STYLE', category: 'Efficacy', facet: '본능적 확신',
-        context: "육아 정보를 접할 때",
+        context: "다양한 육아 정보를 접하게 되었을 때, 나는?",
         choices: [
             "정보가 너무 많아 무엇이 맞는지 불안하다.",
             "다른 사람들의 말을 듣고 자주 흔들린다.",
@@ -283,7 +283,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     },
     {
         id: 45, type: 'PARENTING_STYLE', category: 'Autonomy', facet: '실수 허용',
-        context: "아이가 혼자 하다가 실수했을 때",
+        context: "아이가 스스로 하다가 실수를 저질렀을 때, 나는?",
         choices: [
             "\"그것 봐, 엄마가 해준댔잖아\"라며 핀잔준다.",
             "답답해서 바로 개입하여 해결해준다.",
@@ -294,7 +294,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     },
     {
         id: 46, type: 'PARENTING_STYLE', category: 'Responsiveness', facet: '감정 읽기',
-        context: "아이가 학교/원에서 돌아왔을 때",
+        context: "아이가 학교나 어린이집에서 돌아왔을 때, 나는?",
         choices: [
             "밥 먹었는지, 숙제 했는지부터 묻는다.",
             "별말 없이 할 일을 챙긴다.",
@@ -305,7 +305,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     },
     {
         id: 47, type: 'PARENTING_STYLE', category: 'Efficacy', facet: '훈육 자신감',
-        context: "아이를 훈육해야 할 때",
+        context: "아이의 잘못된 행동을 훈육해야 하는 순간, 나는?",
         choices: [
             "화만 내고 흐지부지 끝나거나 아이에게 끌려다닌다.",
             "어떻게 해야 할지 몰라 피하고 싶다.",
@@ -316,7 +316,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     },
     {
         id: 48, type: 'PARENTING_STYLE', category: 'Autonomy', facet: '의견 존중',
-        context: "주말 계획을 짤 때",
+        context: "다가오는 주말 가족 계획을 세울 때, 나는?",
         choices: [
             "부모가 정한 일정에 아이를 따르게 한다.",
             "아이 의견은 묻지 않고 통보한다.",
@@ -327,7 +327,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     },
     {
         id: 49, type: 'PARENTING_STYLE', category: 'Responsiveness', facet: '즉각적 반응',
-        context: "아이가 부를 때",
+        context: "집중해서 일을 하던 중 아이가 나를 부를 때, 나는?",
         choices: [
             "하던 일이 바쁘면 대꾸하지 않거나 늦게 반응한다.",
             "건성으로 대답한다.",
@@ -338,7 +338,7 @@ export const PARENTING_STYLE_QUESTIONS: Question[] = [
     },
     {
         id: 50, type: 'PARENTING_STYLE', category: 'Efficacy', facet: '부모 역할 만족도',
-        context: "잠들기 전 하루를 돌아볼 때",
+        context: "아이를 재우고 조용히 하루를 돌아보는 순간, 나는?",
         choices: [
             "오늘도 아이에게 화낸 것이 후회스럽고 힘들다.",
             "부모 역할이 너무 버겁게 느껴진다.",
@@ -353,7 +353,7 @@ export const PARENT_QUESTIONS: Question[] = [
     // 자극 추구 (NS) - Adult Information
     {
         id: 21, type: 'PARENT', category: 'NS', facet: '탐색적 흥분',
-        context: "새로운 취미나 일을 시작할 때",
+        context: "새로운 취미나 낯선 일을 시작할 때, 나는?",
         choices: [
             "익숙한 방식이 편하고 새로운 시도는 꺼려진다.",
             "굳이 새로운 것을 찾아다니지는 않는다.",
@@ -364,7 +364,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 22, type: 'PARENT', category: 'NS', facet: '충동성',
-        context: "쇼핑을 하거나 중요한 결정을 내릴 때",
+        context: "쇼핑을 하거나 인생의 중요한 결정을 내릴 때, 나는?",
         choices: [
             "며칠 동안 꼼꼼하게 비교하고 신중하게 결정한다.",
             "대체로 계획적으로 소비하고 결정한다.",
@@ -375,7 +375,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 23, type: 'PARENT', category: 'NS', facet: '재정적 태도(무절제)',
-        context: "돈을 쓰거나 자원을 활용하는 태도",
+        context: "경제적인 지출이나 자원을 사용하는 나의 태도는?",
         choices: [
             "미래를 위해 아끼고 저축하는 것이 최우선이다.",
             "필요한 곳에는 쓰되 낭비는 하지 않는다.",
@@ -386,7 +386,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 24, type: 'PARENT', category: 'NS', facet: '지루함 민감성', // Disorderliness/Regimentation
-        context: "반복적인 일상을 보낼 때",
+        context: "매일 반복되는 일상을 보낼 때, 나는?",
         choices: [
             "매일 똑같은 루틴에서 안정감과 편안함을 느낀다.",
             "규칙적인 생활을 선호하며 큰 변화를 원치 않는다.",
@@ -397,7 +397,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 25, type: 'PARENT', category: 'NS', facet: '자유분방함',
-        context: "여행이나 휴가를 보낼 때",
+        context: "즐거운 여행이나 휴가 계획을 세울 때, 나는?",
         choices: [
             "분 단위로 꼼꼼하게 계획을 세워야 마음이 편하다.",
             "대략적인 일정은 미리 정하고 움직인다.",
@@ -412,7 +412,7 @@ export const PARENT_QUESTIONS: Question[] = [
     // If the text for 5 is "Bold", use reverse: true.
     {
         id: 26, type: 'PARENT', category: 'HA', facet: '예기 불안',
-        context: "미래의 불확실한 일을 앞두고",
+        context: "아직 일어나지 않은 미래를 생각할 때, 나는?",
         choices: [
             "\"어떻게든 잘 될 거야\"라며 낙관적으로 생각한다.",
             "별로 걱정하지 않고 현재에 집중한다.",
@@ -423,7 +423,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 27, type: 'PARENT', category: 'HA', facet: '불확실성에 대한 두려움',
-        context: "새로운 도전이나 변화가 필요할 때",
+        context: "새로운 도전이나 큰 변화가 필요할 때, 나는?",
         choices: [
             "리스크를 감수하고서라도 도전하는 것이 흥분된다.",
             "성공할 가능성을 보고 과감하게 뛰어든다.",
@@ -434,7 +434,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 28, type: 'PARENT', category: 'HA', facet: '수줍음(사회적 위축)',
-        context: "낯선 사람들이 많은 모임에서",
+        context: "모르는 사람들이 많은 모임에 갔을 때, 나는?",
         choices: [
             "먼저 다가가서 말을 걸고 분위기를 주도한다.",
             "두루두루 사람들과 어울리는 것이 편하다.",
@@ -445,7 +445,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 29, type: 'PARENT', category: 'HA', facet: '피로 용이성',
-        context: "하루 일과를 마치고 났을 때",
+        context: "고된 하루 일과를 모두 마치고 난 뒤, 나의 상태는?",
         choices: [
             "아직 에너지가 넘쳐서 친구를 만나거나 취미를 즐긴다.",
             "적당히 피곤하지만 할 일을 더 할 수 있다.",
@@ -456,7 +456,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 30, type: 'PARENT', category: 'HA', facet: '걱정/근심',
-        context: "가족에게 연락이 늦게 올 때",
+        context: "가족에게 오기로 한 연락이 늦어질 때, 나는?",
         choices: [
             "바쁜가 보다 하고 별로 신경 쓰지 않는다.",
             "조금 기다려보다가 다시 연락해본다.",
@@ -469,7 +469,7 @@ export const PARENT_QUESTIONS: Question[] = [
     // High RD = Warm, Sentimental, Dependent. Low RD = Aloof, Practical.
     {
         id: 31, type: 'PARENT', category: 'RD', facet: '정서적 개방성',
-        context: "슬픈 영화나 뉴스를 볼 때",
+        context: "슬픈 영화나 가슴 아픈 뉴스를 보게 되면, 나는?",
         choices: [
             "별다른 감정의 동요가 없거나 연출을 분석한다.",
             "그렇구나 하고 넘기는 편이다.",
@@ -480,7 +480,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 32, type: 'PARENT', category: 'RD', facet: '사회적 부착',
-        context: "혼자 있는 시간 vs 사람들과 있는 시간",
+        context: "혼자 있을 때와 누군가와 함께 있을 때, 나는?",
         choices: [
             "혼자 일하거나 시간을 보내는 것이 훨씬 효율적이고 편하다.",
             "가끔 사람들을 만나지만 혼자가 좋을 때가 많다.",
@@ -491,7 +491,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 33, type: 'PARENT', category: 'RD', facet: '인정 욕구(승인 의존)',
-        context: "타인에게 칭찬이나 인정을 받을 때",
+        context: "주변 사람들에게 인정이나 칭찬을 받았을 때, 나는?",
         choices: [
             "남들의 평가보다 나 스스로의 만족이 중요하다.",
             "고맙지만 크게 의식하지 않는다.",
@@ -502,7 +502,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 34, type: 'PARENT', category: 'RD', facet: '표현력',
-        context: "가족이나 연인에게 애정 표현을 할 때",
+        context: "가족이나 소중한 사람에게 마음을 표현할 때, 나는?",
         choices: [
             "말보다는 행동이나 무뚝뚝한 챙김으로 대신한다.",
             "쑥스러워서 표현을 잘 하지 못한다.",
@@ -513,7 +513,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 35, type: 'PARENT', category: 'RD', facet: '공감 및 배려',
-        context: "친구가 힘든 고민을 털어놓을 때",
+        context: "가까운 지인이 힘든 고민을 털어놓았을 때, 나는?",
         choices: [
             "감정보다는 실질적인 해결책을 먼저 제시한다.",
             "들어주긴 하지만 내 할 말이 더 생각난다.",
@@ -525,7 +525,7 @@ export const PARENT_QUESTIONS: Question[] = [
     // 지속성 (P) - Adult
     {
         id: 36, type: 'PARENT', category: 'P', facet: '과제 지속성',
-        context: "어렵고 지루한 업무를 맡았을 때",
+        context: "어렵고 지루한 일을 끝까지 해내야 할 때, 나는?",
         choices: [
             "효율적이지 않으면 빨리 포기하거나 대충 처리한다.",
             "하기 싫어서 자꾸 미루게 된다.",
@@ -536,7 +536,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 37, type: 'PARENT', category: 'P', facet: '완벽주의',
-        context: "집안일이나 일처리를 할 때",
+        context: "집안일이나 업무를 처리하는 나의 스타일은?",
         choices: [
             "사는 데 지장 없을 정도로만 대충 한다.",
             "눈에 보이는 곳 위주로 정리한다.",
@@ -547,7 +547,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 38, type: 'PARENT', category: 'P', facet: '야심(성취욕)',
-        context: "새로운 목표를 세울 때",
+        context: "인생의 새로운 목표를 세우고 도전할 때, 나는?",
         choices: [
             "현재에 만족하며 안분지족하는 삶을 선호한다.",
             "실현 가능한 안전한 목표를 세운다.",
@@ -558,7 +558,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 39, type: 'PARENT', category: 'P', facet: '좌절 내성',
-        context: "계획대로 일이 풀리지 않을 때",
+        context: "열심히 세운 계획이 뜻대로 풀리지 않을 때, 나는?",
         choices: [
             "\"안 되나 보다\" 하고 빠르게 단념하고 다른 길을 찾는다.",
             "속상해서 한동안 의욕을 잃는다.",
@@ -569,7 +569,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 40, type: 'PARENT', category: 'P', facet: '일관성(근면)',
-        context: "매일 해야 하는 귀찮은 일이 있을 때",
+        context: "매일 반복해야 하는 귀찮은 일과를 마주할 때, 나는?",
         choices: [
             "작심삼일로 끝나는 경우가 많다.",
             "누가 시키지 않으면 꾸준히 하기 힘들다.",
