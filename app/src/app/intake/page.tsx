@@ -10,7 +10,7 @@ import { Concern, CONCERN_LABELS } from '@/types';
 
 export default function IntakePage() {
   const router = useRouter();
-  const { intake, setIntake } = useAppStore();
+  const { intake, setIntake, resetSurveyOnly } = useAppStore();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const concerns: Concern[] = ['sleep', 'eating', 'tantrum', 'social', 'learning'];
@@ -57,6 +57,7 @@ export default function IntakePage() {
 
   const handleSubmit = () => {
     if (validate()) {
+      resetSurveyOnly();
       router.push('/survey');
     }
   };
@@ -107,8 +108,8 @@ export default function IntakePage() {
                   type="button"
                   onClick={() => setIntake({ gender: 'male' })}
                   className={`flex-1 h-14 rounded-2xl border-2 text-[15px] font-bold transition-all ${intake.gender === 'male'
-                      ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                      : `bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 shadow-sm`
+                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                    : `bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 shadow-sm`
                     }`}
                 >
                   남아
@@ -117,8 +118,8 @@ export default function IntakePage() {
                   type="button"
                   onClick={() => setIntake({ gender: 'female' })}
                   className={`flex-1 h-14 rounded-2xl border-2 text-[15px] font-bold transition-all ${intake.gender === 'female'
-                      ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                      : `bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 shadow-sm`
+                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                    : `bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 shadow-sm`
                     }`}
                 >
                   여아
@@ -208,8 +209,8 @@ export default function IntakePage() {
                   type="button"
                   onClick={() => toggleConcern(concern)}
                   className={`px-5 py-3 rounded-2xl text-[14px] font-bold transition-all border-2 ${isActive
-                      ? 'bg-primary/10 border-primary text-primary shadow-sm shadow-primary/10'
-                      : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'
+                    ? 'bg-primary/10 border-primary text-primary shadow-sm shadow-primary/10'
+                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'
                     }`}
                 >
                   {CONCERN_LABELS[concern]}

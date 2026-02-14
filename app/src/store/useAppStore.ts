@@ -28,6 +28,7 @@ interface AppState {
 
   // Reset all
   resetAll: () => void;
+  resetSurveyOnly: () => void;
 }
 
 const initialIntake: IntakeFormData = {
@@ -91,6 +92,14 @@ export const useAppStore = create<AppState>()(
           parentingResponses: {},
           analysisResult: null,
           isPaid: false,
+        }),
+      resetSurveyOnly: () =>
+        set({
+          surveyProgress: 0,
+          cbqResponses: {},
+          atqResponses: {},
+          parentingResponses: {},
+          analysisResult: null,
         }),
     }),
     {

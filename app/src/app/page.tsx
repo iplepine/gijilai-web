@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useAppStore } from '@/store/useAppStore'; // Add this line
 import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
@@ -13,6 +14,7 @@ import { CHILD_QUESTIONS } from '@/data/questions';
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, resetSurveyOnly } = useAppStore(); // Added useAppStore destructuring
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [reports, setReports] = useState<ReportData[]>([]);
@@ -518,7 +520,10 @@ export default function HomePage() {
 
               <div className="w-full space-y-3">
                 <button
-                  onClick={() => router.push('/survey')}
+                  onClick={() => {
+                    resetSurveyOnly();
+                    router.push('/survey');
+                  }}
                   className="w-full bg-[#2E7D32] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#2E7D32]/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   <span>테스트 시작하기</span>

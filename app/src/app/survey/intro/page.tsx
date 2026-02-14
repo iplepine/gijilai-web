@@ -2,15 +2,15 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { useSurveyStore } from '../../../store/surveyStore';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function IntroPage() {
     const router = useRouter();
-    const resetSurvey = useSurveyStore((state) => state.resetSurvey);
+    const resetAll = useAppStore((state) => state.resetAll);
 
     const startSurvey = () => {
-        resetSurvey();
-        router.push('/survey/child');
+        resetAll();
+        router.push('/survey');
     };
 
     return (

@@ -44,7 +44,7 @@ export function Navbar({ title, showBack = false, onBackClick, rightIcon, onRigh
             <Icon name={rightIcon} />
           </button>
         ) : (
-          <Icon name="account_circle" className="text-[var(--navy)] dark:text-white" />
+          <div className="size-10" />
         )}
       </div>
     </nav>
