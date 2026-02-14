@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useSurveyStore } from '../../store/surveyStore';
-import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '../../data/questions';
+import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/store/useAppStore';
+import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -17,6 +18,11 @@ import {
 } from 'chart.js';
 import { Radar, Bar } from 'react-chartjs-2';
 import Link from 'next/link';
+import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui/Button';
+import { TemperamentScorer } from '@/lib/TemperamentScorer';
+import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
+import { PRESCRIPTION_DATA } from '@/lib/PrescriptionData';
 
 ChartJS.register(
   RadialLinearScale,
@@ -30,13 +36,12 @@ ChartJS.register(
   LinearScale
 );
 
-import { TemperamentScorer } from '../../lib/TemperamentScorer';
-
 export default function ReportPage() {
-  const answers = useSurveyStore((state) => state.answers);
+  const router = useRouter();
+  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid } = useAppStore();
 
-  const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, answers), [answers]);
-  const parentScores = useMemo(() => TemperamentScorer.calculate(PARENT_QUESTIONS, answers), [answers]);
+  const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any), [cbqResponses]);
+  const parentScores = useMemo(() => TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any), [atqResponses]);
 
   // Parenting Style Scores
   const styleScores = useMemo(() => {
@@ -44,40 +49,46 @@ export default function ReportPage() {
     const counts = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
 
     PARENTING_STYLE_QUESTIONS.forEach(q => {
-      if (answers[q.id]) {
+      const answer = parentingResponses[q.id.toString()];
+      if (answer) {
         const cat = q.category as keyof typeof scores;
         if (cat in scores) {
-          scores[cat] += answers[q.id];
+          scores[cat] += answer;
           counts[cat]++;
         }
       }
     });
     return {
-      Efficacy: scores.Efficacy > 0 ? Math.round((scores.Efficacy / (counts.Efficacy * 5)) * 100) : 0,
-      Autonomy: scores.Autonomy > 0 ? Math.round((scores.Autonomy / (counts.Autonomy * 5)) * 100) : 0,
-      Responsiveness: scores.Responsiveness > 0 ? Math.round((scores.Responsiveness / (counts.Responsiveness * 5)) * 100) : 0,
+      Efficacy: counts.Efficacy > 0 ? Math.round((scores.Efficacy / (counts.Efficacy * 5)) * 100) : 0,
+      Autonomy: counts.Autonomy > 0 ? Math.round((scores.Autonomy / (counts.Autonomy * 5)) * 100) : 0,
+      Responsiveness: counts.Responsiveness > 0 ? Math.round((scores.Responsiveness / (counts.Responsiveness * 5)) * 100) : 0,
     }
-  }, [answers]);
+  }, [parentingResponses]);
 
+  // Temperament Classification
+  const childType = useMemo(() => TemperamentClassifier.analyze(childScores), [childScores]);
+  const prescription = useMemo(() => PRESCRIPTION_DATA[childType.label] || PRESCRIPTION_DATA["무한한 잠재력의 새싹"], [childType]);
 
   const radarData = {
-    labels: ['자극 추구 (NS)', '위험 회피 (HA)', '사회적 민감성 (RD)', '지속성 (P)'],
+    labels: ['자극 추구', '위험 회피', '사회적 민감성', '지속성'],
     datasets: [
       {
         label: '아이 기질',
         data: [childScores.NS, childScores.HA, childScores.RD, childScores.P],
-        backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        borderColor: 'rgba(255, 159, 64, 1)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(255, 159, 64, 1)',
+        backgroundColor: 'rgba(78, 205, 196, 0.2)',
+        borderColor: '#4ECDC4',
+        borderWidth: 3,
+        pointBackgroundColor: '#4ECDC4',
+        pointRadius: 4,
       },
       {
         label: '부모 기질',
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+        borderColor: '#FF6B6B',
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+        pointBackgroundColor: '#FF6B6B',
+        pointRadius: 0,
         borderDash: [5, 5],
       },
     ],
@@ -86,16 +97,21 @@ export default function ReportPage() {
   const radarOptions = {
     scales: {
       r: {
-        angleLines: {
-          display: false
-        },
+        angleLines: { display: true, color: 'rgba(0,0,0,0.05)' },
+        grid: { color: 'rgba(0,0,0,0.05)' },
         suggestedMin: 0,
         suggestedMax: 100,
+        ticks: { display: false, stepSize: 20 },
+        pointLabels: {
+          font: { size: 11, weight: 'bold' as const },
+          color: '#64748b'
+        }
       },
     },
     plugins: {
       legend: {
         position: 'bottom' as const,
+        labels: { boxWidth: 12, font: { size: 12, weight: 'bold' as const } }
       }
     }
   };
@@ -104,201 +120,231 @@ export default function ReportPage() {
     labels: ['양육 효능감', '자율성 지지', '정서적 반응성'],
     datasets: [
       {
-        label: '나의 점수',
         data: [styleScores.Efficacy, styleScores.Autonomy, styleScores.Responsiveness],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
-        ],
-        borderColor: [
-          'rgb(75, 192, 192)',
-          'rgb(153, 102, 255)',
-          'rgb(255, 159, 64)',
-        ],
-        borderWidth: 1,
+        backgroundColor: ['#FFD93D', '#6C5CE7', '#FF6B6B'],
+        borderRadius: 8,
+        barThickness: 32,
       }
     ]
   };
 
+  // Simple Logic for BCI
   const barOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     scales: {
       y: {
         beginAtZero: true,
-        max: 100
+        max: 100,
+        grid: { display: false },
+        ticks: { font: { size: 10 } }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 11, weight: 'bold' as const } }
       }
     },
     plugins: {
-      legend: {
-        display: false
-      }
+      legend: { display: false }
     }
   };
 
-  // Simple Logic for BCI (Average difference)
   const bciScore = useMemo(() => {
-    if (!answers[1]) return 0;
     const diff =
       Math.abs(childScores.NS - parentScores.NS) +
       Math.abs(childScores.HA - parentScores.HA) +
       Math.abs(childScores.RD - parentScores.RD) +
       Math.abs(childScores.P - parentScores.P);
-
-    // Average difference. 
-    // Spec says BCI = |C - P|. Since we normalized to 100, a diff of 100 is max.
-    // If we use raw scores (1-5), max diff is 4.
-    // Let's use the normalized scores (0-100) for resolution. Max diff is 100 per dimension.
-    // Average Diff = Total Diff / 4.
     return diff / 4;
-  }, [childScores, parentScores, answers]);
+  }, [childScores, parentScores]);
 
-  // 3D Dynamic Matching Logic
   const analysisResult = useMemo(() => {
-    let type = 'NORMAL'; // NORMAL, MITIGATED, CRISIS
+    let type = 'NORMAL';
     let message = '서로 다른 기질이지만, 부모님의 노력으로 균형을 맞춰가고 있습니다.';
-
-    // Thresholds (assuming normalized 0-100 scale)
-    // BCI >= 3.0 on 5-point scale => 60 on 100-point scale.
-    const isHighBCI = bciScore >= 40; // 2 points diff = 40. Strict: 60. Let's use 40 as "Noticeable".
-
-    // Specific Conflict: Child NS High vs Parent HA High
-    const isConflictPattern = childScores.NS >= 80 && parentScores.HA >= 80;
+    const isHighBCI = bciScore >= 40;
+    const isConflictPattern = childScores.NS >= 70 && parentScores.HA >= 70;
 
     if (isHighBCI || isConflictPattern) {
-      // Check Mitigation (Autonomy >= 4 -> 80)
-      if (styleScores.Autonomy >= 80) {
+      if (styleScores.Autonomy >= 70) {
         type = 'MITIGATED';
-        message = '기질적인 차이가 크지만, 부모님의 높은 [자율성 지지] 덕분에 아이가 이를 건강하게 극복하고 있습니다. 훌륭한 양육 태도입니다!';
-      }
-      // Check Crisis (Responsiveness <= 2 -> 40)
-      else if (styleScores.Responsiveness <= 40) {
+        message = '기질적인 차이가 크지만, 부모님의 높은 [자율성 지지] 덕분에 아이가 이를 건강하게 극복하고 있습니다.';
+      } else if (styleScores.Responsiveness <= 50) {
         type = 'CRISIS';
-        message = '현재 기질적 갈등이 심화되고 있습니다. 부모님의 [정서적 반응성]을 높여 아이의 마음을 먼저 읽어주는 노력이 시급합니다.';
-      }
-      else {
+        message = '현재 기질적 갈등이 심화되고 있습니다. 아이의 마음을 먼저 읽어주는 [정서적 반응성]을 높이는 노력이 필요합니다.';
+      } else {
         message = '기질 차이로 인한 갈등 가능성이 있습니다. 서로의 다름을 인정하는 대화가 필요합니다.';
       }
     }
     return { type, message };
   }, [bciScore, childScores, parentScores, styleScores]);
 
-  // BCI color logic
-  const bciColor = bciScore < 20 ? 'text-green-600' : (bciScore < 50 ? 'text-blue-600' : 'text-red-500');
-  const bciBg = bciScore < 20 ? 'bg-green-500' : (bciScore < 50 ? 'bg-blue-500' : 'bg-red-500');
-  const bciLabel = bciScore < 20 ? '최상의 궁합' : (bciScore < 50 ? '안정적 조화' : '갈등 주의');
+  const bciColor = bciScore < 25 ? 'text-teal-600' : (bciScore < 55 ? 'text-indigo-600' : 'text-rose-500');
+  const bciBg = bciScore < 25 ? 'bg-teal-500' : (bciScore < 55 ? 'bg-indigo-500' : 'bg-rose-500');
+  const bciLabel = bciScore < 25 ? '안정적 조화' : (bciScore < 55 ? '균형 잡힌 관계' : '주의 깊은 관찰 필요');
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-primary text-white p-6 pb-24 rounded-b-[40px] shadow-lg relative" style={{ backgroundColor: '#6C5CE7' }}>
-        <h1 className="text-2xl font-bold text-center mb-2">분석 결과</h1>
-        <p className="text-center opacity-90">Aina Garden이 분석한 우리 가족 리포트</p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans">
+      {/* Header Overlay */}
+      <div className="bg-primary pt-12 pb-32 px-6 rounded-b-[3rem] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10 text-center space-y-2">
+          <h1 className="text-3xl font-black text-white tracking-tight">분석 리포트</h1>
+          <p className="text-white/70 text-sm font-medium">Aina Garden이 발견한 {intake.childName || '아이'}의 세상</p>
+        </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 -mt-16 space-y-6">
+      <div className="max-w-md mx-auto px-6 -mt-20 space-y-8 relative z-20">
 
-        {/* Summary Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-xl text-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            "에너지 넘치는 <span className="text-orange-500">열정 탐험가</span>"
-          </h2>
-          <p className="text-gray-600 mb-4 text-sm">
-            호기심이 많고 새로운 것을 두려워하지 않는 유형입니다.
-          </p>
-          <div className="w-24 h-24 mx-auto bg-orange-100 rounded-full flex items-center justify-center text-4xl mb-4">
-            🦁
-          </div>
-          <div className="flex justify-center gap-2 flex-wrap">
-            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs">#호기심대장</span>
-            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs">#활동적</span>
-            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs">#충동적</span>
-          </div>
-        </div>
+        {/* Tier 2: Heart Prescription (Only if Paid) */}
+        {isPaid && (
+          <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-primary/10 border border-primary/20 space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4">
+              <span className="text-[10px] font-bold bg-primary text-white px-2 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-primary/20">Paid Content</span>
+            </div>
 
-        {/* Radar Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-md">
-          <h3 className="font-bold text-gray-800 mb-4 flex items-center">
-            📊 기질 프로파일 비교
-          </h3>
-          <div className="h-64">
-            <Radar data={radarData} options={radarOptions} />
-          </div>
-          <p className="text-xs text-gray-500 text-center mt-4 bg-gray-50 p-3 rounded-lg">
-            * 점선(부모)과 실선(아이)의 차이가 클수록 갈등 가능성이 높습니다.
-          </p>
-        </div>
-
-        {/* BCI Score with Dynamic Analysis */}
-        <div className={`bg-white rounded-2xl p-6 shadow-md border-2 ${analysisResult.type === 'CRISIS' ? 'border-red-400' : (analysisResult.type === 'MITIGATED' ? 'border-green-400' : 'border-transparent')}`}>
-          <h3 className="font-bold text-gray-800 mb-4 flex justify-between">
-            <span>🤝 부모-자녀 적합도 (BCI)</span>
-            {analysisResult.type === 'MITIGATED' && <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Great!</span>}
-            {analysisResult.type === 'CRISIS' && <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">Warning</span>}
-          </h3>
-          <div className="relative pt-4 pb-2">
-            <div className="flex mb-2 items-center justify-between">
-              <div>
-                <span className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${bciScore < 50 ? 'bg-blue-200' : 'bg-red-200'} ${bciColor}`}>
-                  {bciLabel}
-                </span>
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary text-xs font-bold">
+                <span className="animate-pulse">✨</span> 오늘의 마음 처방전
               </div>
-              <div className="text-right">
-                <span className={`text-xs font-semibold inline-block ${bciColor}`}>
-                  충돌지수 {Math.round(bciScore)}점
-                </span>
+
+              {/* 1. Seed's Language */}
+              <div className="space-y-3">
+                <h4 className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em]">아이의 신호 통역</h4>
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border-l-4 border-primary italic text-[15px] text-slate-700 dark:text-slate-200 leading-relaxed break-keep">
+                  "{prescription.interpretation}"
+                </div>
+              </div>
+
+              {/* 2. Magic Word */}
+              <div className="space-y-3">
+                <h4 className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em]">마법의 한마디</h4>
+                <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 space-y-3">
+                  <p className="text-[14px] font-bold text-primary flex items-center gap-2">
+                    <Icon name="chat" size="sm" /> 오늘 바로 이렇게 말해보세요
+                  </p>
+                  <p className="text-[16px] font-black text-slate-800 dark:text-white leading-relaxed break-keep">
+                    {prescription.magicWord}
+                  </p>
+                </div>
+              </div>
+
+              {/* 3. Illustration Preview (Visual) */}
+              <div className="space-y-3 pt-2">
+                <h4 className="text-[13px] font-black text-slate-400 uppercase tracking-[0.2em]">나의 정원 카드</h4>
+                <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-lg group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 backdrop-blur-[2px]"></div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                    <span className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-500">{childType.emoji}</span>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{prescription.gardenTheme.soil}</p>
+                    <p className="text-lg font-black text-slate-800 dark:text-white">{prescription.gardenTheme.plant}</p>
+                  </div>
+                  <div className="absolute bottom-4 left-0 right-0 text-center">
+                    <button className="text-[10px] font-bold text-primary underline">전체 이미지 다운로드</button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
-              <div style={{ width: `${Math.min(100, bciScore)}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-1000 ${bciBg}`}></div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-700 leading-relaxed font-medium">
-              {analysisResult.message}
-            </div>
-          </div>
-        </div>
+          </section>
+        )}
 
-        {/* Parenting Style Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-md">
-          <h3 className="font-bold text-green-800 mb-4 flex items-center">
-            🌱 나의 양육 스타일 점검
-          </h3>
-          <div className="h-48">
-            <Bar data={barData} options={barOptions} />
-          </div>
-        </div>
-
-        {/* Solutions */}
-        <div className="space-y-3">
-          <h3 className="font-bold text-gray-800 ml-1">💡 맞춤 솔루션</h3>
-
-          <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500 cursor-pointer hover:shadow-md transition">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-bold text-gray-800 text-sm mb-1">[놀이법] 에너지 발산 미션</h4>
-                <p className="text-xs text-gray-500">15분간의 장애물 달리기 후 차분한 마무리</p>
+        {/* Child Temperament Card (Free Contents Start) */}
+        {!isPaid && (
+          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-4 shadow-xl border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center">
+            <div className="w-full aspect-square relative rounded-[2rem] overflow-hidden mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-400/20 to-yellow-400/20"></div>
+              <div className="absolute inset-0 flex items-center justify-center text-8xl">
+                {childType.emoji}
               </div>
-              <span className="text-xl">🏃</span>
+            </div>
+            <div className="px-4 pb-4 space-y-2">
+              <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+                "{childType.label}"
+              </h2>
+              <p className="text-slate-500 text-sm leading-relaxed px-4 break-keep">
+                {childType.desc}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Detailed Analysis Section (Paid or Scrollable) */}
+        <div className="space-y-8">
+          {/* Radar Chart Section */}
+          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-8">
+            <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
+              <Icon name="analytics" className="text-primary" /> 기질 프로파일 지표
+            </h3>
+            <div className="h-64 relative">
+              <Radar data={radarData} options={radarOptions} />
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic">
+              * 점선(부모)과 실선(아이)의 차이가 클수록 갈등 가능성이 높지만,<br />양육 태도로 충분히 조화로운 성장이 가능합니다.
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-500 cursor-pointer hover:shadow-md transition">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-bold text-gray-800 text-sm mb-1">[대화법] 감정 수용하기</h4>
-                <p className="text-xs text-gray-500">"그만해!" 대신 "더 놀고 싶었구나"라고 말하기</p>
+          {/* BCI Section */}
+          <div className={`bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border-2 transition-all ${analysisResult.type === 'CRISIS' ? 'border-rose-400' : (analysisResult.type === 'MITIGATED' ? 'border-teal-400' : 'border-transparent')}`}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-black text-slate-800 dark:text-white text-lg">교감 지수 (BCI)</h3>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${bciScore < 40 ? 'bg-teal-100 text-teal-600' : 'bg-rose-100 text-rose-600'}`}>
+                {bciLabel}
+              </span>
+            </div>
+
+            <div className="space-y-6">
+              <div className="relative">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Difference Index</span>
+                  <span className={`text-2xl font-black ${bciColor}`}>{Math.round(bciScore)}</span>
+                </div>
+                <div className="h-3 w-full bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+                  <div
+                    style={{ width: `${Math.min(100, bciScore)}%` }}
+                    className={`h-full transition-all duration-1000 ease-out ${bciBg}`}
+                  />
+                </div>
               </div>
-              <span className="text-xl">💬</span>
+              <p className="text-[14px] text-slate-600 dark:text-slate-300 leading-relaxed break-keep font-medium">
+                {analysisResult.message}
+              </p>
             </div>
           </div>
+
+          {/* Parenting Style Section */}
+          <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6">
+            <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
+              <Icon name="eco" className="text-green-500" /> 나의 양육 토양 점검
+            </h3>
+            <div className="h-56">
+              <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
+            </div>
+          </div>
+
+          {/* Locked Content Preview (If not paid) */}
+          {!isPaid && (
+            <div className="bg-slate-800 rounded-[2.5rem] p-10 text-center space-y-6">
+              <div className="text-4xl mb-2">🔒</div>
+              <h4 className="text-xl font-bold text-white">더 깊은 처방이 필요한가요?</h4>
+              <p className="text-slate-400 text-sm leading-relaxed px-4">
+                아이의 행동을 통역해주는 [마음 처방전]과<br />
+                오늘 밤 바로 써먹는 [마법의 한마디]를 확인하세요.
+              </p>
+              <Button onClick={() => router.push('/payment')} variant="primary" fullWidth className="h-14 rounded-2xl">
+                990원에 처방전 구매하기
+              </Button>
+            </div>
+          )}
         </div>
 
-        <div className="pt-8 pb-4 text-center">
-          <Link href="/survey/intro" className="text-gray-400 text-sm underline">
-            검사 다시하기
+        {/* Footer Actions */}
+        <div className="flex flex-col gap-4 pt-10 pb-10">
+          <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+            결과 공유하고 할인권 받기
+          </Button>
+          <Link href="/" className="text-slate-400 text-sm text-center font-bold hover:text-primary transition-colors">
+            홈 정원으로 돌아가기
           </Link>
         </div>
-
       </div>
     </div>
   );
