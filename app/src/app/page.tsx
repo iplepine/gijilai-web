@@ -45,12 +45,19 @@ export default function HomePage() {
 
   const [loading, setLoading] = useState(true);
 
-  // Derived Temperament
+  // Derived Temperament (Parent = Soil, Child = Seed + Plant)
   const temperamentInfo = (() => {
     if (!latestSurvey || !latestSurvey.answers) return null;
     const answers = latestSurvey.answers as Record<number, number>;
     const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, answers);
-    return TemperamentClassifier.analyze(scores);
+
+    // Parent scores for soil context (defaults if not surveyed yet)
+    let parentScores = { NS: 50, HA: 50, RD: 50, P: 50 };
+    if (parentSurvey && parentSurvey.answers) {
+      parentScores = TemperamentScorer.calculate(CHILD_QUESTIONS, parentSurvey.answers as any);
+    }
+
+    return TemperamentClassifier.analyze(scores, parentScores);
   })();
 
   useEffect(() => {

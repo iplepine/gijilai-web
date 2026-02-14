@@ -65,15 +65,15 @@ export default function ReportPage() {
     }
   }, [parentingResponses]);
 
-  // Temperament Classification
-  const childType = useMemo(() => TemperamentClassifier.analyze(childScores), [childScores]);
+  // Temperament Classification (Parent = Soil, Child = Seed + Plant)
+  const childType = useMemo(() => TemperamentClassifier.analyze(childScores, parentScores), [childScores, parentScores]);
   const prescription = useMemo(() => PRESCRIPTION_DATA[childType.label] || PRESCRIPTION_DATA["무한한 잠재력의 새싹"], [childType]);
 
   const radarData = {
     labels: ['자극 추구', '위험 회피', '사회적 민감성', '지속성'],
     datasets: [
       {
-        label: '아이의 씨앗 (Seed)',
+        label: '아이의 식물 (Plant)',
         data: [childScores.NS, childScores.HA, childScores.RD, childScores.P],
         backgroundColor: 'rgba(78, 205, 196, 0.2)',
         borderColor: '#4ECDC4',
@@ -82,7 +82,7 @@ export default function ReportPage() {
         pointRadius: 4,
       },
       {
-        label: '정원의 환경 (Weather)',
+        label: '가드너의 토양 (Soil)',
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
         backgroundColor: 'rgba(255, 107, 107, 0.1)',
         borderColor: '#FF6B6B',
@@ -247,7 +247,7 @@ export default function ReportPage() {
           </section>
         )}
 
-        {/* Child Temperament Card (Free Contents Start) */}
+        {/* Child Temperament Card (Free Contents Start) - Ecosystem Hierarchy: Soil -> Seed -> Plant */}
         {!isPaid && (
           <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-6 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-6">
             <div className="w-full aspect-square relative rounded-[2.5rem] overflow-hidden">
@@ -257,24 +257,39 @@ export default function ReportPage() {
               </div>
             </div>
 
-            <div className="space-y-4 px-4 pb-4">
+            <div className="space-y-6 px-4 pb-4">
+              {/* Hierarchy 1: Soil (Parent) */}
               <div className="space-y-1">
-                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">아이의 바탕(토양)</span>
-                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">"{childType.soil.label}"</h3>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">가드너가 일군 토양</span>
+                <div className="flex flex-col">
+                  <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">"{childType.soil.label}"</h3>
+                  <p className="text-[11px] text-slate-400">{childType.soil.desc}</p>
+                </div>
               </div>
 
-              <div className="w-8 h-1 bg-slate-100 dark:bg-slate-800 mx-auto rounded-full"></div>
+              <div className="w-12 h-[1px] bg-slate-100 dark:bg-slate-800 mx-auto"></div>
 
+              {/* Hierarchy 2: Seed (Child Nature) */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">아이의 타고난 씨앗</span>
+                <div className="flex flex-col">
+                  <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">"{childType.seed.label}"</h3>
+                  <p className="text-[11px] text-slate-400">{childType.seed.desc}</p>
+                </div>
+              </div>
+
+              <div className="w-12 h-[1px] bg-slate-100 dark:bg-slate-800 mx-auto"></div>
+
+              {/* Hierarchy 3: Plant (Current Expression) */}
               <div className="space-y-2">
-                <span className="text-[11px] font-black text-secondary uppercase tracking-[0.2em]">잠재된 씨앗</span>
+                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">피어난 식물의 모습</span>
                 <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">
                   {childType.label}
                 </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep">
+                  {childType.desc}
+                </p>
               </div>
-
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep">
-                {childType.desc}
-              </p>
             </div>
           </div>
         )}
@@ -290,7 +305,7 @@ export default function ReportPage() {
               <Radar data={radarData} options={radarOptions} />
             </div>
             <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-              * 부모의 기질이 만드는 정원의 **날씨(환경)**와 아이의 **씨앗**이 가진 차이를 이해하면,<br />양육의 햇살(스타일)로 더욱 건강한 성장이 가능합니다.
+              * 가드너(부모)가 일군 **토양** 위에서 아이라는 **씨앗**이 만나 <br />현재 어떤 **식물**로 피어났는지 그 조화를 분석합니다.
             </div>
           </div>
 

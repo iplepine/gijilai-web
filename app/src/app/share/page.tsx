@@ -13,15 +13,22 @@ import { CHILD_QUESTIONS } from '@/data/questions';
 
 export default function SharePage() {
   const router = useRouter();
-  const { intake, cbqResponses } = useAppStore();
+  const { intake, cbqResponses, atqResponses } = useAppStore();
   const [copied, setCopied] = useState(false);
   const referralCode = 'AINA-GARDEN-' + (intake.childName ? intake.childName.toUpperCase() : 'FRIEND');
 
-  // Calculate Temperament
+  // Calculate Temperament (Parent = Soil, Child = Seed + Plant)
   const temperamentInfo = (() => {
     if (!cbqResponses || Object.keys(cbqResponses).length === 0) return null;
-    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses);
-    return TemperamentClassifier.analyze(scores);
+    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
+
+    // Parent scores for soil context
+    let parentScores = { NS: 50, HA: 50, RD: 50, P: 50 };
+    if (atqResponses && Object.keys(atqResponses).length > 0) {
+      parentScores = TemperamentScorer.calculate(CHILD_QUESTIONS, atqResponses as any);
+    }
+
+    return TemperamentClassifier.analyze(scores, parentScores);
   })();
 
   const handleCopyCode = async () => {
