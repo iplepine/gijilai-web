@@ -240,7 +240,7 @@ export default function HomePage() {
                         <div className="flex flex-col items-center gap-1 text-primary">
                           <div className="flex items-center gap-1">
                             <span className="material-symbols-outlined text-[16px] font-bold">
-                              {temperamentInfo ? 'visibility' : 'help_outline'}
+                              {temperamentInfo ? 'eco' : 'help_outline'}
                             </span>
                             <span className="text-[13px] font-bold relative z-20">
                               {temperamentInfo ? temperamentInfo.label : <span className="text-gray-400 font-medium">어떤 씨앗일까요?</span>}
