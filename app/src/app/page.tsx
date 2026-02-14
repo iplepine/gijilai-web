@@ -181,7 +181,7 @@ export default function HomePage() {
     const months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
     if (months <= 36) return `${months}개월`;
     const years = Math.floor(months / 12);
-    return `만 ${years}세`;
+    return `${years}세`;
   })() : "생일 정보 없음";
 
   return (
