@@ -200,7 +200,7 @@ export default function HomePage() {
           <div className="relative w-full flex flex-col items-center">
 
             {/* 1. The Child "Bloom" (Photo + Stem + Leaves) */}
-            <div className="relative flex flex-col items-center z-20 mb-[-12px]">
+            <div className="relative flex flex-col items-center z-20 mb-[-45px]">
               {/* Photo Frame (Bloom) */}
               <div
                 className="w-40 h-40 rounded-full border-[6px] border-white shadow-2xl overflow-hidden bg-slate-100 relative group cursor-pointer"
@@ -237,18 +237,18 @@ export default function HomePage() {
               {/* Stem & Leaves */}
               <div className="relative flex flex-col items-center mt-[-4px]">
                 {/* Stem */}
-                <div className="w-2 h-20 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full"></div>
+                <div className="w-2 h-24 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full"></div>
 
-                {/* Leaves - Moved up significantly to avoid covering name */}
-                <div className="absolute top-0 left-[-48px] w-12 h-24 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-35deg] origin-right shadow-sm border border-white/20"></div>
-                <div className="absolute top-[-4px] right-[-48px] w-12 h-24 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[35deg] origin-left shadow-sm border border-white/20"></div>
+                {/* Leaves - Overlapping position for the name */}
+                <div className="absolute top-12 left-[-50px] w-14 h-28 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20 opacity-85"></div>
+                <div className="absolute top-10 right-[-50px] w-14 h-28 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20 opacity-85"></div>
               </div>
             </div>
 
             {/* 2. The Pot (Soil + Base) */}
             <div className="w-full max-w-[340px] flex flex-col items-stretch shadow-2xl rounded-[3rem] overflow-hidden border border-earth-brown/10 animate-fade-in-up">
               {/* Top Part: Soil/Pot Body */}
-              <div className="bg-[#EAD7C3] p-8 pt-16 flex flex-col items-center text-center relative text-balance">
+              <div className="bg-[#EAD7C3] p-8 pt-12 flex flex-col items-center text-center relative text-balance">
                 {/* Soft Inner Shadow */}
                 <div className="absolute top-0 left-0 w-full h-6 bg-gradient-to-b from-black/5 to-transparent"></div>
 
