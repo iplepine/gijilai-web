@@ -195,106 +195,103 @@ export default function HomePage() {
           </button>
         </header>
 
-        {/* New Garden Pot Profile Section */}
+        {/* New Garden Pot Profile Section - Refined Z-Layers */}
         <section className="w-full px-6 mb-16 mt-6">
           <div className="relative w-full flex flex-col items-center">
 
-            {/* 1. The Child "Bloom" (Photo + Stem + Leaves) */}
-            <div className="relative flex flex-col items-center z-20 mb-[-45px]">
-              {/* Photo Frame (Bloom) */}
-              <div
-                className="w-40 h-40 rounded-full border-[6px] border-white shadow-2xl overflow-hidden bg-slate-100 relative group cursor-pointer"
-                onClick={handleProfileClick}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-
-                {mainChild?.image_url ? (
-                  <img src={mainChild.image_url} alt={childName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
-                    <span className="material-icons-round text-5xl">face</span>
-                    <span className="text-[10px] font-bold mt-1">사진 등록</span>
-                  </div>
-                )}
-
-                {uploading && (
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
-                  <span className="material-icons-round text-white opacity-0 group-hover:opacity-100 transition-opacity">photo_camera</span>
+            {/* 4. The Child Bloom (Photo) - Topmost (z-40) */}
+            <div
+              className="w-40 h-40 rounded-full border-[6px] border-white shadow-2xl overflow-hidden bg-slate-100 relative z-40 group cursor-pointer"
+              onClick={handleProfileClick}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+              {mainChild?.image_url ? (
+                <img src={mainChild.image_url} alt={childName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                  <span className="material-icons-round text-5xl">face</span>
+                  <span className="text-[10px] font-bold mt-1">사진 등록</span>
                 </div>
-              </div>
-
-              {/* Stem & Leaves */}
-              <div className="relative flex flex-col items-center mt-[-4px]">
-                {/* Stem */}
-                <div className="w-2 h-24 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full"></div>
-
-                {/* Leaves - Overlapping position for the name */}
-                <div className="absolute top-12 left-[-50px] w-14 h-28 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20 opacity-85"></div>
-                <div className="absolute top-10 right-[-50px] w-14 h-28 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20 opacity-85"></div>
+              )}
+              {uploading && (
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
+                <span className="material-icons-round text-white opacity-0 group-hover:opacity-100 transition-opacity">photo_camera</span>
               </div>
             </div>
 
-            {/* 2. The Pot (Soil + Base) */}
-            <div className="w-full max-w-[340px] flex flex-col items-stretch shadow-2xl rounded-[3rem] overflow-hidden border border-earth-brown/10 animate-fade-in-up">
-              {/* Top Part: Soil/Pot Body */}
-              <div className="bg-[#EAD7C3] p-8 pt-12 flex flex-col items-center text-center relative text-balance">
-                {/* Soft Inner Shadow */}
-                <div className="absolute top-0 left-0 w-full h-6 bg-gradient-to-b from-black/5 to-transparent"></div>
+            {/* Plant & Pot Composite Area */}
+            <div className="relative w-full max-w-[340px] mt-[-4px] flex flex-col items-center">
 
-                {mainChild ? (
-                  <>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
-                      {childName} <span className="text-sm font-bold text-earth-brown/60 ml-1">{ageString}</span>
-                    </h2>
-                    <div className="flex flex-col items-center gap-2 mt-3">
-                      {temperamentInfo ? (
-                        <>
-                          <div className="px-4 py-1 bg-white/40 rounded-full text-[13px] font-bold text-earth-brown border border-white/30 backdrop-blur-sm">
-                            {temperamentInfo.seed.label}
-                          </div>
-                          <p className="text-[17px] font-black text-primary flex items-center gap-1.5 mt-1">
-                            <span className="material-symbols-outlined text-[20px] fill-1">eco</span>
-                            {temperamentInfo.label}
-                          </p>
-                        </>
-                      ) : (
-                        <div className="py-2">
-                          <p className="text-sm font-bold text-earth-brown/40 italic">어떤 씨앗인지 궁금해요!</p>
-                          <button
-                            onClick={() => setShowSurveyIntro(true)}
-                            className="mt-2 text-xs font-bold text-primary underline underline-offset-4"
-                          >
-                            기질 테스트 시작하기
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="py-6 flex flex-col items-center">
-                    <button
-                      onClick={() => setShowOnboarding(true)}
-                      className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all"
-                    >
-                      첫 아이 등록하기
-                    </button>
-                  </div>
-                )}
+              {/* 1. Pot Body Background (Soil) - Bottom (z-0) */}
+              <div className="absolute inset-0 top-16 bg-[#EAD7C3] rounded-[3rem] shadow-2xl border border-earth-brown/10 z-0">
+                {/* Soft Inner Shadow */}
+                <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-black/5 to-transparent rounded-t-[3rem]"></div>
               </div>
 
-              {/* Bottom Part: Base (Guardian Info) */}
-              <div className="bg-[#D9C4B0] px-6 py-6 flex flex-col items-center text-center border-t border-white/10">
+              {/* 2. Stem (z-10) */}
+              <div className="relative w-2 h-28 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full z-10"></div>
+
+              {/* 3. Leaves (z-20) */}
+              <div className="absolute top-28 left-[calc(50%-60px)] w-14 h-28 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20 z-20"></div>
+              <div className="absolute top-26 right-[calc(50%-60px)] w-14 h-28 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20 z-20"></div>
+
+              {/* 5. Child Info (Name) - Above Leaves (z-30) */}
+              <div className="relative w-full pt-4 pb-8 flex flex-col items-center text-center z-30 pointer-events-none">
+                <div className="pointer-events-auto">
+                  {mainChild ? (
+                    <>
+                      <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
+                        {childName} <span className="text-sm font-bold text-earth-brown/60 ml-1">{ageString}</span>
+                      </h2>
+                      <div className="flex flex-col items-center gap-2 mt-3">
+                        {temperamentInfo ? (
+                          <>
+                            <div className="px-4 py-1 bg-white/50 rounded-full text-[13px] font-bold text-earth-brown border border-white/40 backdrop-blur-sm">
+                              {temperamentInfo.seed.label}
+                            </div>
+                            <p className="text-[17px] font-black text-primary flex items-center gap-1.5 mt-1">
+                              <span className="material-symbols-outlined text-[20px] fill-1">eco</span>
+                              {temperamentInfo.label}
+                            </p>
+                          </>
+                        ) : (
+                          <div className="py-2">
+                            <p className="text-sm font-bold text-earth-brown/40 italic">어떤 씨앗인지 궁금해요!</p>
+                            <button
+                              onClick={() => setShowSurveyIntro(true)}
+                              className="mt-2 text-xs font-bold text-primary underline underline-offset-4"
+                            >
+                              기질 테스트 시작하기
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-6 flex flex-col items-center">
+                      <button
+                        onClick={() => setShowOnboarding(true)}
+                        className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                      >
+                        첫 아이 등록하기
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pot Base Area (Guardian Info) - Attached to bottom of background */}
+              <div className="relative w-full bg-[#D9C4B0] px-6 py-6 flex flex-col items-center text-center border-t border-white/10 rounded-b-[3rem] z-30">
                 <div className="flex items-center gap-2.5 text-earth-brown/70">
                   <span className="material-symbols-outlined text-xl">layers</span>
                   <div className="text-[13px] font-bold leading-tight">
