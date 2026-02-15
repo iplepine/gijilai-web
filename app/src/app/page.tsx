@@ -195,15 +195,17 @@ export default function HomePage() {
           </button>
         </header>
 
-        {/* Double Circle Profile Section */}
-        <section className="w-full px-4 mb-10 mt-4">
+        {/* New Garden Pot Profile Section */}
+        <section className="w-full px-6 mb-16 mt-6">
           <div className="relative w-full flex flex-col items-center">
-            <div className="relative w-[340px] h-[340px] flex items-center justify-center">
-              {/* Outer Soil Blob */}
-              <div className="outer-soil-blob absolute inset-0 bg-soil-beige/50 border border-earth-brown/10"></div>
 
-              {/* Inner Profile Circle / Empty State */}
-              <div className="inner-profile-circle w-56 h-56 bg-white shadow-xl shadow-primary/5 border border-primary/5 flex flex-col items-center justify-center relative z-10 overflow-hidden p-5 transition-colors group">
+            {/* 1. The Child "Bloom" (Photo + Stem + Leaves) */}
+            <div className="relative flex flex-col items-center z-20 mb-[-20px]">
+              {/* Photo Frame (Bloom) */}
+              <div
+                className="w-40 h-40 rounded-full border-[6px] border-white shadow-2xl overflow-hidden bg-slate-100 relative group cursor-pointer"
+                onClick={handleProfileClick}
+              >
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -212,127 +214,118 @@ export default function HomePage() {
                   onChange={handleImageUpload}
                 />
 
+                {mainChild?.image_url ? (
+                  <img src={mainChild.image_url} alt={childName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                    <span className="material-icons-round text-5xl">face</span>
+                    <span className="text-[10px] font-bold mt-1">사진 등록</span>
+                  </div>
+                )}
+
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
+                  <span className="material-icons-round text-white opacity-0 group-hover:opacity-100 transition-opacity">photo_camera</span>
+                </div>
+              </div>
+
+              {/* Stem & Leaves */}
+              <div className="relative flex flex-col items-center mt-[-4px]">
+                {/* Stem */}
+                <div className="w-2 h-20 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full"></div>
+
+                {/* Leaves */}
+                <div className="absolute top-10 left-[-32px] w-10 h-14 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20"></div>
+                <div className="absolute top-8 right-[-32px] w-10 h-14 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20"></div>
+              </div>
+            </div>
+
+            {/* 2. The Pot (Soil + Base) */}
+            <div className="w-full max-w-[340px] flex flex-col items-stretch shadow-2xl rounded-[3rem] overflow-hidden border border-earth-brown/10 animate-fade-in-up">
+              {/* Top Part: Soil/Pot Body */}
+              <div className="bg-[#EAD7C3] p-8 pt-12 flex flex-col items-center text-center relative">
+                {/* Soft Inner Shadow */}
+                <div className="absolute top-0 left-0 w-full h-6 bg-gradient-to-b from-black/5 to-transparent"></div>
+
                 {mainChild ? (
                   <>
-                    <div
-                      className="w-20 h-20 rounded-full border-2 border-soft-leaf shadow-inner overflow-hidden mb-3 bg-gray-100 flex items-center justify-center relative cursor-pointer"
-                      onClick={handleProfileClick}
-                    >
-                      {uploading ? (
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      ) : null}
-                      {mainChild?.image_url ? (
-                        <img src={mainChild.image_url} alt={childName} className="w-full h-full object-cover group-hover:opacity-90 transition-opacity" />
-                      ) : (
-                        <span className="material-icons-round text-gray-300 text-4xl group-hover:text-gray-400 transition-colors">face</span>
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
-                        <span className="material-icons-round text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm">edit</span>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <h2 className="text-lg font-bold text-slate-800 leading-tight">
-                        {childName} <span className="text-sm font-medium text-slate-400 ml-0.5">({ageString})</span>
-                      </h2>
-                      <div className="flex flex-col items-center mt-1">
-                        <div className="flex flex-col items-center gap-1 text-primary">
-                          <div className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[16px] font-bold">
-                              {temperamentInfo ? 'eco' : 'help_outline'}
-                            </span>
-                            <span className="text-[13px] font-bold relative z-20">
-                              {temperamentInfo ? temperamentInfo.label : <span className="text-gray-400 font-medium">어떤 씨앗일까요?</span>}
-                            </span>
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
+                      {childName} <span className="text-sm font-bold text-earth-brown/60 ml-1">{ageString}</span>
+                    </h2>
+                    <div className="flex flex-col items-center gap-2 mt-3">
+                      {temperamentInfo ? (
+                        <>
+                          <div className="px-4 py-1 bg-white/40 rounded-full text-[13px] font-bold text-earth-brown border border-white/30 backdrop-blur-sm">
+                            {temperamentInfo.seed.label}
                           </div>
-                          {temperamentInfo && (
-                            <div className="bg-primary/5 text-primary text-[10px] font-black px-2 py-0.5 rounded-full border border-primary/10">
-                              {temperamentInfo.seed.label}
-                            </div>
-                          )}
+                          <p className="text-[17px] font-black text-primary flex items-center gap-1.5 mt-1">
+                            <span className="material-symbols-outlined text-[20px] fill-1">eco</span>
+                            {temperamentInfo.label}
+                          </p>
+                        </>
+                      ) : (
+                        <div className="py-2">
+                          <p className="text-sm font-bold text-earth-brown/40 italic">어떤 씨앗인지 궁금해요!</p>
+                          <button
+                            onClick={() => setShowSurveyIntro(true)}
+                            className="mt-2 text-xs font-bold text-primary underline underline-offset-4"
+                          >
+                            기질 테스트 시작하기
+                          </button>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center border-2 border-dashed border-slate-200">
-                      <span className="material-icons-round text-slate-300 text-3xl">add</span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-slate-400">아직 등록된<br />아이가 없어요</p>
-                    </div>
+                  <div className="py-6 flex flex-col items-center">
                     <button
                       onClick={() => setShowOnboarding(true)}
-                      className="text-[11px] font-bold bg-primary text-white px-4 py-1.5 rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                      className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all"
                     >
-                      아이 등록하기
+                      첫 아이 등록하기
                     </button>
                   </div>
                 )}
               </div>
 
-              <div className="absolute bottom-6 z-20 flex flex-col items-center gap-1">
-                <div className="bg-[#fff9f0]/90 backdrop-blur-sm px-5 py-2 pebble-shape border border-earth-brown/10 flex items-center gap-1.5 shadow-sm floating-label">
-                  <span className="material-symbols-outlined text-earth-brown text-base">layers</span>
-                  <span className="text-[11px] font-bold text-earth-brown">
-                    양육자 기질: {parentSurvey ? (
-                      <span>따뜻한 토양</span>
-                    ) : (
-                      mainChild ? (
-                        temperamentInfo ? (
-                          <Link href="/survey?type=PARENT" className="underline hover:text-earth-brown/80 cursor-pointer">어떤 흙일까요?</Link>
-                        ) : (
-                          <span className="text-earth-brown/30">테스트 대기 중</span>
-                        )
+              {/* Bottom Part: Base (Guardian Info) */}
+              <div className="bg-[#D9C4B0] px-6 py-6 flex flex-col items-center text-center border-t border-white/10">
+                <div className="flex items-center gap-2.5 text-earth-brown/70">
+                  <span className="material-symbols-outlined text-xl">layers</span>
+                  <div className="text-[13px] font-bold leading-tight">
+                    보호자 기질: <span className="text-slate-800">
+                      {parentSurvey ? (
+                        "따뜻한 토양"
                       ) : (
-                        <span className="text-earth-brown/30" onClick={() => setShowOnboarding(true)}>아이 먼저 등록</span>
-                      )
-                    )}
-                  </span>
+                        mainChild ? (
+                          <Link href="/survey?type=PARENT" className="underline underline-offset-4 decoration-slate-800/30 hover:text-primary transition-colors">어떤 흙일까요?</Link>
+                        ) : (
+                          <span className="opacity-40">아이 먼저 등록</span>
+                        )
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Insight Message */}
-            <div className="text-[13px] text-slate-500 text-center px-10 leading-relaxed mt-8 break-keep">
-              {mainChild ? (
-                <>
-                  {temperamentInfo ? (
-                    <p>
-                      {childName}의 <span className="font-bold text-slate-700">{temperamentInfo.seed.label}</span>에서 돋아난<br />
-                      <span className="text-primary font-bold">{temperamentInfo.label}</span> 기질은 부모님의 따뜻한 지지 속에서<br />
-                      <span className="text-primary font-bold">멋진 강점으로 피어납니다.</span>
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      <p>아직 {childName}의 기질을 잘 모르시나요?</p>
-                      <button
-                        onClick={() => setShowSurveyIntro(true)}
-                        className="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark active:scale-95 transition-all flex items-center justify-center gap-2 animate-pulse-subtle"
-                      >
-                        <span className="material-icons-round text-lg">psychology</span>
-                        <span>기질 테스트 시작하기</span>
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-slate-400 italic">아이를 등록하고 맞춤형 정원을 가꿔보세요!</p>
-                  <button
-                    onClick={() => setShowOnboarding(true)}
-                    className="w-full bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    <span className="material-icons-round text-lg">child_care</span>
-                    <span>첫 아이 등록하기</span>
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Insight Message (Small context below pot) */}
+            {temperamentInfo && (
+              <div className="mt-8 px-8 text-center">
+                <p className="text-[13px] text-slate-500 leading-relaxed break-keep">
+                  {childName}의 <span className="font-bold text-slate-700">{temperamentInfo.seed.label}</span>에서 돋아난 싹이<br />
+                  부모님의 따뜻한 토양 위에서 활짝 피어나고 있어요.
+                </p>
+              </div>
+            )}
           </div>
         </section>
+
 
 
 
