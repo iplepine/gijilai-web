@@ -240,8 +240,8 @@ export default function HomePage() {
                 <div className="w-2 h-20 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full"></div>
 
                 {/* Leaves */}
-                <div className="absolute top-10 left-[-32px] w-10 h-14 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20"></div>
-                <div className="absolute top-8 right-[-32px] w-10 h-14 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20"></div>
+                <div className="absolute top-8 left-[-44px] w-12 h-24 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-45deg] origin-right shadow-sm border border-white/20"></div>
+                <div className="absolute top-6 right-[-44px] w-12 h-24 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[45deg] origin-left shadow-sm border border-white/20"></div>
               </div>
             </div>
 
