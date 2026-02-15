@@ -195,7 +195,7 @@ export default function HomePage() {
           </button>
         </header>
 
-        {/* New Garden Pot Profile Section - Refined Z-Layers */}
+        {/* New Garden Pot Profile Section - Final Z-Layer Refinement */}
         <section className="w-full px-6 mb-16 mt-6">
           <div className="relative w-full flex flex-col items-center">
 
@@ -230,33 +230,33 @@ export default function HomePage() {
             </div>
 
             {/* Plant & Pot Composite Area */}
-            <div className="relative w-full max-w-[340px] mt-[-4px] flex flex-col items-center">
+            <div className="relative w-full max-w-[340px] mt-[-10px] flex flex-col items-center">
 
               {/* 1. Pot Body Background (Soil) - Bottom (z-0) */}
-              <div className="absolute inset-0 top-16 bg-[#EAD7C3] rounded-[3rem] shadow-2xl border border-earth-brown/10 z-0">
+              <div className="absolute inset-0 top-20 bg-[#EAD7C3] rounded-[3rem] shadow-2xl border border-earth-brown/10 z-0">
                 {/* Soft Inner Shadow */}
-                <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-black/5 to-transparent rounded-t-[3rem]"></div>
+                <div className="absolute top-0 left-0 w-full h-10 bg-gradient-to-b from-black/5 to-transparent rounded-t-[3rem]"></div>
               </div>
 
-              {/* 2. Stem (z-10) */}
-              <div className="relative w-2 h-28 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full z-10"></div>
+              {/* 2. Stem (z-10) - Hidden behind leaves in the middle */}
+              <div className="relative w-2 h-36 bg-gradient-to-b from-[#A1C398] to-[#719864] rounded-full z-10"></div>
 
-              {/* 3. Leaves (z-20) */}
-              <div className="absolute top-28 left-[calc(50%-60px)] w-14 h-28 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20 z-20"></div>
-              <div className="absolute top-26 right-[calc(50%-60px)] w-14 h-28 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20 z-20"></div>
+              {/* 3. Leaves (z-20) - Overlapping each other to hide the stem behind the name */}
+              <div className="absolute top-28 left-[calc(50%-56px)] w-16 h-32 bg-gradient-to-br from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[-40deg] origin-right shadow-sm border border-white/20 z-20"></div>
+              <div className="absolute top-26 right-[calc(50%-56px)] w-16 h-32 bg-gradient-to-bl from-[#C1D8C3] to-[#A1C398] rounded-full rotate-[40deg] origin-left shadow-sm border border-white/20 z-20"></div>
 
               {/* 5. Child Info (Name) - Above Leaves (z-30) */}
-              <div className="relative w-full pt-4 pb-8 flex flex-col items-center text-center z-30 pointer-events-none">
+              <div className="relative w-full pt-1 pb-10 flex flex-col items-center text-center z-30 pointer-events-none">
                 <div className="pointer-events-auto">
                   {mainChild ? (
-                    <>
+                    <div className="flex flex-col items-center">
                       <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">
                         {childName} <span className="text-sm font-bold text-earth-brown/60 ml-1">{ageString}</span>
                       </h2>
                       <div className="flex flex-col items-center gap-2 mt-3">
                         {temperamentInfo ? (
                           <>
-                            <div className="px-4 py-1 bg-white/50 rounded-full text-[13px] font-bold text-earth-brown border border-white/40 backdrop-blur-sm">
+                            <div className="px-4 py-1 bg-white/50 rounded-full text-[13px] font-bold text-earth-brown border border-white/40 backdrop-blur-sm shadow-sm">
                               {temperamentInfo.seed.label}
                             </div>
                             <p className="text-[17px] font-black text-primary flex items-center gap-1.5 mt-1">
@@ -276,12 +276,12 @@ export default function HomePage() {
                           </div>
                         )}
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <div className="py-6 flex flex-col items-center">
                       <button
                         onClick={() => setShowOnboarding(true)}
-                        className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                        className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all text-sm"
                       >
                         첫 아이 등록하기
                       </button>
@@ -290,10 +290,10 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Pot Base Area (Guardian Info) - Attached to bottom of background */}
+              {/* Pot Base Area (Guardian Info) - z-30 */}
               <div className="relative w-full bg-[#D9C4B0] px-6 py-6 flex flex-col items-center text-center border-t border-white/10 rounded-b-[3rem] z-30">
                 <div className="flex items-center gap-2.5 text-earth-brown/70">
-                  <span className="material-symbols-outlined text-xl">layers</span>
+                  <span className="material-symbols-outlined text-xl text-earth-brown/50">layers</span>
                   <div className="text-[13px] font-bold leading-tight">
                     보호자 기질: <span className="text-slate-800">
                       {parentSurvey ? (
@@ -311,11 +311,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Insight Message (Small context below pot) */}
+            {/* Insight Message */}
             {temperamentInfo && (
-              <div className="mt-8 px-8 text-center">
+              <div className="mt-8 px-8 text-center animate-fade-in">
                 <p className="text-[13px] text-slate-500 leading-relaxed break-keep">
-                  {childName}의 <span className="font-bold text-slate-700">{temperamentInfo.seed.label}</span>에서 돋아난 싹이<br />
                   부모님의 따뜻한 토양 위에서 활짝 피어나고 있어요.
                 </p>
               </div>
