@@ -203,12 +203,10 @@ export default function HomePage() {
 
         <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
           <section className="flex flex-col items-center justify-center py-6 px-4">
-            <div className="relative w-full flex flex-col items-center">
-              <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent -z-10 transform -translate-y-1/2"></div>
-
-              <div className="flex items-center justify-center gap-4 w-full mb-2 mt-2">
+            <div className="relative w-full flex flex-col items-center p-2">
+              <div className="flex flex-col items-center justify-center w-full mb-4">
                 <div
-                  className="relative w-40 h-40 flex items-center justify-center cursor-pointer group"
+                  className="relative w-32 h-32 mb-4 cursor-pointer group"
                   onClick={handleProfileClick}
                 >
                   <input
@@ -218,9 +216,7 @@ export default function HomePage() {
                     accept="image/*"
                     onChange={handleImageUpload}
                   />
-                  <div className="absolute inset-0 rounded-full border-[6px] border-caregiver/30 dark:border-caregiver/40"></div>
-
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-50 relative z-10 border-4 border-white dark:border-surface-dark shadow-sm group-hover:scale-105 transition-transform">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 relative z-10 border-[3px] border-white dark:border-surface-dark shadow-md ring-1 ring-black/5 group-hover:scale-105 transition-transform">
                     {mainChild?.image_url ? (
                       <img alt={childName} className="w-full h-full object-cover" src={mainChild.image_url} />
                     ) : (
@@ -237,26 +233,29 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  <div className="absolute -bottom-3 bg-caregiver text-white pl-2 pr-3 py-1.5 rounded-full text-[11px] font-bold shadow-md z-20 border-2 border-white dark:border-background-dark flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px]">volunteer_activism</span>
+                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
+                    <div className="bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10">
+                      <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
+                      아이: {temperamentInfo ? temperamentInfo.label : '기질 등록 필요'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-2 mt-2">
+                  <h1 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">
+                    {childName} ({ageString})
+                  </h1>
+                  <div className="bg-caregiver text-white px-4 py-1.5 rounded-full text-[13px] font-bold shadow-sm inline-flex items-center gap-1.5 border border-transparent">
+                    <span className="material-symbols-outlined text-[16px]">volunteer_activism</span>
                     양육자: 지지형
                   </div>
                 </div>
               </div>
 
-              <div className="text-center mt-6">
-                <div className="flex flex-col items-center justify-center gap-1 mb-1">
-                  <h1 className="text-2xl font-bold text-text-main dark:text-white">
-                    {childName} <span className="text-lg">({ageString})</span>
-                  </h1>
-                  {temperamentInfo && (
-                    <div className="mt-1 bg-beige-light dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm inline-flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-[16px] text-child">child_care</span>
-                      {temperamentInfo.seed.label} - {temperamentInfo.label}
-                    </div>
-                  )}
-                </div>
-                <p className="text-text-sub dark:text-gray-400 text-sm mt-2">오늘도 아이의 기질에 맞는 대화를 시도해보세요.</p>
+              <div className="text-center w-full">
+                <p className="text-text-sub dark:text-gray-400 text-sm px-4 font-light">
+                  오늘도 아이의 기질에 맞는 대화를 시도해보세요.
+                </p>
               </div>
             </div>
           </section>
