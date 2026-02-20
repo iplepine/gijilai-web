@@ -235,7 +235,7 @@ export default function HomePage() {
                     </div>
                   )}
 
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
+                  <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
                     <div className="bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10">
                       <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
                       {temperamentInfo ? temperamentInfo.label : '기질 등록 필요'}
@@ -243,7 +243,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center mt-2">
+                <div className="flex flex-col items-center justify-center mt-6">
                   <h1 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">
                     {childName} ({ageString})
                   </h1>
