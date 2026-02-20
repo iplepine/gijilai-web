@@ -241,10 +241,6 @@ export default function HomePage() {
                     <span className="material-symbols-outlined text-[14px]">volunteer_activism</span>
                     양육자: 지지형
                   </div>
-                  <div className="absolute -top-3 bg-child text-white pl-2 pr-3 py-1.5 rounded-full text-[11px] font-bold shadow-md z-20 border-2 border-white dark:border-background-dark flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px]">face</span>
-                    아이: {temperamentInfo ? temperamentInfo.label : '기질 등록 필요'}
-                  </div>
                 </div>
               </div>
 
