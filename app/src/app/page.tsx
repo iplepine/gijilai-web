@@ -192,7 +192,9 @@ export default function HomePage() {
             <button className="material-symbols-outlined text-primary dark:text-white text-[28px]">menu</button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary dark:text-white text-[24px]">face_3</span>
+            <span className="material-symbols-outlined text-primary dark:text-white text-[24px]">
+              {String(mainChild?.gender).toLowerCase() === 'female' ? 'face_3' : 'face_6'}
+            </span>
             <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
           </div>
           <button className="relative p-2 rounded-full hover:bg-beige-main dark:hover:bg-surface-dark transition-colors">
