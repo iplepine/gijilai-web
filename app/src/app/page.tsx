@@ -247,6 +247,10 @@ export default function HomePage() {
                   <h1 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">
                     {childName} ({ageString})
                   </h1>
+                  <div className="mt-2 bg-white/60 dark:bg-surface-dark/60 backdrop-blur-sm text-text-main dark:text-gray-200 px-3.5 py-1.5 rounded-full text-[12px] font-medium shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] inline-flex items-center gap-1.5 ring-1 ring-black/5 dark:ring-white/10">
+                    <span className="material-symbols-outlined text-[16px] text-caregiver">volunteer_activism</span>
+                    양육 성향 <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">지지형</span>
+                  </div>
                 </div>
               </div>
 
