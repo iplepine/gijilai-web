@@ -3,49 +3,56 @@
 /* ========== Design System Colors ========== */
 :root {
   /* Legacy Colors (keeping for safe migration) */
-  --primary: #2D6A4F;
-  /* Updated to new primary */
-  --navy: #0d1b1b;
-  --deep-green: #1a4d4d;
-  --green-custom: #4c9a9a;
-
-  /* New Design System Colors */
-  --accent: #40916C;
-  --earth-brown: #8B5E3C;
-  --soft-leaf: #D8F3DC;
-  --warm-beige: #F5EBE0;
-  --nurture-ring: #E9EDC9;
-  --soil-beige: #EAD7C3;
-
-  --background-light: #FDFCF9;
-  --background-dark: #1A2F23;
+  --primary: #2F4F3E;
+  --primary-light: #4A6E5A;
+  --primary-dark: #1F3629;
+  --secondary: #E5A150;
+  --beige-main: #E8E4D9;
+  --beige-light: #F5F3EF;
+  --background-light: #F9F8F6;
+  --background-dark: #192210;
+  --surface-light: #ffffff;
+  --surface-dark: #2a3620;
+  --text-main: #2c3e35;
+  --text-sub: #6e7a75;
+  --accent-soil: #e8e4d9;
+  --caregiver: #4A6E5A;
+  --child: #E5A150;
 }
 
 @theme inline {
-  /* Legacy Map */
-  --color-primary: var(--primary);
-  --color-navy: var(--navy);
-  --color-deep-green: var(--deep-green);
-  --color-green-custom: var(--green-custom);
-
   /* New Design System Map (Requested) */
-  --color-primary: #2D6A4F;
-  --color-accent: #40916C;
-  --color-background-light: #FDFCF9;
-  --color-background-dark: #1A2F23;
-  --color-earth-brown: #8B5E3C;
-  --color-soft-leaf: #D8F3DC;
-  --color-warm-beige: #F5EBE0;
-  --color-nurture-ring: #E9EDC9;
-  --color-soil-beige: #EAD7C3;
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-beige-main: var(--beige-main);
+  --color-beige-light: var(--beige-light);
+  --color-background-light: var(--background-light);
+  --color-background-dark: var(--background-dark);
+  --color-surface-light: var(--surface-light);
+  --color-surface-dark: var(--surface-dark);
+  --color-text-main: var(--text-main);
+  --color-text-sub: var(--text-sub);
+  --color-accent-soil: var(--accent-soil);
+  --color-caregiver: var(--caregiver);
+  --color-child: var(--child);
 
   /* Fonts */
   --font-display: 'Lexend', 'Noto Sans KR', sans-serif;
-  --font-sans: 'Noto Sans KR', sans-serif;
+  --font-body: 'Lexend', 'Noto Sans KR', sans-serif;
+  --font-logo: 'Jua', sans-serif;
 
   /* Border Radius */
-  --radius-lg: 2rem;
-  --radius-xl: 3rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-2xl: 2.5rem;
+  --radius-full: 9999px;
+
+  /* Box Shadows */
+  --shadow-soft: 0 4px 20px -2px rgba(44, 62, 53, 0.05);
+  --shadow-card: 0 8px 30px -4px rgba(44, 62, 53, 0.08);
+  --shadow-glow: 0 0 15px rgba(47, 79, 62, 0.3);
 }
 
 /* ========== Base Styles ========== */
