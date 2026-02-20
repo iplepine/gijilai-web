@@ -238,19 +238,15 @@ export default function HomePage() {
                   <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
                     <div className="bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10">
                       <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
-                      아이: {temperamentInfo ? temperamentInfo.label : '기질 등록 필요'}
+                      {temperamentInfo ? temperamentInfo.label : '기질 등록 필요'}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center gap-2 mt-2">
+                <div className="flex flex-col items-center justify-center mt-2">
                   <h1 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">
                     {childName} ({ageString})
                   </h1>
-                  <div className="bg-caregiver text-white px-4 py-1.5 rounded-full text-[13px] font-bold shadow-sm inline-flex items-center gap-1.5 border border-transparent">
-                    <span className="material-symbols-outlined text-[16px]">volunteer_activism</span>
-                    양육자: 지지형
-                  </div>
                 </div>
               </div>
 
