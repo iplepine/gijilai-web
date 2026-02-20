@@ -46,7 +46,7 @@
 ## 5. View: 주요 컴포넌트 구조
 
 ### 5.1 상단 헤더 (Header)
-- **Logo**: Aina Garden 로고.
+- **Logo**: 기질아이 로고.
 - **Profile**: 부모 프로필 이미지 (클릭 시 `MyPage` 이동).
 - **Streak**: 연속 수행일 수 (불꽃 아이콘).
 
