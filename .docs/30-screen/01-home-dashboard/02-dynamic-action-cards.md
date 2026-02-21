@@ -7,46 +7,33 @@
 우선순위가 높은 조건(1순위 온보딩)부터 순차적으로 판별하며, 하위 카드 노출 여부를 평가하는 구조(폭포수 방식)입니다.
 
 ```mermaid
-stateDiagram-v2
-    direction TB
-    [*] --> CheckChildProfile : 홈 화면 진입
+flowchart TD
+    Start((홈 화면 진입)) --> CheckChildProfile{"아이 프로필\n존재 여부"}
 
     %% 조건 판별 (분기점)
-    state "아이 프로필 존재 여부" as CheckChildProfile <<choice>>
-    CheckChildProfile --> Card_A : 없음 (!mainChild)
-    CheckChildProfile --> CheckChildSurvey : 존재함
+    CheckChildProfile -- "없음 (!mainChild)" --> Card_A["🚨 [카드 A]\n아이 정보 등록 유도"]
+    CheckChildProfile -- "존재함" --> CheckChildSurvey{"아이 기질 검사\n완료 여부"}
 
-    state "아이 기질 검사 완료 여부" as CheckChildSurvey <<choice>>
-    CheckChildSurvey --> Card_B : 미완료 (!temperamentInfo)
-    CheckChildSurvey --> CheckParentSurvey : 완료
+    CheckChildSurvey -- "미완료 (!temperamentInfo)" --> Card_B["🚨 [카드 B]\n아이 기질 검사 안내"]
+    CheckChildSurvey -- "완료" --> CheckParentSurvey{"양육자 기질 검사\n완료 여부"}
 
-    state "양육자 기질 검사 완료 여부" as CheckParentSurvey <<choice>>
-    CheckParentSurvey --> Card_C : 미완료 (!parentSurvey)
-    CheckParentSurvey --> CheckReport : 완료
+    CheckParentSurvey -- "미완료 (!parentSurvey)" --> Card_C["🚨 [카드 C]\n양육자 성향 검사 안내"]
+    CheckParentSurvey -- "완료" --> CheckReport{"기질 분석 리포트\n발급/확인 여부"}
 
-    state "기질 분석 리포트 존재 여부" as CheckReport <<choice>>
-    CheckReport --> Card_D : 없음 (!hasReport)
-    CheckReport --> CheckActiveCoaching : 발급 완료
+    CheckReport -- "없음 (!hasReport)" --> Card_D["🔍 [카드 D]\n기질 분석 리포트 확인 유도"]
+    CheckReport -- "발급/확인 완료" --> CheckActiveCoaching{"우선순위 코칭\n프로그램 유무"}
 
-    state "진행 중인 코칭 프로그램 여부" as CheckActiveCoaching <<choice>>
-    CheckActiveCoaching --> Card_E : 진행 안함 (!hasActiveCoaching)
-    CheckActiveCoaching --> Card_F : 진행 중
+    CheckActiveCoaching -- "진행 안함 (!hasActiveCoaching)" --> Card_E["🔍 [카드 E]\n맞춤형 코칭 모델 추천"]
+    CheckActiveCoaching -- "진행 중" --> Card_F["🌱 [카드 F/G/H]\n실시간 대응 요령 & 오늘의 미션"]
 
-    %% 노출되는 카드 UI 상태
-    state "🚨 1순위 온보딩 대기" as Priority1 {
-        Card_A : [카드 A] 아이 정보 등록 유도
-        Card_B : [카드 B] 아이 기질 검사 안내
-        Card_C : [카드 C] 양육자 성향 검사 안내
-    }
+    %% 스타일 정의
+    classDef onboarding fill:#ffebee,stroke:#ef5350,stroke-width:2px,color:#b71c1c;
+    classDef review fill:#e3f2fd,stroke:#42a5f5,stroke-width:2px,color:#1565c0;
+    classDef routine fill:#e8f5e9,stroke:#66bb6a,stroke-width:2px,color:#2e7d32;
 
-    state "🔍 2순위 리포트/코칭 시작" as Priority2 {
-        Card_D : [카드 D] 기질 분석 리포트 확인 유도
-        Card_E : [카드 E] 맞춤형 코칭 모델 추천
-    }
-
-    state "🌱 3순위 데일리 루틴 단계" as Priority3 {
-        Card_F : [카드 F/G] 실시간 대응 요령 & 오늘의 미션
-    }
+    class Card_A,Card_B,Card_C onboarding;
+    class Card_D,Card_E review;
+    class Card_F routine;
 ```
 
 ## 2. 상태별 노출 우선순위 및 카드 세부 종류
