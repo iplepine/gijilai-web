@@ -8,23 +8,23 @@
 
 ```mermaid
 flowchart TD
-    Start((홈 화면 진입)) --> CheckChildProfile{"아이 프로필\n존재 여부"}
+    Start((홈 화면 진입)) --> CheckChildProfile{"아이 프로필<br>존재 여부"}
 
     %% 조건 판별 (분기점)
-    CheckChildProfile -- "없음 (!mainChild)" --> Card_A["🚨 [카드 A]\n아이 정보 등록 유도"]
-    CheckChildProfile -- "존재함" --> CheckChildSurvey{"아이 기질 검사\n완료 여부"}
+    CheckChildProfile -- "없음 (!mainChild)" --> Card_A["🚨 [카드 A]<br>아이 정보 등록 유도"]
+    CheckChildProfile -- "존재함" --> CheckChildSurvey{"아이 기질 검사<br>완료 여부"}
 
-    CheckChildSurvey -- "미완료 (!temperamentInfo)" --> Card_B["🚨 [카드 B]\n아이 기질 검사 안내"]
-    CheckChildSurvey -- "완료" --> CheckParentSurvey{"양육자 기질 검사\n완료 여부"}
+    CheckChildSurvey -- "미완료 (!temperamentInfo)" --> Card_B["🚨 [카드 B]<br>아이 기질 검사 안내"]
+    CheckChildSurvey -- "완료" --> CheckParentSurvey{"양육자 기질 검사<br>완료 여부"}
 
-    CheckParentSurvey -- "미완료 (!parentSurvey)" --> Card_C["🚨 [카드 C]\n양육자 성향 검사 안내"]
-    CheckParentSurvey -- "완료" --> CheckReport{"기질 분석 리포트\n발급/확인 여부"}
+    CheckParentSurvey -- "미완료 (!parentSurvey)" --> Card_C["🚨 [카드 C]<br>양육자 성향 검사 안내"]
+    CheckParentSurvey -- "완료" --> CheckReport{"기질 분석 리포트<br>발급/확인 여부"}
 
-    CheckReport -- "없음 (!hasReport)" --> Card_D["🔍 [카드 D]\n기질 분석 리포트 확인 유도"]
-    CheckReport -- "발급/확인 완료" --> CheckActiveCoaching{"우선순위 코칭\n프로그램 유무"}
+    CheckReport -- "없음 (!hasReport)" --> Card_D["🔍 [카드 D]<br>기질 분석 리포트 확인 유도"]
+    CheckReport -- "발급/확인 완료" --> CheckActiveCoaching{"우선순위 코칭<br>프로그램 유무"}
 
-    CheckActiveCoaching -- "진행 안함 (!hasActiveCoaching)" --> Card_E["🔍 [카드 E]\n맞춤형 코칭 모델 추천"]
-    CheckActiveCoaching -- "진행 중" --> Card_F["🌱 [카드 F/G/H]\n실시간 대응 요령 & 오늘의 미션"]
+    CheckActiveCoaching -- "진행 안함 (!hasActiveCoaching)" --> Card_E["🔍 [카드 E]<br>맞춤형 코칭 모델 추천"]
+    CheckActiveCoaching -- "진행 중" --> Card_F["🌱 [카드 F/G/H]<br>실시간 대응 요령 & 오늘의 미션"]
 
     %% 스타일 정의
     classDef onboarding fill:#ffebee,stroke:#ef5350,stroke-width:2px,color:#b71c1c;
