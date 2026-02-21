@@ -2,7 +2,54 @@
 
 홈 화면의 프로필 영역 하단에 노출되는 '다이나믹 액션 카드'는 사용자의 현재 상태(데이터 입력 여부, 검사진행도, 코칭 프로그램 참여 여부 등)에 따라 가장 적합한 다음 행동(Next Action)을 단일 혹은 복합적으로 유도하는 반응형 UI 컴포넌트입니다.
 
-## 1. 상태별 노출 우선순위 및 카드 종류
+## 1. 상태 노출 우선순위 상태 머신 (State Machine)
+
+우선순위가 높은 조건(1순위 온보딩)부터 순차적으로 판별하며, 하위 카드 노출 여부를 평가하는 구조(폭포수 방식)입니다.
+
+```mermaid
+stateDiagram-v2
+    direction TB
+    [*] --> CheckChildProfile : 홈 화면 진입
+
+    %% 조건 판별 (분기점)
+    state "아이 프로필 존재 여부" as CheckChildProfile <<choice>>
+    CheckChildProfile --> Card_A : 없음 (!mainChild)
+    CheckChildProfile --> CheckChildSurvey : 존재함
+
+    state "아이 기질 검사 완료 여부" as CheckChildSurvey <<choice>>
+    CheckChildSurvey --> Card_B : 미완료 (!temperamentInfo)
+    CheckChildSurvey --> CheckParentSurvey : 완료
+
+    state "양육자 기질 검사 완료 여부" as CheckParentSurvey <<choice>>
+    CheckParentSurvey --> Card_C : 미완료 (!parentSurvey)
+    CheckParentSurvey --> CheckReport : 완료
+
+    state "기질 분석 리포트 존재 여부" as CheckReport <<choice>>
+    CheckReport --> Card_D : 없음 (!hasReport)
+    CheckReport --> CheckActiveCoaching : 발급 완료
+
+    state "진행 중인 코칭 프로그램 여부" as CheckActiveCoaching <<choice>>
+    CheckActiveCoaching --> Card_E : 진행 안함 (!hasActiveCoaching)
+    CheckActiveCoaching --> Card_F : 진행 중
+
+    %% 노출되는 카드 UI 상태
+    state "🚨 1순위 온보딩 대기" as Priority1 {
+        Card_A : [카드 A] 아이 정보 등록 유도
+        Card_B : [카드 B] 아이 기질 검사 안내
+        Card_C : [카드 C] 양육자 성향 검사 안내
+    }
+
+    state "🔍 2순위 리포트/코칭 시작" as Priority2 {
+        Card_D : [카드 D] 기질 분석 리포트 확인 유도
+        Card_E : [카드 E] 맞춤형 코칭 모델 추천
+    }
+
+    state "🌱 3순위 데일리 루틴 단계" as Priority3 {
+        Card_F : [카드 F/G] 실시간 대응 요령 & 오늘의 미션
+    }
+```
+
+## 2. 상태별 노출 우선순위 및 카드 세부 종류
 
 액션 카드는 다음과 같은 라이프사이클(우선순위) 흐름에 따라 결정되며, 상위 필수 조건에 해당할 경우 하위 카드를 덮기 위해 단일 카드로 최상단에 배치됩니다.
 
