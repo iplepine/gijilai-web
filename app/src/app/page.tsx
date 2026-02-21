@@ -184,6 +184,10 @@ export default function HomePage() {
     return `${years}세`;
   })() : "생일 정보 없음";
 
+  // TODO: Implement actual db-backed isReportViewed and hasActiveCoaching
+  const hasReport = reports.length > 0;
+  const hasActiveCoaching = false; // DB Schema does not have it yet
+
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center justify-center font-body pb-0">
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
@@ -324,6 +328,50 @@ export default function HomePage() {
                     <button className="w-full py-4 rounded-xl bg-white text-secondary font-bold text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98]">
                       <span>양육 검사 시작</span>
                       <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            ) : !hasReport ? (
+              <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-6 shadow-soft border border-primary/20 dark:border-primary/50 relative overflow-hidden mb-4">
+                {/* [카드 D] 기질 분석 리포트 확인 */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined">description</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-text-main dark:text-white">기질 분석 완료!</h3>
+                  </div>
+                  <p className="text-sm text-text-sub dark:text-gray-300 mb-6">
+                    우리아이 기질 분석이 완료되었어요! 결과를 확인해보세요.
+                  </p>
+                  <Link href="/report">
+                    <button className="w-full bg-primary dark:bg-primary-dark py-4 rounded-xl text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center justify-center gap-1 active:scale-[0.98]">
+                      <span>기질 분석 결과 보기</span>
+                      <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            ) : !hasActiveCoaching ? (
+              <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-6 shadow-soft border border-primary/20 dark:border-primary/50 relative overflow-hidden mb-4">
+                {/* [카드 E] 맞춤형 코칭 프로그램 제안 */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined">auto_awesome</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-text-main dark:text-white">맞춤형 코칭 제안</h3>
+                  </div>
+                  <p className="text-sm text-text-sub dark:text-gray-300 mb-6">
+                    현재의 고민을 해결해줄 맞춤형 데일리 코칭을 시작해보세요.
+                  </p>
+                  <Link href="/coaching">
+                    <button className="w-full bg-primary dark:bg-primary-dark py-4 rounded-xl text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center justify-center gap-1 active:scale-[0.98]">
+                      <span>추천 코칭 살펴보기</span>
+                      <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </button>
                   </Link>
                 </div>
