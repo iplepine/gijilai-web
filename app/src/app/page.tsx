@@ -284,7 +284,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-            ) : !latestSurvey ? (
+            ) : !temperamentInfo ? (
               <div className="bg-primary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-4">
                 {/* [카드 B] 아이 기질 검사 유도 */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -306,7 +306,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-            ) : !parentSurvey ? (
+            ) : (!parentSurvey && Object.keys(atqResponses).length === 0) ? (
               <div className="bg-secondary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-4">
                 {/* [카드 C] 양육자 성향 검사 유도 */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
