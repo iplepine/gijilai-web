@@ -490,7 +490,7 @@ export default function HomePage() {
             </div>
             <span className="text-[10px] font-bold text-primary dark:text-primary">홈</span>
           </Link>
-          <Link href="/garden" className="flex flex-col items-center justify-center gap-1 flex-1 group">
+          <Link href="/report" className="flex flex-col items-center justify-center gap-1 flex-1 group">
             <div className="p-1.5 rounded-full transition-colors">
               <span className="material-symbols-outlined text-gray-400 group-hover:text-primary dark:group-hover:text-white text-[24px]">insert_chart</span>
             </div>
