@@ -168,7 +168,7 @@ export default function RegisterChildPage() {
                         <div className="p-4 bg-[#E8F5E9]/30 dark:bg-green-900/10 rounded-2xl border border-[#E8F5E9] dark:border-green-900/20">
                             <p className="text-[13px] leading-relaxed text-[#2E7D32] dark:text-[#4CAF50]/80 text-center font-medium">
                                 등록하신 정보와 사진은 아이만을 위한<br />
-                                맞춤형 분석 리포트와 정원 꾸미기에 사용됩니다.
+                                맞춤형 분석 리포트와 맞춤형 코칭에 사용됩니다.
                             </p>
                         </div>
                     </div>

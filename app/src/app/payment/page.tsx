@@ -11,9 +11,9 @@ type LoadingStatus = 'idle' | 'analyzing' | 'complete';
 
 const LOADING_MESSAGES = [
   { icon: 'analytics', text: '기질 데이터 분석 중' },
-  { icon: 'auto_awesome', text: '사주 명식 대조 중' },
+  { icon: 'auto_awesome', text: '기질아이 유형 세부 대응 중' },
   { icon: 'favorite', text: '부모-자녀 궁합 계산 중' },
-  { icon: 'lightbulb', text: '맞춤 솔루션 생성 중' },
+  { icon: 'lightbulb', text: '맞춤 양육 솔루션 생성 중' },
 ];
 
 export default function PaymentPage() {
@@ -77,7 +77,7 @@ export default function PaymentPage() {
             </h2>
             <p className="text-slate-400 text-sm leading-relaxed break-keep">
               {loadingIndex === 0 && "아이의 데이터를 꼼꼼하게 읽어보고 있어요."}
-              {loadingIndex === 1 && "타고난 운명과 실제 기질을 비교 분석합니다."}
+              {loadingIndex === 1 && "아이의 기질 조합을 상세하게 분석합니다."}
               {loadingIndex === 2 && "부모님과의 조화로운 교감을 위한 공식을 계산해요."}
               {loadingIndex === 3 && "오늘 바로 실천할 수 있는 솔루션을 준비 중입니다."}
             </p>
@@ -142,8 +142,8 @@ export default function PaymentPage() {
                   <span className="text-xl">🖼️</span>
                 </div>
                 <div>
-                  <h4 className="text-[15px] font-bold text-slate-800 dark:text-white">나의 정원 일러스트</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">내 토양과 아이 꽃이 어우러진 배경화면용 카드 증정.</p>
+                  <h4 className="text-[15px] font-bold text-slate-800 dark:text-white">맞춤형 기질 일러스트</h4>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">내 기질과 아이 기질이 어우러진 배경화면용 카드 증정.</p>
                 </div>
               </div>
             </div>

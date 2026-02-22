@@ -15,7 +15,7 @@ export default function SharePage() {
   const router = useRouter();
   const { intake, cbqResponses, atqResponses } = useAppStore();
   const [copied, setCopied] = useState(false);
-  const referralCode = 'AINA-GARDEN-' + (intake.childName ? intake.childName.toUpperCase() : 'FRIEND');
+  const referralCode = 'TEMPERAMENT-CHILD-' + (intake.childName ? intake.childName.toUpperCase() : 'FRIEND');
 
   // Calculate Temperament (Parent = Soil, Child = Seed + Plant)
   const temperamentInfo = (() => {
@@ -45,10 +45,10 @@ export default function SharePage() {
         {/* Headline */}
         <section className="text-center space-y-2">
           <div className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold mb-2">
-            SHARE YOUR GARDEN
+            SHARE ANALYSIS
           </div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white break-keep">
-            우리 아이만의 특별한 씨앗을<br />가족과 함께 나눠보세요
+            우리 아이만의 빛나는 기질을<br />가족과 함께 나눠보세요
           </h2>
         </section>
 
@@ -64,7 +64,7 @@ export default function SharePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white">
                 <div className="mb-4">
                   <span className="bg-primary px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">
-                    Aina Garden Report
+                    Temperament Report
                   </span>
                 </div>
                 <h3 className="text-3xl font-bold mb-2">
@@ -118,7 +118,7 @@ export default function SharePage() {
         {/* Benefits Section */}
         <section className="bg-slate-100 dark:bg-slate-800/50 rounded-3xl p-6 border border-slate-200/50">
           <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-            <span className="text-lg">🎁</span> 친구와 함께 정원을 가꿔요
+            <span className="text-lg">🎁</span> 친구와 함께 기질아이를 알아봐요
           </h4>
           <p className="text-xs text-slate-500 leading-relaxed break-keep">
             공유된 링크를 통해 친구가 테스트를 완료하면,<br />
@@ -129,7 +129,7 @@ export default function SharePage() {
 
       {/* Referral Code Footer */}
       <div className="px-6 py-8 text-center text-[11px] text-slate-400 font-medium uppercase tracking-[0.2em]">
-        designed by aina garden
+        designed by temperament child
       </div>
     </div>
   );

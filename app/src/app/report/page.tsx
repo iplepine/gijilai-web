@@ -42,7 +42,7 @@ function ReportContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState<'child' | 'parent'>('child');
+  const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, isPaid } = useAppStore();
 
   useEffect(() => {
@@ -50,6 +50,8 @@ function ReportContent() {
       setActiveTab('parent');
     } else if (tabParam === 'child') {
       setActiveTab('child');
+    } else if (tabParam === 'parenting') {
+      setActiveTab('parenting');
     }
   }, [tabParam]);
 
@@ -78,9 +80,9 @@ function ReportContent() {
     }
   }, [parentingResponses]);
 
-  // Temperament Classification (Parent = Soil, Child = Seed + Plant)
+  // Temperament Classification
   const childType = useMemo(() => TemperamentClassifier.analyze(childScores, parentScores), [childScores, parentScores]);
-  const prescription = useMemo(() => PRESCRIPTION_DATA[childType.label] || PRESCRIPTION_DATA["무한한 잠재력의 새싹"], [childType]);
+  const prescription = useMemo(() => PRESCRIPTION_DATA[childType.label] || PRESCRIPTION_DATA["무한한 잠재력의 아이"], [childType]);
 
   const isStyleSurveyComplete = useMemo(() => {
     return PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
@@ -93,7 +95,7 @@ function ReportContent() {
     labels: ['자극 추구', '위험 회피', '사회적 민감성', '지속성'],
     datasets: [
       {
-        label: '아이의 새싹 (Sprout)',
+        label: '아이 기질',
         data: [childScores.NS, childScores.HA, childScores.RD, childScores.P],
         backgroundColor: 'rgba(78, 205, 196, 0.2)',
         borderColor: '#4ECDC4',
@@ -102,7 +104,7 @@ function ReportContent() {
         pointRadius: 4,
       },
       {
-        label: '보호자의 토양 (Soil)',
+        label: '양육자 기질',
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
         backgroundColor: 'rgba(255, 107, 107, 0.1)',
         borderColor: '#FF6B6B',
@@ -148,7 +150,7 @@ function ReportContent() {
     ]
   };
 
-  // Garden Harmony Index (GHI) Logic
+  // Temperament Harmony Index (THI) Logic
   const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -205,22 +207,22 @@ function ReportContent() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans">
       {/* Header Overlay */}
-      <div className="bg-primary pt-12 pb-32 px-6 rounded-b-[3rem] shadow-2xl relative overflow-hidden">
+      <div className="bg-primary pt-12 pb-24 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden z-10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="relative z-10 text-center space-y-2">
           <h1 className="text-3xl font-black text-white tracking-tight">분석 리포트</h1>
-          <p className="text-white/70 text-sm font-medium">Aina Garden이 발견한 {intake.childName || '아이'}의 세상</p>
+          <p className="text-white/70 text-sm font-medium">기질아이가 발견한 {intake.childName || '아이'}의 세상</p>
         </div>
       </div>
 
       {/* Tab Switcher */}
-      <div className="max-w-md mx-auto px-6 -mt-24 mb-12 relative z-30">
-        <div className="bg-white/10 backdrop-blur-md p-1 rounded-2xl flex gap-1 border border-white/20">
+      <div className="max-w-md mx-auto px-6 -mt-14 mb-8 relative z-30">
+        <div className="bg-white/20 backdrop-blur-xl p-1 rounded-2xl flex gap-1 border border-white/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
           <button
             onClick={() => setActiveTab('child')}
-            className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'child' ? 'bg-white text-primary shadow-lg' : 'text-white/60 hover:text-white'}`}
+            className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
           >
-            아이와 정원
+            아이 진단
           </button>
           <button
             onClick={() => {
@@ -229,24 +231,33 @@ function ReportContent() {
                 router.push('/survey?type=PARENT');
               }
             }}
-            className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'parent' ? 'bg-white text-primary shadow-lg' : 'text-white/60 hover:text-white'}`}
+            className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
           >
-            나의 마음 토양
+            양육자 분석
+          </button>
+          <button
+            onClick={() => {
+              if (isStyleSurveyComplete) setActiveTab('parenting');
+              else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                router.push('/survey?type=STYLE');
+              }
+            }}
+            className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+          >
+            기질 맞춤 양육
           </button>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 space-y-12 relative z-20">
+      <div className="max-w-2xl mx-auto px-6 space-y-8 relative z-20">
         {activeTab === 'child' ? (
           <>
-            {/* Phase 1: Archetype Discovery (The Sprout) */}
+            {/* Phase 1: Archetype Discovery */}
             <div className="bg-white dark:bg-slate-800 rounded-[3.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center space-y-8 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-secondary to-primary"></div>
-
               <div className="w-48 h-48 relative flex items-center justify-center">
                 <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-20"></div>
                 <div className="absolute inset-4 bg-primary/20 rounded-full animate-pulse opacity-30"></div>
-                <div className="relative text-8xl drop-shadow-2xl z-10">
+                <div className="relative text-8xl drop-shadow-2xl z-10 hover:scale-110 transition-transform cursor-pointer">
                   {childType.emoji}
                 </div>
               </div>
@@ -266,32 +277,32 @@ function ReportContent() {
               </div>
             </div>
 
-            {/* Phase 2: Relationship Foundation (Soil VS Seed) */}
+            {/* Phase 2: Relationship Foundation (Parent VS Child) */}
             <div className="space-y-4">
               <h3 className="px-4 text-[13px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Icon name="diversity_3" size="sm" /> 정원의 탄생: 토양과 씨앗
+                <Icon name="diversity_3" size="sm" /> 아이와 나의 기질 궁합
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                {/* Soil Card */}
-                <section className="bg-gradient-to-br from-white to-orange-50/30 dark:from-slate-800 dark:to-orange-900/10 rounded-[2.5rem] p-6 shadow-xl border border-orange-100/50 dark:border-orange-900/20 relative group">
-                  <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-4">
-                    <Icon name="eco" size="sm" />
+                {/* Parent Card */}
+                <section className="bg-gradient-to-br from-white to-orange-50/30 dark:from-slate-800 dark:to-orange-900/10 rounded-[2.2rem] p-6 shadow-xl border border-orange-100/50 dark:border-orange-900/20 relative group">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-4 transition-transform group-hover:scale-110">
+                    <Icon name="person" size="sm" />
                   </div>
-                  <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">Protector's Soil</span>
-                  <h4 className="text-md font-black text-slate-800 dark:text-white mb-2">{childType.soil.label}</h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-slate-800/95 flex items-center rounded-[2.5rem]">
+                  <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">양육자 기질</span>
+                  <h4 className="text-[14px] font-black text-slate-800 dark:text-white mb-2 leading-tight break-keep">{childType.soil.label}</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-slate-800/95 flex items-center rounded-[2.2rem]">
                     {childType.soil.desc}
                   </p>
                 </section>
 
-                {/* Seed Card */}
-                <section className="bg-gradient-to-br from-white to-teal-50/30 dark:from-slate-800 dark:to-teal-900/10 rounded-[2.5rem] p-6 shadow-xl border border-teal-100/50 dark:border-teal-900/20 relative group">
-                  <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4">
-                    <Icon name="star" size="sm" />
+                {/* Child Card */}
+                <section className="bg-gradient-to-br from-white to-teal-50/30 dark:from-slate-800 dark:to-teal-900/10 rounded-[2.2rem] p-6 shadow-xl border border-teal-100/50 dark:border-teal-900/20 relative group">
+                  <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4 transition-transform group-hover:scale-110">
+                    <Icon name="child_care" size="sm" />
                   </div>
-                  <span className="text-[9px] font-black text-teal-400 uppercase tracking-widest block mb-1">Child's Seed</span>
-                  <h4 className="text-md font-black text-slate-800 dark:text-white mb-2">{childType.seed.label}</h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-slate-800/95 flex items-center rounded-[2.5rem]">
+                  <span className="text-[9px] font-black text-teal-400 uppercase tracking-widest block mb-1">아이 기질</span>
+                  <h4 className="text-[14px] font-black text-slate-800 dark:text-white mb-2 leading-tight break-keep">{childType.seed.label}</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-slate-800/95 flex items-center rounded-[2.2rem]">
                     {childType.seed.desc}
                   </p>
                 </section>
@@ -304,7 +315,7 @@ function ReportContent() {
               <div className="relative z-10 space-y-5">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Garden Dynamics</span>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Temperament Dynamics</span>
                     <h3 className="text-2xl font-black text-white dark:text-slate-900">"{childType.harmony.title}"</h3>
                   </div>
                   <div className="w-14 h-14 rounded-full bg-white/10 dark:bg-slate-100 flex items-center justify-center border border-white/20 dark:border-slate-200">
@@ -333,7 +344,7 @@ function ReportContent() {
                   <Radar data={radarData} options={radarOptions} />
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-                  * 보호자가 일군 **토양** 위에서 아이라는 **씨앗**이 만나 <br />어떤 **새싹**을 틔웠는지 그 데이터 지표를 보여줍니다.
+                  * 양육자의 **기질**과 아이의 **기질**이 만나 <br />어떤 **시너지**를 내고 있는지 데이터 지표로 보여줍니다.
                 </div>
               </div>
 
@@ -362,45 +373,6 @@ function ReportContent() {
                 </div>
               </div>
 
-              {/* Parenting Style Section */}
-              <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-6 relative overflow-hidden">
-                <div className="flex items-center justify-between relative z-10">
-                  <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-                    <Icon name="tune" className="text-green-500" /> 양육의 햇살과 영양
-                  </h3>
-                  {isStyleSurveyComplete && <span className="text-[10px] font-bold text-slate-400">Current Support Level</span>}
-                </div>
-
-                <div className="relative z-10">
-                  {isStyleSurveyComplete ? (
-                    <div className="h-48">
-                      <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
-                    </div>
-                  ) : (
-                    <div className="py-6 px-4 bg-green-50/50 dark:bg-slate-900/50 rounded-3xl border border-green-100 dark:border-slate-700 text-center space-y-4">
-                      <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                        <span className="text-2xl">☀️</span>
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-white">나의 양육 스타일은 어떤가요?</h4>
-                        <p className="text-[11px] text-slate-500 leading-relaxed break-keep">
-                          기질에 딱 맞는 [양육 처방전]을 완성하기 위해<br />
-                          평소 부모님의 양육 태도를 확인해 보세요.
-                        </p>
-                      </div>
-                      <Button
-                        onClick={() => router.push('/survey?type=STYLE')}
-                        size="sm"
-                        variant="primary"
-                        className="rounded-xl px-6 bg-green-500 hover:bg-green-600 border-none shadow-lg shadow-green-200"
-                      >
-                        양육 태도 확인하기
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Locked Content Preview (Only for Child-focused premium results) */}
               {!isPaid && (
                 <div className="bg-slate-800 rounded-[2.5rem] p-10 text-center space-y-6">
@@ -423,29 +395,29 @@ function ReportContent() {
                 결과 공유하고 할인권 받기
               </Button>
               <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
-                홈 정원으로 돌아가기
+                홈으로 돌아가기
               </Link>
             </div>
           </>
-        ) : (
+        ) : activeTab === 'parent' ? (
           <div className="animate-fade-in space-y-12">
             {/* Parent Report Header */}
             <header className="text-center space-y-4 py-6">
               <div className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2">Parent Self-Report</div>
               <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-snug break-keep">
-                보호자 <span className="text-primary">나</span>의<br />중심을 잡는 마음 토양
+                양육자 <span className="text-primary">나</span>의<br />중심을 잡는 마음 기질
               </h2>
               <p className="text-slate-500 text-[13px] font-medium leading-relaxed break-keep">
                 당신은 누군가의 부모이기 이전에,<br />그 자체로 고유한 결을 가진 소중한 사람입니다.
               </p>
             </header>
 
-            {/* Parent Section 1: Soil Analysis (Individual) */}
+            {/* Parent Section 1: Temperament Analysis (Individual) */}
             <section className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-xl border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
               <div className="relative z-10 space-y-6">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">01. 나의 토양 분석</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">01. 나의 기질 분석</span>
                   <h3 className="text-xl font-black text-slate-800 dark:text-white">{parentReport.soilName}</h3>
                 </div>
                 <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-700">
@@ -511,6 +483,54 @@ function ReportContent() {
                 나의 결과 공유하기
               </Button>
               <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
+                홈으로 돌아가기
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="animate-fade-in space-y-12">
+            {/* Parenting Style Report Header */}
+            <header className="text-center space-y-4 py-6">
+              <div className="text-[10px] font-black text-green-500 uppercase tracking-[0.3em] mb-2">Temperament Chemistry</div>
+              <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-snug break-keep">
+                기질과 기질이 만나는<br /><span className="text-green-500">맞춤 양육</span> 시너지
+              </h2>
+              <p className="text-slate-500 text-[13px] font-medium leading-relaxed break-keep">
+                부모와 아이 고유의 기질적 특성을 바탕으로 현재의 양육 환경이 얼마나 최적화되어 있는지 분석합니다.
+              </p>
+            </header>
+
+            <section className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-xl border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
+              <div className="relative z-10 space-y-6">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">01. 맞춤 양육도 분석</span>
+                  <h3 className="text-xl font-black text-slate-800 dark:text-white">나의 현재 양육 환경</h3>
+                </div>
+                <div className="h-56">
+                  <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
+                </div>
+              </div>
+            </section>
+
+            <section className="bg-[#E8F5E9] dark:bg-green-900/20 rounded-[2.5rem] p-8 shadow-sm border border-green-100 dark:border-green-900/30 relative overflow-hidden">
+              <div className="absolute top-4 right-6 text-2xl">🌱</div>
+              <span className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest block mb-1">02. 행동 방향 가이드</span>
+              <h4 className="text-md font-bold text-slate-800 dark:text-white mb-2">기질아이 맞춤 처방</h4>
+              <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed break-keep">
+                {styleScores.Responsiveness > 70 && styleScores.Autonomy > 70
+                  ? "부모님은 아이의 마음을 잘 알아주고 스스로 할 수 있도록 넉넉한 공간을 내어주는 훌륭한 양육을 하고 계십니다. 다만 부모님 스스로의 에너지가 고갈되지 않도록 양육 효능감과 휴식을 챙겨주세요."
+                  : "아이의 타고난 기질과 행동이 이해되지 않을 땐 즉각적인 반응을 멈추고 한발 물러서서 관찰하는 시간이 필요합니다. 아이가 보내는 작은 신호들을 세심하게 파악하여 정서적인 반응성을 조금씩 높여보는 것을 추천합니다."
+                }
+              </p>
+            </section>
+
+            {/* Footer Actions */}
+            <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
+              <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+                결과 공유하고 할인권 받기
+              </Button>
+              <Link href="/" className="text-slate-400 text-sm font-bold hover:text-green-500 transition-colors">
                 홈으로 돌아가기
               </Link>
             </div>

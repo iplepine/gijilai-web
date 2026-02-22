@@ -20,15 +20,15 @@ export default function LoginPage() {
             <div className="w-full max-w-sm text-center">
                 <div className="mb-8 flex justify-center">
                     <div className="w-16 h-16 bg-[var(--deep-green)] rounded-2xl flex items-center justify-center text-white">
-                        <Icon name="local_florist" size="lg" className="text-4xl" />
+                        <Icon name="child_care" size="lg" className="text-4xl" />
                     </div>
                 </div>
 
                 <h1 className="text-2xl font-bold text-[var(--navy)] mb-2">
-                    아이나 정원
+                    기질아이
                 </h1>
                 <p className="text-gray-500 mb-10">
-                    기질과 사주로 피워내는<br />우리 아이 맞춤 양육 가이드
+                    아이의 신호를 올바르게 통역하는<br />우리 아이 맞춤 양육 가이드
                 </p>
 
                 <div className="space-y-3">

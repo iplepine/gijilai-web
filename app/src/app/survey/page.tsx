@@ -88,21 +88,17 @@ function SurveyContent() {
     } else {
       // Current module finished
       if (currentModule === 'child') {
-        // 아이 기질 완료 시에만 부모 기질 안내 다이얼로그 노출 (핵심 컨텍스트 전환)
+        // 아이 기질 완료 시 부모 기질 안내 다이얼로그 노출
         setTransitionType('toParent');
         setShowTransitionModal(true);
       } else if (currentModule === 'parent') {
-        // 부모 기질 검사 완료 시 즉시 분석 중 로딩 화면으로 진입
-        setIsCalculating(true);
-        setTimeout(() => {
-          router.push('/report?tab=parent');
-        }, 2000); // 3초에서 2초로 약간 단축하여 체감 속도 개선
+        // 부모 기질 완료 시 양육 태도 안내 다이얼로그 노출
+        setTransitionType('toParenting');
+        setShowTransitionModal(true);
       } else if (currentModule === 'parenting') {
-        // 마지막 양육 태도 검사 완료 시 분석 중 로딩 화면으로 진입
-        setIsCalculating(true);
-        setTimeout(() => {
-          router.push('/report');
-        }, 2000);
+        // 마지막 양육 태도 검사 완료 시 결과 확인 다이얼로그 노출
+        setTransitionType('finish');
+        setShowTransitionModal(true);
       }
     }
   }, [currentIndex, questions.length, currentModule, router]);
@@ -144,6 +140,15 @@ function SurveyContent() {
       setCurrentModule('parent');
       setCurrentIndex(0);
       window.scrollTo(0, 0);
+    } else if (transitionType === 'toParenting') {
+      setCurrentModule('parenting');
+      setCurrentIndex(0);
+      window.scrollTo(0, 0);
+    } else if (transitionType === 'finish') {
+      setIsCalculating(true);
+      setTimeout(() => {
+        router.push('/report');
+      }, 2000);
     }
     setTransitionType(null);
   };
@@ -183,16 +188,16 @@ function SurveyContent() {
           <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
           <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-4xl animate-bounce">🌱</span>
+            <span className="text-4xl animate-bounce">✨</span>
           </div>
         </div>
         <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 animate-pulse">
-          {currentModule === 'child' ? '아이 기질 분석 중...' : '우리의 정원 분석 중...'}
+          {currentModule === 'child' ? '아이 기질 분석 중...' : '우리 가족 기질 분석 중...'}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 leading-relaxed break-keep">
           {currentModule === 'child'
-            ? <>{intake.childName || '아이'}의 소중한 답변을 바탕으로<br />딱 맞는 <strong>기질 맞춤형 정원</strong>을 가꾸고 있습니다.</>
-            : <>아이와 부모님의 기질이 만나는<br /><strong>아름다운 하모니</strong>를 정원에 담아내고 있습니다.</>
+            ? <>{intake.childName || '아이'}의 소중한 답변을 바탕으로<br />딱 맞는 <strong>맞춤형 기질 리포트</strong>를 작성하고 있습니다.</>
+            : <>아이와 부모님의 기질이 만나는<br /><strong>아름다운 하모니</strong>를 분석 리포트에 담아내고 있습니다.</>
           }
         </p>
       </div>
@@ -335,7 +340,7 @@ function SurveyContent() {
 
           {/* Skip / Next could go here if needed, but we auto-advance */}
           <div className="text-[10px] text-slate-300">
-            Aina Garden Temperament Test
+            기질아이 Temperament Test
           </div>
         </div>
       </div>
@@ -347,8 +352,8 @@ function SurveyContent() {
             <div className="text-center">
               <div className="w-20 h-20 mx-auto mb-6 bg-green-50 rounded-full flex items-center justify-center">
                 <span className="text-4xl">
-                  {transitionType === 'toParent' ? '🌱' :
-                    transitionType === 'toParenting' ? '🏡' : '🎉'}
+                  {transitionType === 'toParent' ? '✨' :
+                    transitionType === 'toParenting' ? '🤝' : '🎉'}
                 </span>
               </div>
 
@@ -363,7 +368,7 @@ function SurveyContent() {
                 ) : transitionType === 'toParenting' ? (
                   <>마지막으로 <strong>평소 양육 스타일</strong>을 체크할게요.<br />구체적인 육아 솔루션이 제공됩니다.</>
                 ) : (
-                  <>수고하셨습니다!<br />이제 우리 가족만의 <strong>특별한 정원</strong>을 보러 가볼까요?</>
+                  <>수고하셨습니다!<br />이제 우리 가족만의 <strong>특별한 기질 분석 리포트</strong>를 확인하러 가볼까요?</>
                 )}
               </p>
 

@@ -70,12 +70,12 @@ export default function IntakePage() {
         {/* Intro */}
         <section className="text-center space-y-2">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🌱</span>
+            <span className="text-3xl">✨</span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">아이의 씨앗을 심어볼까요?</h2>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white">우리 아이 기질을 알아볼까요?</h2>
           <p className="text-slate-500 text-sm leading-relaxed">
             아이의 이름과 생일을 토대로<br />
-            딱 맞는 정원 솔루션을 준비해드릴게요.
+            딱 맞는 맞춤형 양육 솔루션을 준비해드릴게요.
           </p>
         </section>
 
@@ -152,7 +152,7 @@ export default function IntakePage() {
           </div>
           <p className="text-[12px] text-slate-500 leading-relaxed">
             아이의 태어난 시간과 장소를 입력하시면,<br />
-            <strong>사주 기질 분석</strong>이 포함된 더 정교한 리포트를 받아보실 수 있습니다.
+            <strong>기질아이 세부 분석</strong>이 포함된 더 정교한 리포트를 받아보실 수 있습니다.
           </p>
 
           <div className="space-y-4 pt-2">
@@ -237,7 +237,7 @@ export default function IntakePage() {
               </div>
               <div>
                 <p className="text-[14px] font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors">[필수] 개인정보 처리 방침 동의</p>
-                <p className="text-[12px] text-slate-400 mt-1 leading-relaxed">수집된 정보는 소아 심리 및 사주 기반 분석 목적으로만 활용됩니다.</p>
+                <p className="text-[12px] text-slate-400 mt-1 leading-relaxed">수집된 정보는 소아 심리 및 기질 기반 분석 목적으로만 활용됩니다.</p>
               </div>
             </label>
             {errors.privacy && <p className="text-xs text-red-500 mt-1.5 ml-1 font-medium">{errors.privacy}</p>}

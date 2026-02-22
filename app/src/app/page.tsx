@@ -9,7 +9,7 @@ import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db'
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
-import { CHILD_QUESTIONS } from '@/data/questions';
+import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 
 export default function HomePage() {
   const router = useRouter();
@@ -144,11 +144,26 @@ export default function HomePage() {
     }
   };
 
-  // Loading state
+  // Loading state (Enhanced Splash Screen)
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background-light">
-        <div className="text-primary text-xl font-bold animate-pulse">Aina Garden...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="relative mb-8">
+          <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl animate-pulse scale-150"></div>
+          <img
+            src="/gijilai_icon.png"
+            alt="기질아이"
+            className="w-24 h-24 relative z-10 animate-bounce-subtle object-contain drop-shadow-xl"
+          />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-2xl font-logo text-primary dark:text-white tracking-widest">기질아이</h1>
+          <div className="flex gap-1.5 mt-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/20 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/20 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/20 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -158,12 +173,12 @@ export default function HomePage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background-light p-6 text-center">
         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-          <span className="material-icons-round text-primary text-4xl">local_florist</span>
+          <span className="material-icons-round text-primary text-4xl">child_care</span>
         </div>
-        <h1 className="text-2xl font-bold mb-3 text-slate-800 font-display">아이나 가든</h1>
+        <h1 className="text-2xl font-bold mb-3 text-slate-800 font-display">기질아이</h1>
         <p className="text-slate-500 mb-8 leading-relaxed">
-          아이의 타고난 기질(씨앗)을 이해하고<br />
-          부모의 사랑(토양)으로 꽃피우는 정원
+          아이의 신호를 올바르게 통역하고<br />
+          서로를 더 깊이 이해하는 맞춤형 솔루션
         </p>
         <Link href="/login" className="w-full max-w-xs">
           <button className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
@@ -196,9 +211,7 @@ export default function HomePage() {
             <button className="material-symbols-outlined text-primary dark:text-white text-[28px]">menu</button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary dark:text-white text-[24px]">
-              {String(mainChild?.gender).toLowerCase() === 'female' ? 'face_3' : 'face_6'}
-            </span>
+            <img src="/gijilai_icon.png" alt="기질아이" className="w-8 h-8 rounded-lg object-contain" />
             <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
           </div>
           <button className="relative p-2 rounded-full hover:bg-beige-main dark:hover:bg-surface-dark transition-colors">
@@ -310,7 +323,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-            ) : (!parentSurvey && Object.keys(atqResponses).length === 0) ? (
+            ) : (!parentSurvey && Object.keys(atqResponses).length < PARENT_QUESTIONS.length) ? (
               <div className="bg-secondary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-4">
                 {/* [카드 C] 양육자 성향 검사 유도 */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -324,63 +337,64 @@ export default function HomePage() {
                   <p className="text-sm text-white/90 mb-6">
                     완벽한 분석을 위해 부모님의 양육 성향도 알려주세요.
                   </p>
-                  <Link href="/survey/parent">
+                  <Link href="/survey?type=PARENT">
                     <button className="w-full py-4 rounded-xl bg-white text-secondary font-bold text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-black/5 active:scale-[0.98]">
-                      <span>양육 검사 시작</span>
+                      <span>{Object.keys(atqResponses).length > 0 ? '양육 검사 이어하기' : '양육 검사 시작'}</span>
                       <span className="material-symbols-outlined text-[18px]">play_arrow</span>
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            ) : !hasReport ? (
-              <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-6 shadow-soft border border-primary/20 dark:border-primary/50 relative overflow-hidden mb-4">
-                {/* [카드 D] 기질 분석 리포트 확인 */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined">description</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-text-main dark:text-white">기질 분석 완료!</h3>
-                  </div>
-                  <p className="text-sm text-text-sub dark:text-gray-300 mb-6">
-                    우리아이 기질 분석이 완료되었어요! 결과를 확인해보세요.
-                  </p>
-                  <Link href="/report">
-                    <button className="w-full bg-primary dark:bg-primary-dark py-4 rounded-xl text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center justify-center gap-1 active:scale-[0.98]">
-                      <span>기질 분석 결과 보기</span>
-                      <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            ) : !hasActiveCoaching ? (
-              <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-6 shadow-soft border border-primary/20 dark:border-primary/50 relative overflow-hidden mb-4">
-                {/* [카드 E] 맞춤형 코칭 프로그램 제안 */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined">auto_awesome</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-text-main dark:text-white">맞춤형 코칭 제안</h3>
-                  </div>
-                  <p className="text-sm text-text-sub dark:text-gray-300 mb-6">
-                    현재의 고민을 해결해줄 맞춤형 데일리 코칭을 시작해보세요.
-                  </p>
-                  <Link href="/coaching">
-                    <button className="w-full bg-primary dark:bg-primary-dark py-4 rounded-xl text-white font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary-dark transition-colors flex items-center justify-center gap-1 active:scale-[0.98]">
-                      <span>추천 코칭 살펴보기</span>
-                      <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </button>
                   </Link>
                 </div>
               </div>
             ) : (
               <>
-                {/* 3순위 카드가 들어가는 영역 (추후 조건부 처리 필요시 분기, 현재는 하드코딩된 UI 유지) */}
+                <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-6 shadow-soft border border-primary/20 dark:border-primary/50 relative overflow-hidden mb-4">
+                  {/* [카드 E] 마음 통역소 제안 */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-[14px] bg-secondary flex items-center justify-center text-white shadow-md shadow-secondary/30">
+                        <span className="material-symbols-outlined">chat_bubble</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-text-main dark:text-white">아이의 마음이 궁금한가요?</h3>
+                    </div>
+                    <p className="text-sm text-text-sub dark:text-gray-300 mb-6 leading-relaxed">
+                      아이의 기질을 통역하면 육아가 훨씬 쉬워져요.<br />
+                      <span className="font-bold text-secondary">오늘의 고민</span>에 대한 맞춤 처방을 확인하세요.
+                    </p>
+                    <Link href="/consult">
+                      <button className="w-full bg-secondary dark:bg-secondary py-4 rounded-xl text-white font-bold text-sm shadow-lg shadow-secondary/20 hover:brightness-110 transition-all flex items-center justify-center gap-1 active:scale-[0.98]">
+                        <span>마음 통역소에서 상담하기</span>
+                        <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* [카드 D] 기질 분석 리포트 확인 (서브 카드로 배치) */}
+                <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-5 shadow-soft border border-primary/10 dark:border-primary/50 relative overflow-hidden mb-4 mt-2">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                  <div className="relative z-10 flex justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined text-[20px]">description</span>
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-bold text-text-main dark:text-white">기질 분석 리포트</h3>
+                        <p className="text-[11px] text-text-sub dark:text-gray-400">
+                          우리아이와 부모님 분석 결과
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/report" className="shrink-0">
+                      <button className="px-4 py-2.5 rounded-xl bg-primary/5 text-primary dark:text-primary-light font-bold text-[12px] hover:bg-primary/10 transition-colors border border-primary/10">
+                        결과 보기
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+
                 {/* Realtime Coaching Card */}
-                <div className="bg-primary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden">
+                <div className="bg-primary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-4">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                   <div className="relative z-10">
                     <div className="flex justify-between items-start mb-6">
@@ -482,11 +496,11 @@ export default function HomePage() {
             </div>
             <span className="text-[10px] font-medium text-gray-400 group-hover:text-primary dark:group-hover:text-white">분석</span>
           </Link>
-          <div className="relative -top-6 group w-20 flex justify-center">
+          <Link href="/consult" className="relative -top-6 group w-20 flex justify-center">
             <button className="w-14 h-14 rounded-full bg-primary dark:bg-primary text-white dark:text-white shadow-xl shadow-primary/30 flex items-center justify-center transform transition-all group-hover:scale-105 active:scale-95 border-[4px] border-beige-light dark:border-background-dark">
               <span className="material-symbols-outlined text-white text-[32px]">add</span>
             </button>
-          </div>
+          </Link>
           <Link href="/coaching" className="flex flex-col items-center justify-center gap-1 flex-1 group">
             <div className="p-1.5 rounded-full transition-colors">
               <span className="material-symbols-outlined text-gray-400 group-hover:text-primary dark:group-hover:text-white text-[24px]">chat_bubble_outline</span>
@@ -511,18 +525,18 @@ export default function HomePage() {
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
 
                 <div className="relative z-10 p-8 flex flex-col items-center">
-                  <div className="w-24 h-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mb-8 rotate-3 shadow-inner">
-                    <span className="text-5xl animate-bounce-subtle">🌱</span>
+                  <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mb-8 rotate-3 shadow-xl">
+                    <img src="/gijilai_icon.png" alt="기질아이" className="w-16 h-16 object-contain" />
                   </div>
 
                   <div className="text-center space-y-3 mb-10">
                     <h3 className="text-2xl font-black text-slate-800 dark:text-white font-display break-keep">
-                      반가워요!<br />이제 정원을 가꿔볼까요?
+                      반가워요!<br />이제 아이를 알아가볼까요?
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep px-4">
-                      아이의 <strong>타고난 기질(씨앗)</strong>을 이해하고,<br />
-                      부모님의 <strong>사랑(토양)</strong>으로 아름답게<br />
-                      피어나는 과정을 함께 도와드릴게요.
+                      아이의 <strong>타고난 기질</strong>을 이해하고,<br />
+                      부모님의 <strong>따뜻한 시선</strong>으로 아름답게<br />
+                      성장하는 과정을 함께 도와드릴게요.
                     </p>
                   </div>
 
@@ -578,18 +592,18 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSurveyIntro(false)}></div>
               <div className="relative bg-[#FAFCFA] dark:bg-[#1A2E1A] w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mb-5 animate-bounce-subtle">
-                    <span className="material-icons-round text-4xl text-[#2E7D32]">psychology</span>
+                  <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mb-5 shadow-lg animate-bounce-subtle">
+                    <img src="/gijilai_icon.png" alt="기질아이" className="w-12 h-12 object-contain" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3 font-display">
-                    어떤 씨앗일까요?
+                    어떤 기질일까요?
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-8 break-keep">
                     아이의 타고난 기질을 알면<br />
                     더 지혜롭게 사랑할 수 있습니다.<br />
                     <br />
                     약 3분 정도 소요되는 간단한 테스트로<br />
-                    우리 아이만의 특별한 씨앗을 발견해보세요.
+                    우리 아이만의 특별한 빛을 발견해보세요.
                   </p>
 
                   <div className="w-full space-y-3">
