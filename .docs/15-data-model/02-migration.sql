@@ -115,3 +115,62 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Create consultations table
+create table public.consultations (
+  id uuid not null default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  child_id uuid references public.children(id) on delete cascade,
+  category text,
+  problem_description text,
+  ai_options jsonb,
+  selected_reaction_id text,
+  ai_prescription jsonb,
+  status text default 'DRAFT' check (status in ('DRAFT', 'AWAITING_REACTION', 'COMPLETED')),
+  created_at timestamptz default now(),
+  primary key (id)
+);
+
+alter table public.consultations enable row level security;
+
+create policy "Users can view their own consultations."
+  on public.consultations for select
+  using ( auth.uid() = user_id );
+
+create policy "Users can insert their own consultations."
+  on public.consultations for insert
+  with check ( auth.uid() = user_id );
+
+create policy "Users can update their own consultations."
+  on public.consultations for update
+  using ( auth.uid() = user_id );
+
+-- Create action_items table
+create table public.action_items (
+  id uuid not null default gen_random_uuid(),
+  consultation_id uuid references public.consultations(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  child_id uuid references public.children(id) on delete cascade,
+  target_date date,
+  title text not null,
+  type text,
+  is_completed boolean default false,
+  completed_at timestamptz,
+  created_at timestamptz default now(),
+  primary key (id)
+);
+
+alter table public.action_items enable row level security;
+
+create policy "Users can view their own action_items."
+  on public.action_items for select
+  using ( auth.uid() = user_id );
+
+create policy "Users can insert their own action_items."
+  on public.action_items for insert
+  with check ( auth.uid() = user_id );
+
+create policy "Users can update their own action_items."
+  on public.action_items for update
+  using ( auth.uid() = user_id );
+

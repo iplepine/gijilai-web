@@ -58,3 +58,37 @@ Stores the generated LLM reports.
 | `analysis_json` | `jsonb` | Structured analysis data (optional) |
 | `model_used` | `text` | AI Model used (e.g., 'gpt-4o') |
 | `created_at` | `timestamptz` | Creation timestamp |
+
+## 5. Consultations (마음 통역소)
+Stores user's parenting problems, selected reactions, and AI generated prescriptions.
+
+### `consultations`
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key, Default: `gen_random_uuid()` |
+| `user_id` | `uuid` | References `profiles.id` |
+| `child_id` | `uuid` | References `children.id` |
+| `category` | `text` | Selected category (e.g., '외출 전 떼쓰기') |
+| `problem_description` | `text` | Optional detailed description |
+| `ai_options` | `jsonb` | AI generated reaction options for parent |
+| `selected_reaction_id` | `text` | The ID of the option selected by the parent |
+| `ai_prescription` | `jsonb` | The final solution (interpretation, chemistry, magic word) |
+| `status` | `text` | 'DRAFT', 'AWAITING_REACTION', 'COMPLETED' |
+| `created_at` | `timestamptz` | Creation timestamp |
+
+## 6. Action Items
+Stores specific tasks/missions given to the parent, tied to a consultation.
+
+### `action_items`
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key, Default: `gen_random_uuid()` |
+| `consultation_id` | `uuid` | References `consultations.id` |
+| `user_id` | `uuid` | References `profiles.id` |
+| `child_id` | `uuid` | References `children.id` |
+| `target_date` | `date` | The date this item is scheduled for |
+| `title` | `text` | Short title/description of the action |
+| `type` | `text` | 'MAGIC_WORD', 'BEHAVIOR', etc. |
+| `is_completed` | `boolean` | Whether the parent marked it as done |
+| `completed_at` | `timestamptz` | Timestamp when completed |
+| `created_at` | `timestamptz` | Creation timestamp |

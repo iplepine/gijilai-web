@@ -2,11 +2,11 @@
 
 ## 1. 개요 (Overview)
 - **경로**: `/`
-- **역할**: 부모님(Gardener)을 위한 메인 대시보드.
+- **역할**: 양육자를 위한 메인 대시보드.
 - **주요 기능**: 데일리 양육 미션 수행, 아이와 정서적 성장 확인, 코칭 프로그램 관리.
 
 ## 2. 포함된 기능 (Involved Features)
-- **Gardening Solution**: `docs/20-usecase/03-gardening` (New)
+- **Parenting Chemistry Solution**: `docs/20-usecase/03-parenting-chemistry` (New)
 - **Child Management**: `docs/30-screen/03-child-management`
 - **Parent Profile**: `docs/30-screen/05-parent-profile`
 
@@ -15,7 +15,7 @@
 |---|---|---|---|
 | `profile` | `UserProfile` | `null` | 로그인된 부모 정보 |
 | `children` | `ChildProfile[]` | `[]` | 등록된 자녀 목록 |
-| `garden` | `GardenState` | `null` | **[Module C]** 아이 성장/안정도 시각화 데이터 (레벨, 테마, 식물/비주얼) |
+| `chemistry` | `ChemistryState` | `null` | **[Module C]** 아이 성장/안정도 시각화 데이터 (성장 레벨, 테마 비주얼) |
 | `mission` | `DailyMission` | `null` | **[Module B]** 오늘의 미션 (문장, 가이드, 완료여부) |
 | `cycle` | `ProgramCycle` | `null` | 현재 진행 중인 코칭 프로그램 정보 (3/7/14/21일) |
 | `loading` | `boolean` | `true` | 로딩 상태 |
@@ -25,15 +25,15 @@
 ### A. 초기 데이터 로드 (Init)
 - **Trigger**: 화면 진입.
 - **Action**:
-    1. **Call Use Case**: `UC-PROFILE-03. GetFamilyGardenDataUseCase` (프로필/자녀).
-    2. **Call Use Case**: `UC-GARDEN-03. GetGardenStatusUseCase` (정원 상태).
-    3. **Call Use Case**: `UC-GARDEN-01. GetDailyMissionUseCase` (미션).
-- **Update**: `garden`, `mission`, `cycle` 상태 업데이트.
+    1. **Call Use Case**: `UC-PROFILE-03. GetFamilyDataUseCase` (프로필/자녀).
+    2. **Call Use Case**: `UC-CHEMISTRY-03. GetChemistryStatusUseCase` (시너지 상태).
+    3. **Call Use Case**: `UC-CHEMISTRY-01. GetDailyMissionUseCase` (미션).
+- **Update**: `chemistry`, `mission`, `cycle` 상태 업데이트.
 
 ### B. 데일리 미션 수행 (Check Mission)
 - **Trigger**: 미션 카드 체크박스 클릭.
 - **Action**:
-    1. **Call Use Case**: `UC-GARDEN-02. CompleteDailyMissionUseCase`.
+    1. **Call Use Case**: `UC-CHEMISTRY-02. CompleteDailyMissionUseCase`.
     2. 아이 성장 애니메이션 재생 (안정도 상승).
     3. 토스트 메시지 노출 ("오늘의 미션 완료!").
 - **Optimistic UI**: 즉시 체크 표시 후 백그라운드 동기화.
@@ -41,7 +41,7 @@
 ### C. 코칭 프로그램 시작/변경 (Manage Cycle)
 - **Trigger**: 프로그램 추천 카드 클릭.
 - **Action**: `NewCycleModal` 오픈.
-- **Flow**: 고민 선택 -> **Call Use Case** `UC-GARDEN-04` (기간 추천) -> 확정.
+- **Flow**: 고민 선택 -> **Call Use Case** `UC-CHEMISTRY-04` (기간 추천) -> 확정.
 
 ## 5. View: 주요 컴포넌트 구조
 

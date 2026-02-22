@@ -20,7 +20,8 @@
 ### `20-usecase` (비즈니스 로직 명세)
 - **Core Business Rules**. UI와 무관한 순수 로직 (`docs/_templates/02-usecase-spec.md` 참조).
 - Screen 문서에서 이를 참조(Reference)하여 사용합니다.
-- 예: `03-gardening.md` (양육 코칭/정원 로직).
+- 예: `03-parenting-chemistry.md` (양육 맞춤 시너지 로직).
+- 예: `04-mind-consultation.md` (마음 통역소 및 액션 아이템 관리 로직).
 
 ### `30-screen` (화면 명세)
 - **UI & Interaction Spec** (`docs/_templates/01-screen-spec.md` 참조).
