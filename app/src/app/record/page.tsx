@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/AuthProvider';
+import BottomNav from '@/components/layout/BottomNav';
 
 type TabType = 'CONSULT' | 'MISSION';
 
@@ -101,9 +102,6 @@ export default function RecordPage() {
                         <span className="material-symbols-outlined text-primary fill-1">history_edu</span>
                         기록
                     </h1>
-                    <button onClick={() => router.push('/')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-surface-dark shadow-sm border border-primary/5">
-                        <span className="material-symbols-outlined text-text-sub">close</span>
-                    </button>
                 </div>
 
                 {/* Tab Switcher */}
@@ -111,8 +109,8 @@ export default function RecordPage() {
                     <button
                         onClick={() => setActiveTab('CONSULT')}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'CONSULT'
-                                ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
-                                : 'text-text-sub'
+                            ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
+                            : 'text-text-sub'
                             }`}
                     >
                         마음 상담기록
@@ -120,8 +118,8 @@ export default function RecordPage() {
                     <button
                         onClick={() => setActiveTab('MISSION')}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'MISSION'
-                                ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
-                                : 'text-text-sub'
+                            ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
+                            : 'text-text-sub'
                             }`}
                     >
                         실천 미션함
@@ -186,13 +184,13 @@ export default function RecordPage() {
                                     key={mission.id}
                                     onClick={() => toggleMission(mission.id, mission.is_completed)}
                                     className={`flex items-center gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer active:scale-[0.98] ${mission.is_completed
-                                            ? 'bg-primary/5 border-primary/20 opacity-80'
-                                            : 'bg-white dark:bg-surface-dark border-primary/5 shadow-soft hover:border-primary/20'
+                                        ? 'bg-primary/5 border-primary/20 opacity-80'
+                                        : 'bg-white dark:bg-surface-dark border-primary/5 shadow-soft hover:border-primary/20'
                                         }`}
                                 >
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${mission.is_completed
-                                            ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                            : 'bg-beige-light dark:bg-black/20 text-primary'
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                        : 'bg-beige-light dark:bg-black/20 text-primary'
                                         }`}>
                                         <span className="material-symbols-outlined text-[28px]">
                                             {mission.is_completed ? 'check_circle' : 'task_alt'}
@@ -223,7 +221,8 @@ export default function RecordPage() {
             </main>
 
             {/* Bottom Nav Spacer */}
-            <div className="h-24"></div>
+            <div className="h-32"></div>
+            <BottomNav />
         </div>
     );
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
+import BottomNav from '@/components/layout/BottomNav';
 import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
@@ -483,37 +484,7 @@ export default function HomePage() {
           </div>
         </main>
 
-        <nav className="bg-beige-light dark:bg-surface-dark border-t border-beige-main/50 dark:border-gray-800 px-4 pb-8 pt-2 flex justify-between items-end relative z-20 rounded-t-3xl shadow-[0_-5px_30px_rgba(0,0,0,0.03)] selection:bg-transparent">
-          <Link href="/" className="flex flex-col items-center justify-center gap-1 flex-1 group">
-            <div className="p-1.5 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-primary dark:text-primary text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>
-            </div>
-            <span className="text-[10px] font-bold text-primary dark:text-primary">홈</span>
-          </Link>
-          <Link href="/report" className="flex flex-col items-center justify-center gap-1 flex-1 group">
-            <div className="p-1.5 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-gray-400 group-hover:text-primary dark:group-hover:text-white text-[24px]">insert_chart</span>
-            </div>
-            <span className="text-[10px] font-medium text-gray-400 group-hover:text-primary dark:group-hover:text-white">분석</span>
-          </Link>
-          <Link href="/consult" className="relative -top-6 group w-20 flex justify-center">
-            <button className="w-14 h-14 rounded-full bg-primary dark:bg-primary text-white dark:text-white shadow-xl shadow-primary/30 flex items-center justify-center transform transition-all group-hover:scale-105 active:scale-95 border-[4px] border-beige-light dark:border-background-dark">
-              <span className="material-symbols-outlined text-white text-[32px]">add</span>
-            </button>
-          </Link>
-          <Link href="/coaching" className="flex flex-col items-center justify-center gap-1 flex-1 group">
-            <div className="p-1.5 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-gray-400 group-hover:text-primary dark:group-hover:text-white text-[24px]">chat_bubble_outline</span>
-            </div>
-            <span className="text-[10px] font-medium text-gray-400 group-hover:text-primary dark:group-hover:text-white">기록</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center justify-center gap-1 flex-1 group">
-            <div className="p-1.5 rounded-full transition-colors">
-              <span className="material-symbols-outlined text-gray-400 group-hover:text-primary dark:group-hover:text-white text-[24px]">person</span>
-            </div>
-            <span className="text-[10px] font-medium text-gray-400 group-hover:text-primary dark:group-hover:text-white">내 정보</span>
-          </Link>
-        </nav>
+        <BottomNav />
 
         {/* Onboarding Modal - Show if no children registered */}
         {

@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
+import BottomNav from '@/components/layout/BottomNav';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -530,10 +531,9 @@ function ReportContent() {
               <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
                 결과 공유하고 할인권 받기
               </Button>
-              <Link href="/" className="text-slate-400 text-sm font-bold hover:text-green-500 transition-colors">
-                홈으로 돌아가기
-              </Link>
             </div>
+            <div className="h-32" />
+            <BottomNav />
           </div>
         )}
       </div>
