@@ -10,6 +10,8 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signInWithKakao: () => Promise<void>;
+    isLoadingGoogle: boolean;
+    isLoadingKakao: boolean;
     signOut: () => Promise<void>;
 }
 
@@ -38,22 +40,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
+    const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+    const [isLoadingKakao, setIsLoadingKakao] = useState(false);
+
     const signInWithGoogle = async () => {
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+        setIsLoadingGoogle(true);
+        try {
+            await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+            setIsLoadingGoogle(false);
+        }
     };
 
     const signInWithKakao = async () => {
-        await supabase.auth.signInWithOAuth({
-            provider: 'kakao',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+        setIsLoadingKakao(true);
+        try {
+            await supabase.auth.signInWithOAuth({
+                provider: 'kakao',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+            setIsLoadingKakao(false);
+        }
     };
 
     const signOut = async () => {
@@ -61,7 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, signInWithGoogle, signInWithKakao, signOut }}>
+        <AuthContext.Provider value={{
+            session,
+            user,
+            loading,
+            signInWithGoogle,
+            signInWithKakao,
+            isLoadingGoogle,
+            isLoadingKakao,
+            signOut
+        }}>
             {children}
         </AuthContext.Provider>
     );

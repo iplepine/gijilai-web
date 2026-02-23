@@ -28,12 +28,7 @@ export async function GET(request: NextRequest) {
             }
         )
 
-        // Check if session already exists
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-            return NextResponse.redirect(`${origin}${next}`)
-        }
-
+        // Exchange code for session immediately
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
             return NextResponse.redirect(`${origin}${next}`)

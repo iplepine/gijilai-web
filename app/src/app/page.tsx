@@ -391,12 +391,7 @@ export default function HomePage() {
 
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div className="w-20 h-20 rounded-[2rem] bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center text-primary mb-8 rotate-3 group-hover:rotate-0 transition-transform duration-500 ring-4 ring-primary/5">
-                    <div className="relative">
-                      <span className="material-symbols-outlined text-[46px] fill-1 scale-110">child_care</span>
-                      <div className="absolute -bottom-1 -right-2 w-7 h-7 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg ring-2 ring-white dark:ring-slate-800">
-                        <span className="material-symbols-outlined text-[18px] font-bold">add</span>
-                      </div>
-                    </div>
+                    <span className="material-symbols-outlined text-[46px] fill-1 scale-110">child_care</span>
                   </div>
 
                   <h2 className="text-[28px] font-black text-text-main dark:text-white leading-tight break-keep mb-4">
@@ -470,13 +465,13 @@ export default function HomePage() {
                           key={item.id}
                           onClick={() => togglePreviewAction(item.id)}
                           className={`flex gap-4 p-5 rounded-[1.5rem] border transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.checked
-                              ? 'bg-primary/5 border-primary/20 shadow-sm'
-                              : 'bg-white dark:bg-surface-dark/30 border-gray-100 dark:border-gray-800 hover:border-primary/10'
+                            ? 'bg-primary/5 border-primary/20 shadow-sm'
+                            : 'bg-white dark:bg-surface-dark/30 border-gray-100 dark:border-gray-800 hover:border-primary/10'
                             }`}
                         >
                           <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-colors ${item.checked
-                              ? 'bg-primary border-primary text-white shadow-md'
-                              : 'border-gray-200 dark:border-gray-700'
+                            ? 'bg-primary border-primary text-white shadow-md'
+                            : 'border-gray-200 dark:border-gray-700'
                             }`}>
                             {item.checked && <span className="material-symbols-outlined text-[18px] font-bold">check</span>}
                           </div>

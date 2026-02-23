@@ -22,24 +22,25 @@ interface Prescription {
     actionItem: string;
 }
 
+// 자유 입력 도우미 키워드
 const CATEGORIES = [
-    '외출 전 떼쓰기', '식사 거부', '수면 거부/지연',
-    '장난감/동생 갈등', '공공장소 통제 불능', '분리 불안'
+    '아침마다 전쟁이에요', '밥을 잘 안 먹어요', '밤에 잠을 안 자려 해요',
+    '동생이랑 자꾸 싸워요', '밖에서 통제가 안 돼요'
 ];
 
 export default function ConsultPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { cbqResponses, atqResponses } = useAppStore();
+    const { intake, cbqResponses, atqResponses } = useAppStore();
 
     const [step, setStep] = useState<Step>('INPUT');
     const [isLoading, setIsLoading] = useState(false);
 
     // INPUT STATE
-    const [category, setCategory] = useState('');
     const [problemDesc, setProblemDesc] = useState('');
 
     // DIAGNOSTIC STATE
+    const [empathy, setEmpathy] = useState('');
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -49,24 +50,28 @@ export default function ConsultPage() {
     const [prescription, setPrescription] = useState<Prescription | null>(null);
 
     const handleStartDiagnostic = async () => {
-        if (!category && !problemDesc) {
-            alert('고민 카테고리나 내용을 적어주세요.');
+        if (!problemDesc.trim()) {
+            alert('어떤 부분에서 가장 힘드셨는지 자유롭게 적어주세요.');
             return;
         }
 
-        const fullProblem = `[${category}] ${problemDesc}`;
+        const fullProblem = problemDesc;
 
         setIsLoading(true);
         try {
             const res = await fetch('/api/consult/questions/initial', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ problem: fullProblem }),
+                body: JSON.stringify({
+                    problem: fullProblem,
+                    childName: intake.childName
+                }),
             });
 
             if (!res.ok) throw new Error('Failed to fetch initial questions');
 
             const data = await res.json();
+            setEmpathy(data.empathy);
             setQuestions(data.questions);
             setStep('DIAGNOSTIC');
             setCurrentQuestionIndex(0);
@@ -97,7 +102,7 @@ export default function ConsultPage() {
     const handleCheckFollowUp = async (currentAnswers: Record<string, string>) => {
         setIsLoading(true);
         try {
-            const fullProblem = `[${category}] ${problemDesc}`;
+            const fullProblem = problemDesc;
             const res = await fetch('/api/consult/questions/followup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -150,7 +155,7 @@ export default function ConsultPage() {
                 parentArchetype = result.soilName;
             }
 
-            const fullProblem = `[${category}] ${problemDesc}`;
+            const fullProblem = problemDesc;
             const res = await fetch('/api/consult/prescription', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -176,7 +181,7 @@ export default function ConsultPage() {
                 await supabase.from('consultations').insert({
                     user_id: user.id,
                     child_id: childId,
-                    category,
+                    category: '자유 입력',
                     problem_description: problemDesc,
                     ai_options: questions,
                     user_response: allAnswers,
@@ -235,49 +240,36 @@ export default function ConsultPage() {
                     <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="space-y-2">
                             <h2 className="text-2xl font-bold text-text-main dark:text-white leading-tight">
-                                양육자님,<br />오늘 어떤 일이 가장 힘드셨나요?
+                                {intake.childName ? `${intake.childName} 부모님,` : '양육자님,'}<br />오늘 어떤 일이 가장 힘드셨나요?
                             </h2>
                             <p className="text-sm text-text-sub dark:text-gray-400">아이의 기질에 딱 맞는 솔루션을 찾아드릴게요.</p>
                         </div>
 
                         <div>
-                            <div className="text-sm font-bold text-primary dark:text-primary-light mb-4 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                고민 카테고리
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-wrap gap-2 mb-4">
                                 {CATEGORIES.map(cat => (
                                     <button
                                         key={cat}
-                                        onClick={() => setCategory(cat)}
-                                        className={`px-4 py-3 rounded-2xl text-[13px] font-bold transition-all border ${category === cat
-                                            ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]'
-                                            : 'bg-white dark:bg-surface-dark text-text-sub border-primary/10 hover:border-primary/30'
-                                            }`}
+                                        onClick={() => setProblemDesc(prev => prev ? `${prev} ${cat}` : cat)}
+                                        className="px-3 py-2 rounded-xl text-[13px] font-bold transition-all border bg-white dark:bg-surface-dark text-text-sub border-primary/10 hover:border-primary/30 hover:bg-primary/5 active:scale-95 shadow-sm"
                                     >
-                                        {cat}
+                                        + {cat}
                                     </button>
                                 ))}
                             </div>
-                        </div>
 
-                        <div>
-                            <div className="text-sm font-bold text-primary dark:text-primary-light mb-3 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                상황 설명 (선택)
-                            </div>
                             <textarea
                                 value={problemDesc}
                                 onChange={(e) => setProblemDesc(e.target.value)}
-                                placeholder="예: 아침에 유치원 갈 시간이 다 됐는데 옷을 안 입겠다고 숨어버렸어요."
-                                className="w-full h-40 p-5 text-[15px] rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
+                                placeholder="자유롭게 적어주세요.&#10;예: 아침에 어린이집에 가야 하는데 옷을 안 입겠다며 30분째 울었어요. 결국 화를 내고 말았네요..."
+                                className="w-full h-48 p-5 text-[15px] leading-relaxed rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
                             />
                         </div>
 
                         <button
                             onClick={handleStartDiagnostic}
-                            disabled={(!category && !problemDesc) || isLoading}
-                            className={`w-full py-5 rounded-2xl text-white font-bold text-lg mt-4 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${(!category && !problemDesc) || isLoading
+                            disabled={!problemDesc.trim() || isLoading}
+                            className={`w-full py-5 rounded-2xl text-white font-bold text-lg mt-4 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${!problemDesc.trim() || isLoading
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 : 'bg-primary hover:bg-primary-dark shadow-xl shadow-primary/20'
                                 }`}
@@ -298,7 +290,17 @@ export default function ConsultPage() {
                 )}
 
                 {step === 'DIAGNOSTIC' && currentQuestion && (
-                    <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-right-4 duration-500">
+                    <div className="flex flex-col gap-6 w-full animate-in fade-in slide-in-from-right-4 duration-500">
+                        {/* Empathy Box */}
+                        {currentQuestionIndex === 0 && empathy && (
+                            <div className="bg-secondary/10 rounded-3xl p-6 border border-secondary/20 relative animate-in zoom-in-95 duration-700">
+                                <div className="absolute -top-3 left-6 bg-secondary text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter">상담사 아이나</div>
+                                <p className="text-[14px] text-text-main dark:text-white leading-relaxed font-medium">
+                                    {empathy}
+                                </p>
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-black text-primary uppercase tracking-widest">Question {currentQuestionIndex + 1} / {questions.length}</span>
@@ -308,7 +310,7 @@ export default function ConsultPage() {
                                     ))}
                                 </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-text-main dark:text-white leading-snug">
+                            <h2 className="text-xl font-bold text-text-main dark:text-white leading-snug">
                                 {currentQuestion.text}
                             </h2>
                         </div>
@@ -319,7 +321,7 @@ export default function ConsultPage() {
                                     <button
                                         key={opt.id}
                                         onClick={() => handleAnswer(currentQuestion.id, opt.text)}
-                                        className="w-full text-left p-6 rounded-[2rem] border-2 border-primary/5 bg-white dark:bg-surface-dark hover:border-secondary hover:bg-secondary/5 transition-all active:scale-[0.98] group"
+                                        className="w-full text-left p-5 rounded-[1.5rem] border-2 border-primary/5 bg-white dark:bg-surface-dark hover:border-secondary hover:bg-secondary/5 transition-all active:scale-[0.98] group"
                                     >
                                         <div className="font-bold leading-relaxed text-[15px] text-text-main dark:text-white group-hover:text-secondary">
                                             {opt.text}
@@ -351,7 +353,7 @@ export default function ConsultPage() {
                         {isLoading && (
                             <div className="fixed inset-0 bg-white/60 dark:bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
                                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                <p className="font-bold text-primary">AI가 답변을 분석 중입니다...</p>
+                                <p className="font-bold text-primary">아이나가 마음을 번역 중입니다...</p>
                             </div>
                         )}
                     </div>
