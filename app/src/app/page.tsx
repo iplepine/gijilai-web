@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import BottomNav from '@/components/layout/BottomNav';
-import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db';
+import { db, UserProfile, ChildProfile, ReportData, SurveyData, ActionItem } from '@/lib/db';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
@@ -23,6 +23,7 @@ export default function HomePage() {
   const [reports, setReports] = useState<ReportData[]>([]);
   const [latestSurvey, setLatestSurvey] = useState<SurveyData | null>(null);
   const [parentSurvey, setParentSurvey] = useState<SurveyData | null>(null);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [showSurveyIntro, setShowSurveyIntro] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -114,6 +115,7 @@ export default function HomePage() {
         setReports(data.reports);
         setLatestSurvey(data.latestSurvey);
         setParentSurvey(data.parentSurvey);
+        setActionItems(data.actionItems || []);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
@@ -139,6 +141,16 @@ export default function HomePage() {
     setPreviewActions(prev => prev.map(action =>
       action.id === id ? { ...action, checked: !action.checked } : action
     ));
+  };
+
+  const handleToggleActionItem = async (action: ActionItem) => {
+    try {
+      const updated = await db.toggleActionItem(action.id, !action.is_completed);
+      setActionItems(prev => prev.map(a => a.id === action.id ? updated : a));
+    } catch (e) {
+      console.error(e);
+      alert('오류가 발생했습니다.');
+    }
   };
 
   const handleProfileClick = () => {
@@ -376,6 +388,50 @@ export default function HomePage() {
                       <Link href="/report">
                         <button className="px-4 py-2.5 rounded-xl bg-primary/5 text-primary font-bold text-[12px] border border-primary/10">결과 보기</button>
                       </Link>
+                    </div>
+
+                    {/* 실전 액션 아이템 연동 블록 */}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-4 px-1">
+                        <h3 className="text-[17px] font-bold text-text-main dark:text-white flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary">task_alt</span>
+                          오늘의 홈 미션
+                        </h3>
+                      </div>
+
+                      {actionItems.length === 0 ? (
+                        <div className="bg-white/50 dark:bg-surface-dark/30 rounded-2xl p-6 text-center border border-dashed border-gray-200 dark:border-gray-700">
+                          <span className="material-symbols-outlined text-[32px] text-gray-300 mb-2">assignment_turned_in</span>
+                          <p className="text-sm font-bold text-gray-400">아직 발급받은 미션이 없어요.</p>
+                          <p className="text-[12px] text-gray-400 mt-1 break-keep leading-relaxed">마음 통역소에서 고민을 상담하고<br />우리 아이 맞춤형 미션을 받아보세요!</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {actionItems.map(item => (
+                            <div
+                              key={item.id}
+                              onClick={() => handleToggleActionItem(item)}
+                              className={`flex gap-4 p-5 rounded-[1.5rem] border transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.is_completed
+                                  ? 'bg-primary/5 border-primary/20 shadow-sm'
+                                  : 'bg-white dark:bg-surface-dark shadow-sm border-gray-100 dark:border-gray-800'
+                                }`}
+                            >
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${item.is_completed
+                                  ? 'bg-primary border-primary text-white shadow-md'
+                                  : 'border-gray-200 dark:border-gray-700'
+                                }`}>
+                                {item.is_completed && <span className="material-symbols-outlined text-[15px] font-bold">check</span>}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={`text-[15px] font-bold leading-snug break-keep ${item.is_completed ? 'text-primary' : 'text-text-main dark:text-gray-100'}`}>
+                                  {item.title}
+                                </span>
+                                {item.is_completed && <span className="text-[11px] font-bold text-primary/60 mt-1">완료! 멋져요 👍</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
