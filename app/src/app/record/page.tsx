@@ -106,31 +106,30 @@ export default function RecordPage() {
             {/* Header */}
             <header className="w-full max-w-md px-6 py-8 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md sticky top-0 z-20">
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-bold text-text-main dark:text-white flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary fill-1">history_edu</span>
-                        기록
+                    <h1 className="text-2xl font-bold text-text-main dark:text-white flex items-center gap-2 font-display tracking-tight">
+                        <span className="material-symbols-outlined text-secondary fill-1">vaccines</span>
+                        마음 약국
                     </h1>
                 </div>
 
-                {/* Tab Switcher */}
                 <div className="flex p-1.5 bg-beige-main/30 dark:bg-black/20 rounded-2xl">
                     <button
                         onClick={() => setActiveTab('CONSULT')}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'CONSULT'
-                            ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
-                            : 'text-text-sub'
+                            ? 'bg-white dark:bg-surface-dark text-secondary shadow-sm'
+                            : 'text-text-sub dark:text-gray-400 hover:text-secondary/70'
                             }`}
                     >
-                        마음 상담기록
+                        처방전 보관함
                     </button>
                     <button
                         onClick={() => setActiveTab('MISSION')}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'MISSION'
                             ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
-                            : 'text-text-sub'
+                            : 'text-text-sub dark:text-gray-400 hover:text-primary/70'
                             }`}
                     >
-                        실천 미션함
+                        우리의 미션 기록
                     </button>
                 </div>
             </header>
@@ -149,37 +148,45 @@ export default function RecordPage() {
                                 <div
                                     key={item.id}
                                     onClick={() => setSelectedConsult(item)}
-                                    className="bg-white dark:bg-surface-dark rounded-[2rem] p-6 shadow-soft border border-primary/5 relative overflow-hidden group active:scale-[0.99] transition-all cursor-pointer"
+                                    className="bg-[#FFFDF9] dark:bg-surface-dark rounded-[2rem] p-6 shadow-sm border border-[#EACCA4]/30 relative overflow-hidden group active:scale-[0.99] transition-all cursor-pointer hover:border-secondary/30"
                                 >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <span className="text-[11px] font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-lg uppercase tracking-wider mb-2 inline-block">
-                                                {formatDate(item.created_at)}
-                                            </span>
-                                            <h3 className="text-lg font-bold text-text-main dark:text-white leading-tight">
-                                                {item.category}
-                                            </h3>
-                                        </div>
-                                        <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                                            <span className="material-symbols-outlined text-[20px] fill-1">chat_bubble</span>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                                    <div className="flex justify-between items-center mb-4 relative z-10">
+                                        <span className="text-[12px] font-bold text-[#D08B5B] dark:text-secondary bg-[#D08B5B]/10 dark:bg-secondary/10 px-3 py-1.5 rounded-lg tracking-wide inline-flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            {formatDate(item.created_at)}
+                                        </span>
+                                        <div className="w-8 h-8 rounded-full bg-white dark:bg-black/20 flex items-center justify-center text-[#D08B5B] dark:text-secondary shadow-sm">
+                                            <span className="material-symbols-outlined text-[18px] fill-1">heart_plus</span>
                                         </div>
                                     </div>
-                                    <p className="text-[13px] text-text-sub dark:text-gray-400 mb-5 line-clamp-2 leading-relaxed">
-                                        {item.problem_description}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-xs font-bold text-primary bg-primary/5 p-3 rounded-xl border border-primary/10">
-                                        <span className="material-symbols-outlined text-[16px]">magic_button</span>
-                                        <span className="truncate">마법 문장: {item.ai_prescription?.magicWord}</span>
+
+                                    <div className="relative z-10 mb-6">
+                                        <h3 className="text-[15.5px] font-bold text-text-main dark:text-white leading-relaxed line-clamp-2 break-keep tracking-tight">
+                                            "{item.problem_description}"
+                                        </h3>
                                     </div>
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none"></div>
+
+                                    <div className="relative z-10 bg-[#519E8A]/5 p-4 rounded-2xl border border-[#519E8A]/10 flex flex-col gap-1.5">
+                                        <div className="text-[11px] font-bold text-[#519E8A] flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                                            처방받은 마법의 한마디
+                                        </div>
+                                        <p className="text-[14px] font-bold text-[#3B7A6A] dark:text-[#519E8A] leading-snug truncate">
+                                            "{item.ai_prescription?.magicWord}"
+                                        </p>
+                                    </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="py-20 text-center space-y-4">
-                                <div className="text-5xl opacity-20">📜</div>
-                                <p className="text-text-sub dark:text-gray-400 text-sm leading-relaxed">
-                                    아직 상담 기록이 없어요.<br />
-                                    마음 통역소에서 아이의 신호를 기록해보세요.
+                            <div className="py-24 flex flex-col items-center text-center space-y-5">
+                                <div className="w-20 h-20 bg-[#FFFDF9] dark:bg-surface-dark rounded-full shadow-inner flex items-center justify-center mb-2">
+                                    <span className="material-symbols-outlined text-4xl text-[#D08B5B]/30 font-light">vaccines</span>
+                                </div>
+                                <p className="text-text-sub dark:text-gray-400 text-[15px] leading-relaxed break-keep font-medium">
+                                    아직 기록된 처방전이 없어요.<br />
+                                    육아가 유독 버겁고 힘든 날,<br />언제든 마음 약국을 찾아와 고민을 털어놓아주세요.
                                 </p>
                             </div>
                         )}
@@ -226,104 +233,117 @@ export default function RecordPage() {
                             </div>
                         )}
                     </div>
-                )}
-            </main>
+                )
+                }
+            </main >
 
             {/* Consultation Detail Modal */}
-            {selectedConsult && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div
-                        className="w-full max-w-md bg-background-light dark:bg-background-dark rounded-t-[3rem] max-h-[90vh] overflow-y-auto flex flex-col p-8 animate-in slide-in-from-bottom-10 duration-500 shadow-2xl relative"
-                    >
-                        {/* Close Button */}
-                        <button
-                            onClick={() => setSelectedConsult(null)}
-                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center"
+            {
+                selectedConsult && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div
+                            className="w-full max-w-md bg-background-light dark:bg-background-dark rounded-t-[3rem] max-h-[90vh] overflow-y-auto flex flex-col p-8 animate-in slide-in-from-bottom-10 duration-500 shadow-2xl relative"
                         >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setSelectedConsult(null)}
+                                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
 
-                        <div className="mb-8">
-                            <span className="text-[11px] font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-lg uppercase tracking-wider mb-2 inline-block">
-                                {formatDate(selectedConsult.created_at)} 상담
-                            </span>
-                            <h2 className="text-2xl font-bold text-text-main dark:text-white">{selectedConsult.category}</h2>
-                        </div>
-
-                        {/* Problem Context */}
-                        <div className="bg-white dark:bg-surface-dark border border-primary/10 rounded-3xl p-6 mb-8 flex flex-col gap-2">
-                            <div className="text-[11px] font-bold text-text-sub flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[14px]">psychology_alt</span>
-                                접수된 고민 상황
+                            <div className="mb-8 pt-4">
+                                <span className="text-[12px] font-bold text-[#D08B5B] dark:text-secondary bg-[#D08B5B]/10 dark:bg-secondary/10 px-3 py-1.5 rounded-lg tracking-wider mb-3 inline-block">
+                                    {formatDate(selectedConsult.created_at)}
+                                </span>
+                                <h2 className="text-[26px] font-bold text-text-main dark:text-white font-display tracking-tight break-keep leading-snug">
+                                    아이를 온전히 이해하고 싶었던 날의 기록
+                                </h2>
                             </div>
-                            <p className="text-[14px] leading-relaxed text-text-main dark:text-white italic">
-                                "{selectedConsult.problem_description}"
-                            </p>
-                        </div>
 
-                        {/* Dynamic Questions & Answers */}
-                        {selectedConsult.ai_options && selectedConsult.ai_options.length > 0 && (
-                            <div className="flex flex-col gap-6 mb-10">
-                                <div className="text-sm font-bold text-primary flex items-center gap-2 mb-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                    심층 문진 과정
+                            {/* Problem Context */}
+                            <div className="bg-[#FFFDF9] dark:bg-surface-dark border border-[#EACCA4]/40 rounded-[2rem] p-7 mb-8 flex flex-col gap-3 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]">
+                                <div className="text-[12px] font-bold text-[#D08B5B] flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                                    그날 양육자님의 마음
                                 </div>
-                                {selectedConsult.ai_options.map((q: any) => (
-                                    <div key={q.id} className="flex flex-col gap-3">
-                                        <div className="flex gap-3 items-start pr-8">
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                                <img src="/gijilai_icon.png" alt="" className="w-5 h-5 opacity-70" />
-                                            </div>
-                                            <div className="bg-primary/5 border border-primary/10 rounded-2xl rounded-tl-none p-4 text-[13px] text-text-main dark:text-white leading-relaxed">
-                                                {q.text}
-                                            </div>
-                                        </div>
-                                        {selectedConsult.user_response?.[q.id] && (
-                                            <div className="flex gap-3 items-start pl-8 justify-end">
-                                                <div className="bg-secondary text-white rounded-2xl rounded-tr-none p-4 text-[13px] font-bold shadow-soft">
-                                                    {selectedConsult.user_response[q.id]}
+                                <p className="text-[15px] leading-relaxed text-text-main dark:text-white font-medium">
+                                    "{selectedConsult.problem_description}"
+                                </p>
+                            </div>
+
+                            {/* Dynamic Questions & Answers */}
+                            {selectedConsult.ai_options && selectedConsult.ai_options.length > 0 && (
+                                <div className="flex flex-col gap-6 mb-10 pl-2">
+                                    <div className="text-sm font-bold text-text-sub dark:text-gray-400 flex items-center gap-2 mb-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                                        상담사 아이나와 나눈 대화
+                                    </div>
+                                    {selectedConsult.ai_options.map((q: any) => (
+                                        <div key={q.id} className="flex flex-col gap-3">
+                                            <div className="flex gap-3 items-start pr-8">
+                                                <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
+                                                    <img src="/gijilai_icon.png" alt="" className="w-4 h-4 opacity-70 grayscale" />
+                                                </div>
+                                                <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-none p-4 text-[13px] text-text-main dark:text-white leading-relaxed">
+                                                    {q.text}
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Prescription Result */}
-                        <div className="flex flex-col gap-6 mb-20">
-                            <div className="text-sm font-bold text-primary flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                최종 마음 처방
-                            </div>
-
-                            <div className="bg-white dark:bg-surface-dark rounded-3xl p-6 border-l-4 border-secondary shadow-soft space-y-4">
-                                <div>
-                                    <div className="text-[11px] font-bold text-secondary mb-1">아이의 속마음</div>
-                                    <p className="text-[14px] leading-relaxed dark:text-gray-200">{selectedConsult.ai_prescription.interpretation}</p>
+                                            {selectedConsult.user_response?.[q.id] && (
+                                                <div className="flex gap-3 items-start pl-8 justify-end">
+                                                    <div className="bg-secondary/10 text-secondary border border-secondary/20 dark:bg-surface-dark rounded-2xl p-4 text-[13px] font-bold">
+                                                        {selectedConsult.user_response[q.id]}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="h-px bg-primary/5"></div>
-                                <div>
-                                    <div className="text-[11px] font-bold text-primary mb-1">우리의 케미스트리</div>
-                                    <p className="text-[14px] leading-relaxed dark:text-gray-200">{selectedConsult.ai_prescription.chemistry}</p>
+                            )}
+
+                            {/* Prescription Result */}
+                            <div className="flex flex-col gap-6 mb-20">
+                                <div className="text-[15px] font-bold text-secondary flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[20px] fill-1">vaccines</span>
+                                    우리를 위한 마음 처방전
                                 </div>
-                                <div className="h-px bg-primary/5"></div>
-                                <div className="bg-teal-500/5 p-4 rounded-xl border border-teal-500/20">
-                                    <div className="text-[11px] font-bold text-teal-600 mb-1 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                                        마법의 한마디
+
+                                <div className="bg-white dark:bg-surface-dark rounded-[2rem] p-7 border border-secondary/20 shadow-lg shadow-secondary/5 space-y-6">
+                                    <div>
+                                        <div className="text-[12px] font-bold text-secondary mb-2 flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                            그때 아이의 진짜 마음은요
+                                        </div>
+                                        <p className="text-[14.5px] leading-relaxed dark:text-gray-200 break-keep">{selectedConsult.ai_prescription.interpretation}</p>
                                     </div>
-                                    <p className="text-[15px] font-bold text-teal-700">"{selectedConsult.ai_prescription.magicWord}"</p>
+
+                                    <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent"></div>
+
+                                    <div>
+                                        <div className="text-[12px] font-bold text-text-main dark:text-white mb-2 flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                            우리의 기질 케미
+                                        </div>
+                                        <p className="text-[14px] text-text-sub dark:text-gray-300 leading-relaxed break-keep">{selectedConsult.ai_prescription.chemistry}</p>
+                                    </div>
+
+                                    <div className="bg-[#519E8A]/10 p-5 rounded-2xl border border-[#519E8A]/20">
+                                        <div className="text-[12px] font-bold text-[#3B7A6A] mb-2 flex items-center gap-1.5">
+                                            <span className="material-symbols-outlined text-[16px] fill-1">auto_awesome</span>
+                                            마법의 한마디
+                                        </div>
+                                        <p className="text-[16px] font-black text-[#519E8A] break-keep leading-snug tracking-tight">"{selectedConsult.ai_prescription.magicWord}"</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Bottom Nav Spacer */}
             <div className="h-32"></div>
             <BottomNav />
-        </div>
+        </div >
     );
 }
