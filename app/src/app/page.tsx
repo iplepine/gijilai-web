@@ -45,6 +45,11 @@ export default function HomePage() {
     praise: false,
     skinship: false
   });
+  const [previewActions, setPreviewActions] = useState([
+    { id: 1, title: "🧩 장난감 정리 시간", before: "정리해!", after: "장난감 친구들이 이제 집에 가고 싶대", checked: true },
+    { id: 2, title: "🪥 양치질 거부할 때", before: "치카하자~", after: "치아 나라 세균을 물리치는 용사가 되어볼까?", checked: false },
+    { id: 3, title: "🌟 잠들기 전 인사", before: "잘 자~", after: "오늘 민준이가 인사를 잘해서 엄마는 정말 행복했어", checked: false }
+  ]);
   const [loading, setLoading] = useState(true);
 
   // Derived Child Profile (DB first, then local intake store)
@@ -128,6 +133,12 @@ export default function HomePage() {
 
   const toggleAction = (key: keyof typeof dailyActions) => {
     setDailyActions(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const togglePreviewAction = (id: number) => {
+    setPreviewActions(prev => prev.map(action =>
+      action.id === id ? { ...action, checked: !action.checked } : action
+    ));
   };
 
   const handleProfileClick = () => {
@@ -379,10 +390,10 @@ export default function HomePage() {
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/10 rounded-full blur-[60px] -ml-24 -mb-24 pointer-events-none"></div>
 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-3xl bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center text-primary mb-8 rotate-3 group-hover:rotate-0 transition-transform duration-500 ring-4 ring-primary/5">
+                  <div className="w-20 h-20 rounded-[2rem] bg-white dark:bg-slate-800 shadow-xl flex items-center justify-center text-primary mb-8 rotate-3 group-hover:rotate-0 transition-transform duration-500 ring-4 ring-primary/5">
                     <div className="relative">
-                      <span className="material-symbols-outlined text-[42px] fill-1">child_care</span>
-                      <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg ring-2 ring-white dark:ring-slate-800 scale-110">
+                      <span className="material-symbols-outlined text-[46px] fill-1 scale-110">child_care</span>
+                      <div className="absolute -bottom-1 -right-2 w-7 h-7 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg ring-2 ring-white dark:ring-slate-800">
                         <span className="material-symbols-outlined text-[18px] font-bold">add</span>
                       </div>
                     </div>
@@ -417,29 +428,89 @@ export default function HomePage() {
 
                 {/* Preview Items */}
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="bg-white/50 dark:bg-surface-dark/30 rounded-3xl p-6 border border-primary/5 backdrop-blur-sm">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
-                        <span className="material-symbols-outlined text-[28px]">category</span>
+                  {/* Preview 1: Temperament Types Banner */}
+                  {/* Preview 1: Temperament Types Card (Premium & Balanced) */}
+                  <div className="bg-white/80 dark:bg-surface-dark/50 rounded-[2rem] p-7 border border-secondary/20 shadow-soft relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                          <span className="material-symbols-outlined text-[24px]">psychology</span>
+                        </div>
+                        <h4 className="text-[17px] font-bold text-text-main dark:text-white">우리 아이의 기질은?</h4>
                       </div>
-                      <h4 className="text-[15px] font-bold text-text-main dark:text-white">우리아이 기질 유형들</h4>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                      {['순한 아이', '신중한 아이', '열정적인 아이'].map((t) => (
-                        <span key={t} className="shrink-0 px-4 py-2.5 bg-white dark:bg-surface-dark rounded-xl text-[12px] font-medium border border-primary/5 shadow-sm">{t}</span>
-                      ))}
+
+                      <p className="text-[14px] text-text-sub dark:text-gray-400 mb-6 leading-relaxed break-keep">
+                        순한 아이? 신중한 아이? 열정적인 아이??<br />
+                        아이의 기질을 이해하면 육아가 훨씬 즐거워집니다.
+                      </p>
+
+                      <Link href="/settings/child/new">
+                        <button className="w-full bg-secondary/10 hover:bg-secondary/20 py-4 rounded-2xl text-secondary font-bold text-[15px] transition-all flex items-center justify-center gap-2">
+                          <span>아이 등록하고 알아보기</span>
+                          <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </button>
+                      </Link>
                     </div>
                   </div>
 
-                  <div className="bg-white/50 dark:bg-surface-dark/30 rounded-3xl p-6 border border-primary/5 backdrop-blur-sm">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[28px]">auto_awesome</span>
+                  {/* Preview 2: Daily Action Item Card */}
+                  <div className="bg-white/80 dark:bg-surface-dark/50 rounded-[2rem] p-7 border border-primary/10 shadow-soft relative overflow-hidden">
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined text-[24px]">task_alt</span>
                       </div>
-                      <h4 className="text-[15px] font-bold text-text-main dark:text-white">상황별 맞춤 대화법</h4>
+                      <h4 className="text-[17px] font-bold text-text-main dark:text-white">우리 아이를 위한 오늘의 액션 아이템!</h4>
                     </div>
-                    <div className="bg-primary/5 rounded-2xl p-4 text-[13px] leading-relaxed italic text-text-sub">
-                      "안돼" 대신 "지금은 기다릴 시간이야"라고 말해보세요.
+
+                    <div className="space-y-4">
+                      {previewActions.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => togglePreviewAction(item.id)}
+                          className={`flex gap-4 p-5 rounded-[1.5rem] border transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.checked
+                              ? 'bg-primary/5 border-primary/20 shadow-sm'
+                              : 'bg-white dark:bg-surface-dark/30 border-gray-100 dark:border-gray-800 hover:border-primary/10'
+                            }`}
+                        >
+                          <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-colors ${item.checked
+                              ? 'bg-primary border-primary text-white shadow-md'
+                              : 'border-gray-200 dark:border-gray-700'
+                            }`}>
+                            {item.checked && <span className="material-symbols-outlined text-[18px] font-bold">check</span>}
+                          </div>
+
+                          <div className="flex flex-col gap-3 overflow-hidden">
+                            <span className={`text-[15px] font-black tracking-tight ${item.checked ? 'text-primary' : 'text-text-main dark:text-gray-100'}`}>
+                              {item.title}
+                            </span>
+
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2 opacity-40">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-500">기존</span>
+                                <span className="text-[13px] line-through decoration-1 decoration-gray-400">"{item.before}"</span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 bg-primary/20 text-primary rounded shrink-0">추천</span>
+                                <p className={`text-[14.5px] font-bold leading-snug break-keep ${item.checked ? 'text-primary' : 'text-text-main dark:text-gray-200'}`}>
+                                  "{item.after}"
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="pt-4 text-center">
+                        <p className="text-[12px] font-medium text-text-sub opacity-50 mb-4">
+                          기질 검사 후 우리 아이만을 위한 매일의 액션을 받아보세요.
+                        </p>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full border border-primary/10">
+                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                          <span className="text-[11px] font-black text-primary tracking-tight">현재 135,240명의 부모님이 실천 중</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
