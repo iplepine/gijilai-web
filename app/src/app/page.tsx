@@ -361,7 +361,10 @@ export default function HomePage() {
                           <div className="w-10 h-10 rounded-[14px] bg-secondary flex items-center justify-center text-white shadow-md shadow-secondary/30">
                             <span className="material-symbols-outlined">chat_bubble</span>
                           </div>
-                          <h3 className="text-lg font-bold text-text-main dark:text-white">마음 통역소 상담</h3>
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-secondary mb-0.5 mt-1">기질아이 맞춤 상담</span>
+                            <h3 className="text-lg font-bold text-text-main dark:text-white leading-tight">마음 통역소</h3>
+                          </div>
                         </div>
                         <p className="text-sm text-text-sub dark:text-gray-300 mb-6 leading-relaxed">
                           아이의 행동 뒤에 숨겨진 마음을 통역해드릴게요.
@@ -403,7 +406,7 @@ export default function HomePage() {
                         <div className="bg-white/50 dark:bg-surface-dark/30 rounded-2xl p-6 text-center border border-dashed border-gray-200 dark:border-gray-700">
                           <span className="material-symbols-outlined text-[32px] text-gray-300 mb-2">assignment_turned_in</span>
                           <p className="text-sm font-bold text-gray-400">아직 발급받은 미션이 없어요.</p>
-                          <p className="text-[12px] text-gray-400 mt-1 break-keep leading-relaxed">마음 통역소에서 고민을 상담하고<br />우리 아이 맞춤형 미션을 받아보세요!</p>
+                          <p className="text-[12px] text-gray-400 mt-1 break-keep leading-relaxed">기질아이 마음 통역소에서 상담받고<br />우리 아이 맞춤형 미션을 받아보세요!</p>
                         </div>
                       ) : (
                         <div className="space-y-3">
