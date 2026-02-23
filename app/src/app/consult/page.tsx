@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useAppStore } from '@/store/useAppStore';
 
-type Step = 'INPUT' | 'REACTION' | 'RESULT';
+type Step = 'INPUT' | 'DIAGNOSTIC' | 'RESULT';
 
-interface Option {
+interface Question {
     id: string;
-    type: string;
     text: string;
+    type: 'CHOICE' | 'TEXT';
+    options?: { id: string; text: string }[];
 }
 
 interface Prescription {
@@ -28,6 +30,7 @@ const CATEGORIES = [
 export default function ConsultPage() {
     const router = useRouter();
     const { user } = useAuth();
+    const { cbqResponses, atqResponses } = useAppStore();
 
     const [step, setStep] = useState<Step>('INPUT');
     const [isLoading, setIsLoading] = useState(false);
@@ -36,14 +39,16 @@ export default function ConsultPage() {
     const [category, setCategory] = useState('');
     const [problemDesc, setProblemDesc] = useState('');
 
-    // REACTION STATE
-    const [optionsData, setOptionsData] = useState<{ question: string; options: Option[] } | null>(null);
-    const [selectedReaction, setSelectedReaction] = useState<Option | null>(null);
+    // DIAGNOSTIC STATE
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [answers, setAnswers] = useState<Record<string, string>>({});
+    const [isFollowUpDone, setIsFollowUpDone] = useState(false);
 
     // RESULT STATE
     const [prescription, setPrescription] = useState<Prescription | null>(null);
 
-    const handleGenerateOptions = async () => {
+    const handleStartDiagnostic = async () => {
         if (!category && !problemDesc) {
             alert('고민 카테고리나 내용을 적어주세요.');
             return;
@@ -53,41 +58,107 @@ export default function ConsultPage() {
 
         setIsLoading(true);
         try {
-            const res = await fetch('/api/consult/options', {
+            const res = await fetch('/api/consult/questions/initial', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ problem: fullProblem }),
             });
 
-            if (!res.ok) throw new Error('Failed to generate options');
+            if (!res.ok) throw new Error('Failed to fetch initial questions');
 
             const data = await res.json();
-            setOptionsData(data);
-            setStep('REACTION');
+            setQuestions(data.questions);
+            setStep('DIAGNOSTIC');
+            setCurrentQuestionIndex(0);
         } catch (error) {
             console.error(error);
-            alert('일시적인 오류가 발생했습니다. 다시 시도해주세요.');
+            alert('오류가 발생했습니다. 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleGeneratePrescription = async () => {
-        if (!selectedReaction) return;
+    const handleAnswer = async (questionId: string, answer: string) => {
+        const newAnswers = { ...answers, [questionId]: answer };
+        setAnswers(newAnswers);
 
+        if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+            // Check if we need follow-up
+            if (!isFollowUpDone) {
+                await handleCheckFollowUp(newAnswers);
+            } else {
+                await handleGeneratePrescription(newAnswers);
+            }
+        }
+    };
+
+    const handleCheckFollowUp = async (currentAnswers: Record<string, string>) => {
         setIsLoading(true);
         try {
-            // (Optional) Fetch child and parent archetype from DB.
-            // For now, we leave them blank or fetch later. We can rely on AI to guess without them if not provided.
             const fullProblem = `[${category}] ${problemDesc}`;
+            const res = await fetch('/api/consult/questions/followup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    problem: fullProblem,
+                    firstRoundAnswers: currentAnswers
+                }),
+            });
 
+            const data = await res.json();
+            if (data.needsFollowUp && data.followUpQuestions && data.followUpQuestions.length > 0) {
+                setQuestions(prev => [...prev, ...data.followUpQuestions]);
+                setIsFollowUpDone(true);
+                setCurrentQuestionIndex(prev => prev + 1);
+            } else {
+                await handleGeneratePrescription(currentAnswers);
+            }
+        } catch (error) {
+            console.error(error);
+            await handleGeneratePrescription(currentAnswers); // Fallback to results
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGeneratePrescription = async (allAnswers: Record<string, string>) => {
+        setIsLoading(true);
+        try {
+            // Calculate archetypes
+            let childArchetype = "알 수 없음 (기질 데이터 부족)";
+            let parentArchetype = "알 수 없음 (기질 데이터 부족)";
+
+            if (Object.keys(cbqResponses).length > 0) {
+                const { TemperamentScorer } = await import('@/lib/TemperamentScorer');
+                const { TemperamentClassifier } = await import('@/lib/TemperamentClassifier');
+                const { CHILD_QUESTIONS } = await import('@/data/questions');
+
+                const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
+                const result = TemperamentClassifier.analyze(scores, { NS: 50, HA: 50, RD: 50, P: 50 });
+                childArchetype = `${result.label} (${result.seed.label})`;
+            }
+
+            if (Object.keys(atqResponses).length > 0) {
+                const { TemperamentScorer } = await import('@/lib/TemperamentScorer');
+                const { ParentClassifier } = await import('@/lib/ParentClassifier');
+                const { PARENT_QUESTIONS } = await import('@/data/questions');
+
+                const scores = TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
+                const result = ParentClassifier.analyze(scores);
+                parentArchetype = result.soilName;
+            }
+
+            const fullProblem = `[${category}] ${problemDesc}`;
             const res = await fetch('/api/consult/prescription', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     problem: fullProblem,
-                    selectedReaction: selectedReaction.text
-                    // Add childArchetype and parentArchetype after fetching from profiles if needed
+                    answers: allAnswers,
+                    childArchetype,
+                    parentArchetype
                 }),
             });
 
@@ -97,9 +168,8 @@ export default function ConsultPage() {
             setPrescription(data);
             setStep('RESULT');
 
-            // Save consultation history
+            // Save history
             if (user) {
-                // Fetch user's active child to bind
                 const { data: children } = await supabase.from('children').select('id').eq('parent_id', user.id).limit(1);
                 const childId = children?.[0]?.id || null;
 
@@ -108,13 +178,13 @@ export default function ConsultPage() {
                     child_id: childId,
                     category,
                     problem_description: problemDesc,
-                    ai_options: optionsData,
-                    selected_reaction_id: selectedReaction.id,
+                    ai_options: questions,
+                    user_response: allAnswers,
+                    selected_reaction_id: 'DYNAMIC_FLOW',
                     ai_prescription: data,
                     status: 'COMPLETED'
                 });
             }
-
         } catch (error) {
             console.error(error);
             alert('처방전을 생성하는 중 오류가 발생했습니다.');
@@ -143,6 +213,8 @@ export default function ConsultPage() {
             alert('미션 등록에 실패했습니다.');
         }
     };
+
+    const currentQuestion = questions[currentQuestionIndex];
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center">
@@ -203,9 +275,9 @@ export default function ConsultPage() {
                         </div>
 
                         <button
-                            onClick={handleGenerateOptions}
-                            disabled={!category && !problemDesc || isLoading}
-                            className={`w-full py-5 rounded-2xl text-white font-bold text-lg mt-4 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${!category && !problemDesc || isLoading
+                            onClick={handleStartDiagnostic}
+                            disabled={(!category && !problemDesc) || isLoading}
+                            className={`w-full py-5 rounded-2xl text-white font-bold text-lg mt-4 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${(!category && !problemDesc) || isLoading
                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 : 'bg-primary hover:bg-primary-dark shadow-xl shadow-primary/20'
                                 }`}
@@ -217,7 +289,7 @@ export default function ConsultPage() {
                                 </>
                             ) : (
                                 <>
-                                    <span>분석 시작하기</span>
+                                    <span>상담 시작하기</span>
                                     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                                 </>
                             )}
@@ -225,54 +297,63 @@ export default function ConsultPage() {
                     </div>
                 )}
 
-                {step === 'REACTION' && optionsData && (
+                {step === 'DIAGNOSTIC' && currentQuestion && (
                     <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-right-4 duration-500">
                         <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-black text-primary uppercase tracking-widest">Question {currentQuestionIndex + 1} / {questions.length}</span>
+                                <div className="flex gap-1">
+                                    {questions.map((_, i) => (
+                                        <div key={i} className={`w-4 h-1 rounded-full transition-all ${i <= currentQuestionIndex ? 'bg-primary' : 'bg-primary/10'}`}></div>
+                                    ))}
+                                </div>
+                            </div>
                             <h2 className="text-2xl font-bold text-text-main dark:text-white leading-snug">
-                                {optionsData.question}
+                                {currentQuestion.text}
                             </h2>
-                            <p className="text-sm text-text-sub dark:text-gray-400">
-                                당시 가장 비슷했던 행동을 골라주세요.
-                            </p>
                         </div>
 
-                        <div className="flex flex-col gap-3">
-                            {optionsData.options.map(opt => (
+                        {currentQuestion.type === 'CHOICE' ? (
+                            <div className="flex flex-col gap-3">
+                                {currentQuestion.options?.map(opt => (
+                                    <button
+                                        key={opt.id}
+                                        onClick={() => handleAnswer(currentQuestion.id, opt.text)}
+                                        className="w-full text-left p-6 rounded-[2rem] border-2 border-primary/5 bg-white dark:bg-surface-dark hover:border-secondary hover:bg-secondary/5 transition-all active:scale-[0.98] group"
+                                    >
+                                        <div className="font-bold leading-relaxed text-[15px] text-text-main dark:text-white group-hover:text-secondary">
+                                            {opt.text}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <textarea
+                                    className="w-full h-40 p-5 text-[15px] rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
+                                    placeholder="자유롭게 적어주세요."
+                                    onBlur={(e) => {
+                                        if (e.target.value) handleAnswer(currentQuestion.id, e.target.value);
+                                    }}
+                                />
                                 <button
-                                    key={opt.id}
-                                    onClick={() => setSelectedReaction(opt)}
-                                    className={`w-full text-left p-6 rounded-[2rem] border-2 transition-all active:scale-[0.98] ${selectedReaction?.id === opt.id
-                                        ? 'border-secondary bg-secondary/5 ring-4 ring-secondary/10 shadow-lg'
-                                        : 'border-primary/5 bg-white dark:bg-surface-dark hover:border-primary/20'
-                                        }`}
+                                    onClick={(e) => {
+                                        const textarea = (e.currentTarget.previousSibling as HTMLTextAreaElement);
+                                        if (textarea.value) handleAnswer(currentQuestion.id, textarea.value);
+                                    }}
+                                    className="w-full py-4 rounded-2xl bg-primary text-white font-bold"
                                 >
-                                    <div className={`font-bold leading-relaxed text-[15px] ${selectedReaction?.id === opt.id ? 'text-secondary' : 'text-text-main dark:text-white'}`}>
-                                        {opt.text}
-                                    </div>
+                                    다음으로
                                 </button>
-                            ))}
-                        </div>
+                            </div>
+                        )}
 
-                        <button
-                            onClick={handleGeneratePrescription}
-                            disabled={!selectedReaction || isLoading}
-                            className={`w-full py-5 rounded-2xl text-white font-bold text-lg mt-4 transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${!selectedReaction || isLoading
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-secondary hover:brightness-110 shadow-xl shadow-secondary/20'
-                                }`}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    <span>기질 대조 중...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span>처방전 생성하기</span>
-                                    <span className="material-symbols-outlined text-[20px]">magic_button</span>
-                                </>
-                            )}
-                        </button>
+                        {isLoading && (
+                            <div className="fixed inset-0 bg-white/60 dark:bg-black/40 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
+                                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                <p className="font-bold text-primary">AI가 답변을 분석 중입니다...</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -283,7 +364,7 @@ export default function ConsultPage() {
                                 <span className="material-symbols-outlined text-secondary text-3xl fill-1">verified_user</span>
                             </div>
                             <h2 className="text-2xl font-bold text-text-main dark:text-white">오늘의 마음 처방전</h2>
-                            <p className="text-sm text-text-sub mt-2">아이의 기질을 고려한 최선의 솔루션입니다.</p>
+                            <p className="text-sm text-text-sub mt-2">아이의 기질과 상황을 종합한 최선의 솔루션입니다.</p>
                         </div>
 
                         <div className="bg-white dark:bg-surface-dark rounded-[2.5rem] p-8 shadow-card border border-primary/5 dark:border-white/5 flex flex-col gap-8 relative overflow-hidden">

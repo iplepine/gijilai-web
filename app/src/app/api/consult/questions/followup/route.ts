@@ -1,0 +1,62 @@
+import { NextResponse } from 'next/server';
+import { openai } from '@/lib/openai';
+
+export async function POST(request: Request) {
+    try {
+        const { problem, firstRoundAnswers } = await request.json();
+
+        if (!problem || !firstRoundAnswers) {
+            return NextResponse.json(
+                { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
+
+        const systemPrompt = `당신은 아동 심리 및 기질 전문가입니다. 
+1차 답변 데이터를 분석하여, 아이의 기질적 원인을 확정하기 위해 추가 정보가 더 필요한지 판단하세요.
+
+**[분석 가이드]**
+1. 1차 답변만으로 기질적 특성(NS, HA, RD, P 등)과 환경적 요인이 충분히 설명된다면 "needsFollowUp": false로 설정하세요.
+2. 특정 기질적 특성을 더 명확히 확인해야 하거나(예: 고집의 이유가 자극추구인지 위험회피인지 등), 갈등의 트리거를 더 구체화해야 한다면 "needsFollowUp": true로 설정하고 '심층 질문' 1~2개를 생성하세요.
+3. 질문은 1차 답변 내용을 언급하며 날카롭되 다정하게 물어보세요.
+
+**[Output Format (JSON Only)]**
+{
+  "needsFollowUp": true,
+  "followUpQuestions": [
+    {
+      "id": "f1",
+      "text": "심층 질문 내용",
+      "type": "CHOICE", // "CHOICE" 또는 "TEXT"
+      "options": [ ... ] 
+    }
+  ]
+}
+
+주의: JSON 형식만 출력하세요. markdown 기호 없이 순수 JSON 문자열만 반환해야 합니다.`;
+
+        const userMessage = `
+고민 상황: ${problem}
+1차 문진 답변: ${JSON.stringify(firstRoundAnswers)}
+`;
+
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+            ],
+            temperature: 0.7,
+            response_format: { type: "json_object" }
+        });
+
+        const content = response.choices[0].message.content;
+        return NextResponse.json(JSON.parse(content || '{"needsFollowUp": false}'));
+    } catch (error) {
+        console.error('Error generating follow-up questions:', error);
+        return NextResponse.json(
+            { error: 'Failed to process follow-up' },
+            { status: 500 }
+        );
+    }
+}
