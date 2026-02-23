@@ -46,6 +46,10 @@ function ReportContent() {
   const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, isPaid } = useAppStore();
 
+  const [childAiReport, setChildAiReport] = useState<string | null>(null);
+  const [parentAiReport, setParentAiReport] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   useEffect(() => {
     if (tabParam === 'parent') {
       setActiveTab('parent');
@@ -55,6 +59,47 @@ function ReportContent() {
       setActiveTab('parenting');
     }
   }, [tabParam]);
+
+  const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
+    setActiveTab(tab);
+  };
+
+  const generateAIReport = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      const type = activeTab === 'child' ? 'CHILD' : 'PARENT';
+      const scores = type === 'CHILD' ? childScores : parentScores;
+      const responses = type === 'CHILD' ? cbqResponses : atqResponses;
+
+      const answers = Object.entries(responses).map(([id, score]) => ({
+        questionId: id,
+        score: score as number
+      }));
+
+      const res = await fetch('/api/llm/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userName: intake.childName || '아이',
+          scores,
+          type,
+          answers
+        })
+      });
+
+      if (!res.ok) throw new Error('Report generation failed');
+      const data = await res.json();
+
+      if (type === 'CHILD') setChildAiReport(data.report);
+      else setParentAiReport(data.report);
+    } catch (error) {
+      console.error(error);
+      alert('리포트 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any), [cbqResponses]);
   const parentScores = useMemo(() => TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any), [atqResponses]);
@@ -220,14 +265,14 @@ function ReportContent() {
       <div className="max-w-md mx-auto px-6 -mt-14 mb-8 relative z-30">
         <div className="bg-white/20 backdrop-blur-xl p-1 rounded-2xl flex gap-1 border border-white/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
           <button
-            onClick={() => setActiveTab('child')}
+            onClick={() => handleTabChange('child')}
             className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
           >
             아이 진단
           </button>
           <button
             onClick={() => {
-              if (isParentSurveyComplete) setActiveTab('parent');
+              if (isParentSurveyComplete) handleTabChange('parent');
               else if (confirm('부모 기질 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
                 router.push('/survey?type=PARENT');
               }
@@ -238,7 +283,7 @@ function ReportContent() {
           </button>
           <button
             onClick={() => {
-              if (isStyleSurveyComplete) setActiveTab('parenting');
+              if (isStyleSurveyComplete) handleTabChange('parenting');
               else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
                 router.push('/survey?type=STYLE');
               }
@@ -332,6 +377,49 @@ function ReportContent() {
                   <div className="flex-1 h-[1px] bg-slate-800 dark:bg-slate-200"></div>
                 </div>
               </div>
+            </section>
+
+            {/* AI 심층 분석 리포트 */}
+            <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border border-primary/10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
+                  <Icon name="auto_awesome" className="text-primary" /> AI 전문가 심층 리포트
+                </h3>
+              </div>
+
+              {childAiReport ? (
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-medium text-pretty">
+                    {childAiReport}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 space-y-6">
+                  <p className="text-sm text-slate-500 leading-relaxed break-keep">
+                    아이의 세부 문항 응답 데이터까지 분석하여<br />
+                    가장 정확한 양육 가이드를 생성합니다.
+                  </p>
+                  <Button
+                    onClick={generateAIReport}
+                    variant="primary"
+                    fullWidth
+                    className="h-14 rounded-2xl flex items-center justify-center gap-2"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        <span>리포트 생성 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>AI 정밀 리포트 생성하기</span>
+                        <Icon name="arrow_forward" size="sm" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </section>
 
             {/* Scientific Indicators */}
@@ -476,6 +564,49 @@ function ReportContent() {
               <p className="text-slate-600 text-[14px] leading-relaxed italic break-keep px-4">
                 "{parentReport.letter}"
               </p>
+            </section>
+
+            {/* AI 심층 분석 리포트 (Parent) */}
+            <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border border-primary/10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
+                  <Icon name="auto_awesome" className="text-primary" /> AI 전문가 성향 리포트
+                </h3>
+              </div>
+
+              {parentAiReport ? (
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-medium text-pretty">
+                    {parentAiReport}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 space-y-6">
+                  <p className="text-sm text-slate-500 leading-relaxed break-keep">
+                    양육자님의 내면 기질과 응답 패턴을 분석하여<br />
+                    심층적인 자기 이해 리포트를 생성합니다.
+                  </p>
+                  <Button
+                    onClick={generateAIReport}
+                    variant="primary"
+                    fullWidth
+                    className="h-14 rounded-2xl flex items-center justify-center gap-2"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        <span>리포트 분석 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>AI 심층 리포트 생성하기</span>
+                        <Icon name="arrow_forward" size="sm" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </section>
 
             {/* Footer Actions */}

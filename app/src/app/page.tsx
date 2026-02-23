@@ -10,6 +10,7 @@ import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db'
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
+import { ParentClassifier } from '@/lib/ParentClassifier';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 
 export default function HomePage() {
@@ -79,10 +80,16 @@ export default function HomePage() {
       : (parentSurvey?.answers as Record<string, number>);
 
     if (parentAnswers) {
-      parentScores = TemperamentScorer.calculate(CHILD_QUESTIONS, parentAnswers as any);
+      parentScores = TemperamentScorer.calculate(PARENT_QUESTIONS, parentAnswers as any);
     }
 
-    return TemperamentClassifier.analyze(scores, parentScores);
+    const childResult = TemperamentClassifier.analyze(scores, parentScores);
+    const parentResult = ParentClassifier.analyze(parentScores);
+
+    return {
+      child: childResult,
+      parent: parentResult
+    };
   }, [cbqResponses, atqResponses, latestSurvey, parentSurvey]);
 
   useEffect(() => {
@@ -258,7 +265,7 @@ export default function HomePage() {
                   <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
                     <div className="bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10">
                       <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
-                      {temperamentInfo ? temperamentInfo.label : '기질 등록 필요'}
+                      {temperamentInfo ? temperamentInfo.child.label : '기질 등록 필요'}
                     </div>
                   </div>
                 </div>
@@ -269,7 +276,7 @@ export default function HomePage() {
                   </h1>
                   <div className="mt-2 bg-white/60 dark:bg-surface-dark/60 backdrop-blur-sm text-text-main dark:text-gray-200 px-3.5 py-1.5 rounded-full text-[12px] font-medium shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] inline-flex items-center gap-1.5 ring-1 ring-black/5 dark:ring-white/10">
                     <span className="material-symbols-outlined text-[16px] text-caregiver">volunteer_activism</span>
-                    양육자 기질 <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">지지형</span>
+                    양육자 기질 <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">{temperamentInfo ? temperamentInfo.parent.soilName : '등록 필요'}</span>
                   </div>
                 </div>
               </div>
@@ -304,7 +311,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-            ) : !temperamentInfo ? (
+            ) : !temperamentInfo?.child ? (
               <div className="bg-primary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-4">
                 {/* [카드 B] 아이 기질 검사 유도 */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
