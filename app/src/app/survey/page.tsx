@@ -269,37 +269,32 @@ function SurveyContent() {
       {/* Question Content */}
       <div
         key={`${currentModule}-${currentIndex}`}
-        className="flex-1 px-5 py-6 max-w-2xl mx-auto w-full pb-24 animate-fade-in"
+        className="flex-1 px-5 py-4 max-w-2xl mx-auto w-full pb-20 animate-fade-in"
       >
         {/* Context Card */}
-        <div className="mb-6 animate-fade-in-up">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 animate-fade-in-up">
+          <div className="flex items-center justify-between mb-3">
             <div className="inline-block px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[12px] font-bold">
               {currentModule === 'child' ? `${intake.childName || '아이'}의 행동` :
                 currentModule === 'parent' ? '나(부모)의 성향' : '양육 상황'}
             </div>
-            {/* Helpful Hint */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-full">
-              <span className="material-symbols-outlined text-slate-400 text-[14px]">info</span>
-              <span className="text-[11px] font-medium text-slate-500">가장 비슷한 반응을 선택해 주세요</span>
-            </div>
           </div>
 
-          <h2 className="text-[19px] sm:text-[21px] font-extrabold text-slate-800 dark:text-white leading-snug whitespace-pre-line mb-5 break-keep">
-            <span className="text-primary mr-2 text-[22px]">Q.</span>
+          <h2 className="text-[17px] sm:text-[19px] font-extrabold text-slate-800 dark:text-white leading-snug whitespace-pre-line mb-3 break-keep">
+            <span className="text-primary mr-2 text-[19px]">Q.</span>
             {currentQuestion.context}
           </h2>
 
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50">
             <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed break-keep">
               <span className="font-bold text-slate-700 dark:text-slate-300 mr-1">Tip.</span>
-              제시된 상황이 우리 아이와 완벽히 똑같지 않더라도, <strong>평소 모습이나 가장 가까운 느낌</strong>의 보기를 골라주시면 분석에 도움이 됩니다.
+              상황이 완벽히 똑같지 않더라도, <strong>평소 모습이나 가장 가까운 느낌</strong>을 골라주세요.
             </p>
           </div>
         </div>
 
         {/* Choices (BARS) */}
-        <div className="space-y-3.5">
+        <div className="space-y-2.5">
           {currentQuestion.choices?.map((choice, idx) => {
             const score = idx + 1; // 1-based score
             const isSelected = currentAnswer === score;
@@ -308,18 +303,18 @@ function SurveyContent() {
               <button
                 key={idx}
                 onClick={() => handleSelect(idx)}
-                className={`w-full text-left p-4 sm:p-5 rounded-[1.25rem] border-2 transition-all duration-300 relative overflow-hidden group flex items-center gap-4 ${isSelected
-                    ? 'border-primary bg-primary/5 shadow-md shadow-primary/10 scale-[1.01] z-10'
-                    : 'border-transparent bg-white dark:bg-slate-800 shadow-sm hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5'
+                className={`w-full text-left p-3.5 sm:p-4 rounded-[1.25rem] border-2 transition-all duration-300 relative overflow-hidden group flex items-center gap-3.5 ${isSelected
+                  ? 'border-primary bg-primary/5 shadow-md shadow-primary/10 scale-[1.01] z-10'
+                  : 'border-transparent bg-white dark:bg-slate-800 shadow-sm hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5'
                   }`}
               >
                 <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 transition-colors
+                    w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black shrink-0 transition-colors
                     ${isSelected ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-400 group-hover:bg-primary/20 group-hover:text-primary'}
                   `}>
                   {score}
                 </div>
-                <span className={`text-[15px] sm:text-[16px] leading-relaxed break-keep flex-1 ${isSelected ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-slate-300'}`}>
+                <span className={`text-[14px] sm:text-[15px] leading-snug break-keep flex-1 ${isSelected ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-600 dark:text-slate-300'}`}>
                   {choice}
                 </span>
               </button>
