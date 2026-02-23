@@ -14,7 +14,7 @@ import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/
 
 export default function HomePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, resetSurveyOnly } = useAppStore(); // Added useAppStore destructuring
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
@@ -87,6 +87,8 @@ export default function HomePage() {
 
   useEffect(() => {
     async function fetchData() {
+      if (authLoading) return;
+
       if (!user) {
         setLoading(false);
         return;
@@ -107,7 +109,7 @@ export default function HomePage() {
     }
 
     fetchData();
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
     // Only show onboarding if no child is registered in DB AND no intake info in local store

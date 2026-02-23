@@ -29,17 +29,21 @@ interface ActionItem {
 
 export default function RecordPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [activeTab, setActiveTab] = useState<TabType>('CONSULT');
     const [consultations, setConsultations] = useState<Consultation[]>([]);
     const [missions, setMissions] = useState<ActionItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (user) {
-            fetchData();
+        if (!authLoading) {
+            if (user) {
+                fetchData();
+            } else {
+                setIsLoading(false);
+            }
         }
-    }, [user]);
+    }, [user, authLoading]);
 
     const fetchData = async () => {
         setIsLoading(true);
