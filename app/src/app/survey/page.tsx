@@ -324,7 +324,7 @@ function SurveyContent() {
       </div>
 
       {/* Bottom Navigation (Safe Area) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-4 pb-8 z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 py-3 pb-6 sm:pb-3 z-20">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <Button variant="ghost" size="sm" onClick={handlePrev} className="text-slate-400 hover:text-slate-600">
             <Icon name="arrow_back" size="sm" className="mr-1" /> 이전
