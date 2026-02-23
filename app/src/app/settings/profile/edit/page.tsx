@@ -97,12 +97,12 @@ export default function ProfileEditPage() {
                     <div className="flex flex-col items-center mb-10 relative">
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="size-28 rounded-full bg-primary/10 flex items-center justify-center text-primary border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden cursor-pointer relative group"
+                            className="size-28 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden cursor-pointer relative group"
                         >
                             {!avatarError && avatarUrl ? (
                                 <img
                                     src={avatarUrl}
-                                    alt="Profile"
+                                    alt=""
                                     className="w-full h-full object-cover"
                                     referrerPolicy="no-referrer"
                                     onError={() => setAvatarError(true)}

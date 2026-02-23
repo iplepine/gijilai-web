@@ -86,11 +86,11 @@ export default function ProfilePage() {
                     {/* User Profile Card */}
                     <section className="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-4">
-                            <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center text-primary border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden">
+                            <div className="size-20 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden">
                                 {!avatarError && user?.user_metadata?.avatar_url ? (
                                     <img
                                         src={user.user_metadata.avatar_url}
-                                        alt="Profile"
+                                        alt=""
                                         className="w-full h-full object-cover"
                                         referrerPolicy="no-referrer"
                                         onError={() => setAvatarError(true)}

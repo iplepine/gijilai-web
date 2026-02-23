@@ -324,7 +324,7 @@ export default function HomePage() {
                           <h3 className="text-xl font-bold text-white leading-snug tracking-tight">우리아이 기질 검사</h3>
                         </div>
                       </div>
-                      <p className="text-sm text-white/90 mb-6">아이트러스트의 과학적인 기질 검사를 시작해보세요.</p>
+                      <p className="text-sm text-white/90 mb-6">기질아이의 과학적인 기질 검사를 시작해보세요.</p>
                       <Link href="/survey/intro">
                         <button className="w-full py-4 rounded-xl bg-white text-primary font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                           <span>검사 시작하기</span>
@@ -412,13 +412,13 @@ export default function HomePage() {
                               key={item.id}
                               onClick={() => handleToggleActionItem(item)}
                               className={`flex gap-4 p-5 rounded-[1.5rem] border transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.is_completed
-                                  ? 'bg-primary/5 border-primary/20 shadow-sm'
-                                  : 'bg-white dark:bg-surface-dark shadow-sm border-gray-100 dark:border-gray-800'
+                                ? 'bg-primary/5 border-primary/20 shadow-sm'
+                                : 'bg-white dark:bg-surface-dark shadow-sm border-gray-100 dark:border-gray-800'
                                 }`}
                             >
                               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${item.is_completed
-                                  ? 'bg-primary border-primary text-white shadow-md'
-                                  : 'border-gray-200 dark:border-gray-700'
+                                ? 'bg-primary border-primary text-white shadow-md'
+                                : 'border-gray-200 dark:border-gray-700'
                                 }`}>
                                 {item.is_completed && <span className="material-symbols-outlined text-[15px] font-bold">check</span>}
                               </div>
@@ -559,7 +559,7 @@ export default function HomePage() {
                         </p>
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full border border-primary/10">
                           <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                          <span className="text-[11px] font-black text-primary tracking-tight">현재 135,240명의 부모님이 실천 중</span>
+                          <span className="text-[11px] font-black text-primary tracking-tight">오늘도 많은 부모님들이 함께 실천 중</span>
                         </div>
                       </div>
                     </div>
