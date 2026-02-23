@@ -3,9 +3,9 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "기질×사주 분석 | 맞춤 양육 가이드",
-  description: "과학적 기질 분석과 전통 사주의 만남. 10분 설문으로 우리 아이 맞춤 양육 가이드를 받아보세요.",
-  keywords: ["기질 분석", "사주", "육아", "양육 가이드", "CBQ", "아동 발달"],
+  title: "마음 통역소 | 우리 아이 기질 맞춤 양육 가이드",
+  description: "과학적 기질 분석(TCI) 기반. 10분 설문으로 부모와 아이의 기질적 구조를 분석하고 우리 가족만의 맞춤 양육 가이드를 받아보세요.",
+  keywords: ["기질 분석", "마음 통역소", "육아", "양육 가이드", "CBQ", "ATQ", "아동 발달", "육아 고민"],
 };
 
 export const viewport: Viewport = {
