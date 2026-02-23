@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db, UserProfile, ChildProfile } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import BottomNav from '@/components/layout/BottomNav';
 import Link from 'next/link';
 
@@ -39,6 +40,24 @@ export default function ProfilePage() {
         if (confirm('로그아웃 하시겠습니까?')) {
             await signOut();
             router.push('/login');
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (confirm('정말로 회원 탈퇴를 진행하시겠습니까?\n프로필, 아이 기질 검사 결과 및 처방전 등 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
+            try {
+                if (user) {
+                    await db.resetUserData(user.id);
+                    // supabase auth user deletion function is often restricted.
+                    // If you have a backend/edge-function, call that.
+                    // Here we clear data and sign out.
+                    await signOut();
+                    router.push('/login');
+                }
+            } catch (error) {
+                console.error("Failed to delete account:", error);
+                alert("회원 탈퇴 중 문제가 발생했습니다.");
+            }
         }
     };
 
@@ -156,6 +175,7 @@ export default function ProfilePage() {
                             로그아웃
                         </button>
                         <button
+                            onClick={handleDeleteAccount}
                             className="w-full py-4 text-xs text-gray-300 dark:text-gray-600 font-medium hover:text-red-400 transition-colors"
                         >
                             회원 탈퇴

@@ -182,13 +182,52 @@ export const db = {
         return data.publicUrl;
     },
 
+    uploadUserAvatar: async (file: File, userId: string) => {
+        let uploadData: File | Blob = file;
+
+        if (typeof window !== 'undefined') {
+            try {
+                const { resizeImage } = await import('@/lib/imageUtils');
+                uploadData = await resizeImage(file, 800, 800, 0.8);
+            } catch (e) {
+                console.warn('Failed to resize image, uploading original:', e);
+            }
+        }
+
+        const fileExt = 'jpg';
+        const fileName = `${userId}-${Date.now()}.${fileExt}`;
+        const filePath = `user-avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, uploadData, {
+                contentType: 'image/jpeg',
+                upsert: true
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        return data.publicUrl;
+    },
+
     resetUserData: async (userId: string) => {
-        // Delete all data related to the user
+        // Delete all data related to the user in a soft/hard manner
         const resetChildren = supabase.from('children').delete().eq('parent_id', userId);
         const resetSurveys = supabase.from('surveys').delete().eq('user_id', userId);
         const resetReports = supabase.from('reports').delete().eq('user_id', userId);
+        const resetActions = supabase.from('action_items').delete().eq('user_id', userId);
+        const resetConsults = supabase.from('consultations').delete().eq('user_id', userId);
+        const resetProfile = supabase.from('profiles').delete().eq('id', userId);
 
-        const results = await Promise.all([resetChildren, resetSurveys, resetReports]);
+        const results = await Promise.all([
+            resetChildren,
+            resetSurveys,
+            resetReports,
+            resetActions,
+            resetConsults,
+            resetProfile
+        ]);
 
         results.forEach(({ error }) => {
             if (error) throw error;
