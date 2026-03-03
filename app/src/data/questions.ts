@@ -116,7 +116,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 13, type: 'CHILD', category: 'RD', facet: '관계 지향성',
-        context: "혼자 놀기보다는 친구나 다른 사람과 어울려 노는 것을, 우리 아이는?",
+        context: "친구나 다른 사람과 함께 어울려 놀아야 하는 상황에서, 우리 아이는?",
         choices: [
             "혼자서도 아주 오랫동안 깊이 몰입해서 잘 논다.",
             "가끔 부모가 있는지 확인만 하고 혼자 노는 것을 즐긴다.",
@@ -183,7 +183,7 @@ export const CHILD_QUESTIONS: Question[] = [
     },
     {
         id: 5, type: 'CHILD', category: 'NS', facet: '자유분방함',
-        context: "정해진 규칙을 따르기보다 자기 방식대로 즐기려 할 때, 우리 아이는?",
+        context: "놀이 규칙이나 약속된 방식을 지켜야 하는 상황에서, 우리 아이는?",
         choices: [
             "정해진 원칙과 약속을 완벽하게 지키는 것을 편안해한다.",
             "규칙에서 조금이라도 벗어나면 불안해하며 원칙을 지키려 한다.",
