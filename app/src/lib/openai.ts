@@ -13,7 +13,7 @@ export const openai = new OpenAI({
 
 export type ReportType = 'PARENT' | 'CHILD';
 
-import { CBQ_QUESTIONS, ATQ_QUESTIONS, LIKERT_OPTIONS, NA_OPTION } from '@/lib/surveyQuestions';
+import { CHILD_QUESTIONS, PARENT_QUESTIONS } from '@/data/questions';
 
 export const generateReport = async (
     userName: string,
@@ -29,16 +29,24 @@ export const generateReport = async (
     // Scan and Format Q&A if answers provided
     let formattedQnA = '';
     if (answers && answers.length > 0) {
-        const questions = type === 'CHILD' ? CBQ_QUESTIONS : ATQ_QUESTIONS;
+        // 실제 설문 문항(CHILD_QUESTIONS / PARENT_QUESTIONS)에서 텍스트 조회
+        const questions = type === 'CHILD' ? CHILD_QUESTIONS : PARENT_QUESTIONS;
 
         formattedQnA = answers.map(ans => {
-            const question = questions.find(q => q.id === ans.questionId);
+            const question = questions.find(q => String(q.id) === String(ans.questionId));
             if (!question) return null;
 
-            const option = LIKERT_OPTIONS.find(opt => opt.value === ans.score) || (ans.score === 0 ? NA_OPTION : null);
-            const answerText = option ? `${ans.score}점 (${option.label})` : `${ans.score}점`;
+            const scoreLabels: Record<number, string> = {
+                1: '전혀 그렇지 않다',
+                2: '그렇지 않다',
+                3: '보통이다',
+                4: '그렇다',
+                5: '매우 그렇다',
+            };
+            const answerText = `${ans.score}점 (${scoreLabels[ans.score] || '알 수 없음'})`;
 
-            return `Q. ${question.text}\n   A. ${answerText}`;
+            const questionText = question.context || question.text || '(질문 없음)';
+            return `Q. ${questionText}\n   A. ${answerText}`;
         }).filter(Boolean).join('\n\n');
     }
 
