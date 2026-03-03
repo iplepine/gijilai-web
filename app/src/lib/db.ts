@@ -212,25 +212,20 @@ export const db = {
     },
 
     resetUserData: async (userId: string) => {
-        // Delete all data related to the user in a soft/hard manner
-        const resetChildren = supabase.from('children').delete().eq('parent_id', userId);
-        const resetSurveys = supabase.from('surveys').delete().eq('user_id', userId);
-        const resetReports = supabase.from('reports').delete().eq('user_id', userId);
-        const resetActions = supabase.from('action_items').delete().eq('user_id', userId);
-        const resetConsults = supabase.from('consultations').delete().eq('user_id', userId);
-        const resetProfile = supabase.from('profiles').delete().eq('id', userId);
-
-        const results = await Promise.all([
-            resetChildren,
-            resetSurveys,
-            resetReports,
-            resetActions,
-            resetConsults,
-            resetProfile
+        // 개발용 데이터 초기화 - profiles는 삭제하지 않음 (로그인 상태 유지)
+        const results = await Promise.allSettled([
+            supabase.from('children').delete().eq('parent_id', userId),
+            supabase.from('surveys').delete().eq('user_id', userId),
+            supabase.from('reports').delete().eq('user_id', userId),
+            supabase.from('action_items').delete().eq('user_id', userId),
+            supabase.from('consultations').delete().eq('user_id', userId), // 테이블 없으면 무시
         ]);
 
-        results.forEach(({ error }) => {
-            if (error) throw error;
+        results.forEach((result) => {
+            if (result.status === 'fulfilled' && result.value.error) {
+                // consultations 테이블이 없는 경우 등 무시
+                console.warn('Reset partial error (ignored):', result.value.error.message);
+            }
         });
     }
 };
