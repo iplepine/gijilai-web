@@ -36,11 +36,11 @@ export default function IntroPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-screen bg-gradient-to-b from-[#e8fafa] to-white flex flex-col items-center justify-center p-6 text-center">
             <div className="max-w-md w-full space-y-8 animate-fadeIn">
                 <div className="relative w-48 h-48 mx-auto mb-8">
                     {/* Placeholder for Illustration */}
-                    <div className="absolute inset-0 bg-blue-100 rounded-full opacity-50 animate-pulse"></div>
+                    <div className="absolute inset-0 rounded-full opacity-50 animate-pulse" style={{ backgroundColor: '#11d4d420' }}></div>
                     <div className="absolute inset-4 bg-white rounded-full shadow-lg flex items-center justify-center">
                         <span className="text-4xl">👨‍👩‍👧‍👦</span>
                     </div>
@@ -48,7 +48,7 @@ export default function IntroPage() {
 
                 <h1 className="text-3xl font-bold text-gray-900 leading-tight">
                     우리 아이,<br />
-                    <span className="text-primary">도대체 왜 그럴까요?</span>
+                    <span style={{ color: '#0d1b1b' }}>도대체 왜 그럴까요?</span>
                 </h1>
 
                 <p className="text-lg text-gray-600">
@@ -60,8 +60,8 @@ export default function IntroPage() {
                 <div className="pt-8">
                     <button
                         onClick={startSurvey}
-                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-xl shadow-lg transform transition hover:scale-105 active:scale-95 text-lg"
-                        style={{ backgroundColor: '#6C5CE7' }}
+                        className="w-full font-black py-4 px-8 rounded-xl shadow-lg shadow-teal-200 transform transition hover:scale-105 active:scale-95 text-lg"
+                        style={{ backgroundColor: '#11d4d4', color: '#0d1b1b' }}
                     >
                         지금 바로 시작하기
                     </button>

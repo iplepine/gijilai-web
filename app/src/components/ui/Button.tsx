@@ -32,7 +32,7 @@ export function Button({
 
   const variants = {
     primary: `
-      bg-[var(--primary)] text-[var(--navy)]
+      bg-[var(--primary)] text-white
       shadow-xl shadow-[var(--primary)]/20
     `,
     secondary: `

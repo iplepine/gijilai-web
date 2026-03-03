@@ -42,6 +42,7 @@ function ReportContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  const isChildOnly = searchParams.get('child_only') === 'true';
 
   const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, isPaid } = useAppStore();
@@ -60,8 +61,41 @@ function ReportContent() {
     }
   }, [tabParam]);
 
+  // 안A: 아이 리포트 선공 - 아동 설문 완료 직후 자동으로 AI 리포트 생성
+  useEffect(() => {
+    if (isChildOnly && !childAiReport && !isGenerating && Object.keys(cbqResponses).length > 0) {
+      generateChildAIReport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChildOnly]);
+
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
+  };
+
+  const generateChildAIReport = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      const scores = childScores;
+      const answers = Object.entries(cbqResponses).map(([id, score]) => ({
+        questionId: id,
+        score: score as number
+      }));
+      const res = await fetch('/api/llm/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: intake.childName || '아이', scores, type: 'CHILD', answers })
+      });
+      if (!res.ok) throw new Error('Report generation failed');
+      const data = await res.json();
+      setChildAiReport(data.report);
+    } catch (error) {
+      console.error(error);
+      alert('리포트 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const generateAIReport = async () => {
@@ -251,49 +285,65 @@ function ReportContent() {
   const ghiLabel = ghiScore < 25 ? '안정적 조화' : (ghiScore < 55 ? '균형 잡힌 관계' : '주의 깊은 관찰 필요');
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pb-24 font-sans">
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-900 font-sans ${isChildOnly ? 'pb-40' : 'pb-24'}`}>
       {/* Header Overlay */}
       <div className="bg-primary pt-12 pb-24 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden z-10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="relative z-10 text-center space-y-2">
-          <h1 className="text-3xl font-black text-white tracking-tight">분석 리포트</h1>
-          <p className="text-white/70 text-sm font-medium">기질아이가 발견한 {intake.childName || '아이'}의 세상</p>
+          {isChildOnly ? (
+            <>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 bg-white/20 rounded-full text-[11px] font-bold text-white/90 tracking-wide">
+                ✨ 아이 기질 검사 완료!
+              </div>
+              <h1 className="text-3xl font-black text-white tracking-tight">{intake.childName || '아이'}의<br />기질 리포트</h1>
+              <p className="text-white/70 text-sm font-medium">기질아이가 발견한 우리 아이의 타고난 세계</p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-black text-white tracking-tight">분석 리포트</h1>
+              <p className="text-white/70 text-sm font-medium">기질아이가 발견한 {intake.childName || '아이'}의 세상</p>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="max-w-md mx-auto px-6 -mt-14 mb-8 relative z-30">
-        <div className="bg-white/20 backdrop-blur-xl p-1 rounded-2xl flex gap-1 border border-white/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
-          <button
-            onClick={() => handleTabChange('child')}
-            className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
-          >
-            아이 진단
-          </button>
-          <button
-            onClick={() => {
-              if (isParentSurveyComplete) handleTabChange('parent');
-              else if (confirm('부모 기질 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
-                router.push('/survey?type=PARENT');
-              }
-            }}
-            className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
-          >
-            양육자 분석
-          </button>
-          <button
-            onClick={() => {
-              if (isStyleSurveyComplete) handleTabChange('parenting');
-              else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
-                router.push('/survey?type=STYLE');
-              }
-            }}
-            className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
-          >
-            기질 맞춤 양육
-          </button>
+      {/* Tab Switcher - 아이 리포트 선공 모드에서는 숨김 */}
+      {!isChildOnly && (
+        <div className="max-w-md mx-auto px-6 -mt-14 mb-8 relative z-30">
+          <div className="bg-white/20 backdrop-blur-xl p-1 rounded-2xl flex gap-1 border border-white/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+            <button
+              onClick={() => handleTabChange('child')}
+              className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+            >
+              아이 진단
+            </button>
+            <button
+              onClick={() => {
+                if (isParentSurveyComplete) handleTabChange('parent');
+                else if (confirm('부모 기질 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                  router.push('/survey?type=PARENT');
+                }
+              }}
+              className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+            >
+              양육자 분석
+            </button>
+            <button
+              onClick={() => {
+                if (isStyleSurveyComplete) handleTabChange('parenting');
+                else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                  router.push('/survey?type=STYLE');
+                }
+              }}
+              className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+            >
+              기질 맞춤 양육
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+      {/* child_only 모드: 헤더와 컨텐츠 사이 간격 */}
+      {isChildOnly && <div className="h-8" />}
 
       <div className="max-w-2xl mx-auto px-6 space-y-8 relative z-20">
         {activeTab === 'child' ? (
@@ -479,14 +529,16 @@ function ReportContent() {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
-              <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
-                결과 공유하고 할인권 받기
-              </Button>
-              <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
-                홈으로 돌아가기
-              </Link>
-            </div>
+            {!isChildOnly && (
+              <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
+                <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+                  결과 공유하고 할인권 받기
+                </Button>
+                <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
+                  홈으로 돌아가기
+                </Link>
+              </div>
+            )}
           </>
         ) : activeTab === 'parent' ? (
           <div className="animate-fade-in space-y-12">
@@ -668,6 +720,34 @@ function ReportContent() {
           </div>
         )}
       </div>
+
+      {/* 안A: 아이 리포트 선공 - 하단 고정 CTA 배너 */}
+      {isChildOnly && (
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <div className="max-w-md mx-auto">
+            <div className="m-3 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-primary/10 to-slate-50 px-5 py-3 border-b border-slate-100">
+                <p className="text-[11px] font-bold text-primary text-center">
+                  🔬 부모님 기질까지 추가하면 더 정밀해져요
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="text-[12px] text-slate-500 text-center mb-3 leading-relaxed">
+                  두 기질의 <strong className="text-slate-700">조화 지수(GHI)</strong>와 <strong className="text-slate-700">맞춤 양육 솔루션</strong>을<br />지금 바로 확인해 보세요.
+                </p>
+                <button
+                  onClick={() => router.push('/survey?type=PARENT')}
+                  className="w-full py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  <span>부모님 기질 검사 이어하기</span>
+                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
