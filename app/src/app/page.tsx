@@ -579,6 +579,9 @@ export default function HomePage() {
                 onClick={async () => {
                   if (!window.confirm("데이터를 초기화하시겠습니까?")) return;
                   await db.resetUserData(user.id);
+                  // Zustand persist localStorage 키도 함께 삭제
+                  localStorage.removeItem('temperament-storage');
+                  localStorage.removeItem('survey-storage');
                   resetAll();
                   window.location.reload();
                 }}
