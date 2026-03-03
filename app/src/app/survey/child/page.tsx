@@ -55,11 +55,12 @@ export default function ChildSurveyPage() {
         <SurveyLayout
             title="아동 기질 검사"
             progress={progress}
+            themeColor="#FFD700"
             onBack={handleBack}
         >
             <div className="w-full max-w-md py-6">
                 <div className="mb-4 text-center">
-                    <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium mb-2">
+                    <span className="inline-block px-3 py-1 text-sm font-bold mb-2 rounded-full" style={{ backgroundColor: '#FFD70033', color: '#B29600' }}>
                         Part 1. 아이 편
                     </span>
                 </div>

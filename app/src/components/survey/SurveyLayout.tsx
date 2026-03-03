@@ -8,10 +8,11 @@ interface SurveyLayoutProps {
     children: React.ReactNode;
     progress: number;
     title: string;
+    themeColor?: string;
     onBack?: () => void;
 }
 
-export const SurveyLayout: React.FC<SurveyLayoutProps> = ({ children, progress, title, onBack }) => {
+export const SurveyLayout: React.FC<SurveyLayoutProps> = ({ children, progress, title, themeColor, onBack }) => {
     const router = useRouter();
 
     const handleBack = () => {
@@ -38,7 +39,7 @@ export const SurveyLayout: React.FC<SurveyLayoutProps> = ({ children, progress, 
                         <h1 className="text-base font-semibold text-gray-800">{title}</h1>
                         <div className="w-8"></div> {/* Spacer for centering */}
                     </div>
-                    <ProgressBar progress={progress} />
+                    <ProgressBar progress={progress} themeColor={themeColor} />
                 </div>
             </header>
 

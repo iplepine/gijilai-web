@@ -92,11 +92,12 @@ export default function ParentSurveyPage() {
         <SurveyLayout
             title="부모 기질 검사"
             progress={progress}
+            themeColor="#4A90E2"
             onBack={handleBack}
         >
             <div className="w-full max-w-md py-6">
                 <div className="mb-4 text-center">
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-2">
+                    <span className="inline-block px-3 py-1 text-sm font-bold mb-2 rounded-full" style={{ backgroundColor: '#4A90E233', color: '#2C5E9E' }}>
                         Part 2. 나(부모) 편
                     </span>
                 </div>

@@ -84,11 +84,12 @@ export default function ParentingStyleSurveyPage() {
         <SurveyLayout
             title="양육 스타일 검사"
             progress={progress}
+            themeColor="#8BC34A"
             onBack={handleBack}
         >
             <div className="w-full max-w-md py-6">
                 <div className="mb-4 text-center">
-                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium mb-2">
+                    <span className="inline-block px-3 py-1 text-sm font-bold mb-2 rounded-full" style={{ backgroundColor: '#8BC34A33', color: '#558B2F' }}>
                         Part 3. 양육 스타일
                     </span>
                 </div>
