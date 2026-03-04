@@ -4,7 +4,7 @@ import { generateReport, ReportType } from '@/lib/openai';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { userName, scores, type, systemPrompt, model, answers } = body;
+        const { userName, scores, type, systemPrompt, model, answers, parentScores } = body;
 
         // Basic validation
         if (!userName || !scores || !type) {
@@ -14,21 +14,9 @@ export async function POST(request: Request) {
             );
         }
 
-        if (type !== 'PARENT' && type !== 'CHILD') {
+        if (type !== 'PARENT' && type !== 'CHILD' && type !== 'HARMONY') {
             return NextResponse.json(
-                { error: 'Invalid type. Must be PARENT or CHILD.' },
-                { status: 400 }
-            );
-        }
-
-        if (
-            typeof scores.NS !== 'number' ||
-            typeof scores.HA !== 'number' ||
-            typeof scores.RD !== 'number' ||
-            typeof scores.P !== 'number'
-        ) {
-            return NextResponse.json(
-                { error: 'Invalid scores format. All scores must be numbers.' },
+                { error: 'Invalid type. Must be PARENT, CHILD, or HARMONY.' },
                 { status: 400 }
             );
         }
@@ -36,10 +24,11 @@ export async function POST(request: Request) {
         const report = await generateReport(
             userName,
             scores,
-            type as ReportType,
+            type as any,
             systemPrompt,
             model,
-            answers
+            answers,
+            parentScores
         );
 
         return NextResponse.json({ report });

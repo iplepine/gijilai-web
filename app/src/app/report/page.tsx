@@ -49,6 +49,7 @@ function ReportContent() {
 
   const [childAiReport, setChildAiReport] = useState<any>(null);
   const [parentAiReport, setParentAiReport] = useState<any>(null);
+  const [harmonyAiReport, setHarmonyAiReport] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -123,15 +124,16 @@ function ReportContent() {
     }
   };
 
-  const generateAIReport = async () => {
+  const generateHarmonyAIReport = async () => {
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const type = activeTab === 'child' ? 'CHILD' : 'PARENT';
-      const scores = type === 'CHILD' ? childScores : parentScores;
-      const responses = type === 'CHILD' ? cbqResponses : atqResponses;
-
-      const answers = Object.entries(responses).map(([id, score]) => ({
+      // 모든 응답 통합 (양육 태도 포함)
+      const answers = [
+        ...Object.entries(cbqResponses),
+        ...Object.entries(atqResponses),
+        ...Object.entries(parentingResponses)
+      ].map(([id, score]) => ({
         questionId: id,
         score: score as number
       }));
@@ -141,23 +143,27 @@ function ReportContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userName: intake.childName || '아이',
-          scores,
-          type,
+          scores: childScores,
+          parentScores: parentScores,
+          type: 'HARMONY',
           answers
         })
       });
-
-      if (!res.ok) throw new Error('Report generation failed');
+      if (!res.ok) throw new Error('Harmony report generation failed');
       const data = await res.json();
-
-      if (type === 'CHILD') setChildAiReport(data.report);
-      else setParentAiReport(data.report);
+      setHarmonyAiReport(data.report);
     } catch (error) {
       console.error(error);
-      alert('리포트 생성 중 오류가 발생했습니다.');
+      alert('조화 분석 리포트 생성 중 오류가 발생했습니다.');
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const generateAIReport = async () => {
+    if (activeTab === 'child') await generateChildAIReport();
+    else if (activeTab === 'parent') await generateParentAIReport();
+    else if (activeTab === 'parenting') await generateHarmonyAIReport();
   };
 
   const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any), [cbqResponses]);
@@ -317,10 +323,13 @@ function ReportContent() {
         <div className="relative z-10 text-center space-y-2">
           {isChildOnly ? (
             <>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 bg-white/20 rounded-full text-[11px] font-bold text-white/90 tracking-wide">
-                ✨ 아이 기질 검사 완료!
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 bg-white/20 rounded-full text-[11px] font-bold text-white/90 tracking-wide backdrop-blur-sm">
+                ✨ {childAiReport ? 'AI 정밀 분석 완료' : '아이 기질 검사 완료!'}
               </div>
-              <h1 className="text-3xl font-black text-white tracking-tight">{intake.childName || '아이'}의<br />기질 리포트</h1>
+              <h1 className="text-3xl font-black text-white tracking-tight">
+                {childAiReport?.title?.split(':')[1] || intake.childName + '의'}
+                <br /> {childAiReport ? '심층 리포트' : '기질 리포트'}
+              </h1>
               <p className="text-white/70 text-sm font-medium">기질아이가 발견한 우리 아이의 타고난 세계</p>
             </>
           ) : (
@@ -389,10 +398,10 @@ function ReportContent() {
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-4xl font-black text-slate-900 dark:text-white leading-tight">
-                    {childType.label}
+                    {childAiReport?.title?.split(':')[1]?.trim() || childType.label}
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4 font-medium">
-                    {childType.desc}
+                    {childAiReport?.intro || childType.desc}
                   </p>
                 </div>
               </div>
@@ -847,40 +856,122 @@ function ReportContent() {
           </div>
         ) : (
           <div className="animate-fade-in space-y-12">
-            {/* Parenting Style Report Header */}
-            <header className="text-center space-y-4 py-6">
-              <div className="text-[10px] font-black text-green-500 uppercase tracking-[0.3em] mb-2">Temperament Chemistry</div>
-              <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-snug break-keep">
-                기질과 기질이 만나는<br /><span className="text-green-500">맞춤 양육</span> 시너지
-              </h2>
-              <p className="text-slate-500 text-[13px] font-medium leading-relaxed break-keep">
-                부모와 아이 고유의 기질적 특성을 바탕으로 현재의 양육 환경이 얼마나 최적화되어 있는지 분석합니다.
-              </p>
-            </header>
-
-            <section className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-xl border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
-              <div className="relative z-10 space-y-6">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">01. 맞춤 양육도 분석</span>
-                  <h3 className="text-xl font-black text-slate-800 dark:text-white">나의 현재 양육 환경</h3>
-                </div>
-                <div className="h-56">
-                  <Bar data={barData} options={{ ...barOptions, plugins: { legend: { display: false } } } as any} />
-                </div>
+            {/* AI 조화 분석 리포트 (Harmony & Style) */}
+            <section className="space-y-6">
+              <div className="flex items-center justify-between px-2">
+                <h3 className="font-black text-slate-800 dark:text-white text-xl flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600">🤝</span>
+                  두 기질의 화학 반응 분석
+                </h3>
               </div>
-            </section>
 
-            <section className="bg-[#E8F5E9] dark:bg-green-900/20 rounded-[2.5rem] p-8 shadow-sm border border-green-100 dark:border-green-900/30 relative overflow-hidden">
-              <div className="absolute top-4 right-6 text-2xl">🌱</div>
-              <span className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest block mb-1">02. 행동 방향 가이드</span>
-              <h4 className="text-md font-bold text-slate-800 dark:text-white mb-2">기질아이 맞춤 처방</h4>
-              <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed break-keep">
-                {styleScores.Responsiveness > 70 && styleScores.Autonomy > 70
-                  ? "부모님은 아이의 마음을 잘 알아주고 스스로 할 수 있도록 넉넉한 공간을 내어주는 훌륭한 양육을 하고 계십니다. 다만 부모님 스스로의 에너지가 고갈되지 않도록 양육 효능감과 휴식을 챙겨주세요."
-                  : "아이의 타고난 기질과 행동이 이해되지 않을 땐 즉각적인 반응을 멈추고 한발 물러서서 관찰하는 시간이 필요합니다. 아이가 보내는 작은 신호들을 세심하게 파악하여 정서적인 반응성을 조금씩 높여보는 것을 추천합니다."
-                }
-              </p>
+              {harmonyAiReport ? (
+                <div className="space-y-8 animate-fade-in-up">
+                  {/* 관계 타이틀 및 점수 */}
+                  <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-10 shadow-xl border-b-8 border-green-500 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 text-7xl font-black opacity-5">MATCH</div>
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Our Harmony Name</span>
+                        <h4 className="text-2xl font-black text-slate-800 dark:text-white leading-tight">
+                          {harmonyAiReport.harmonyTitle}
+                        </h4>
+                      </div>
+                      <div className="text-right">
+                        <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Fit Score</span>
+                        <span className="text-4xl font-black text-green-500">{harmonyAiReport.compatibilityScore}%</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
+                      {harmonyAiReport.dynamics?.description}
+                    </p>
+                  </div>
+
+                  {/* 시너지 & 갈등 포인트 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-green-50 dark:bg-green-900/10 rounded-[2rem] p-7 border border-green-100 dark:border-green-800/50">
+                      <h5 className="font-bold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
+                        <span>✨</span> 우리만의 시너지
+                      </h5>
+                      <p className="text-[13px] text-green-800/70 dark:text-green-300/60 leading-relaxed break-keep">
+                        {harmonyAiReport.dynamics?.synergy}
+                      </p>
+                    </div>
+                    <div className="bg-rose-50 dark:bg-rose-900/10 rounded-[2rem] p-7 border border-rose-100 dark:border-rose-800/50">
+                      <h5 className="font-bold text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
+                        <span>⚠️</span> 조심해야 할 스파크
+                      </h5>
+                      <p className="text-[13px] text-rose-800/70 dark:text-rose-300/60 leading-relaxed break-keep">
+                        {harmonyAiReport.dynamics?.conflictPoint}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 양육 태도 진단 */}
+                  <div className="bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl space-y-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl -mr-16 -mt-16"></div>
+                    <div>
+                      <span className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-2 block">Parenting Audit</span>
+                      <h5 className="text-white text-xl font-black mb-4">현재 나의 양육 온도</h5>
+                      <p className="text-slate-400 text-[14px] leading-relaxed break-keep border-l-2 border-green-500/30 pl-4">
+                        <strong>[{harmonyAiReport.parentingAudit?.currentStyle}]</strong> {harmonyAiReport.parentingAudit?.evaluation}
+                      </p>
+                    </div>
+                    <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
+                      <h6 className="text-green-400 text-xs font-black uppercase mb-2">Key Adjustment</h6>
+                      <p className="text-white/80 text-[13px] leading-relaxed break-keep">
+                        {harmonyAiReport.parentingAudit?.adjustment}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 실전 액션 플랜 */}
+                  <div className="space-y-4">
+                    <h5 className="text-sm font-black text-slate-400 px-4 uppercase tracking-[0.2em]">Action Plans</h5>
+                    {harmonyAiReport.actionPlans?.map((plan: any, idx: number) => (
+                      <div key={idx} className="bg-white dark:bg-slate-800 rounded-[2rem] p-8 shadow-lg border border-slate-100 dark:border-slate-700 relative group overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 text-4xl opacity-5 group-hover:scale-125 transition-transform">🎯</div>
+                        <h6 className="text-lg font-black text-slate-800 dark:text-white mb-2">{plan.title}</h6>
+                        <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed mb-4 break-keep">{plan.desc}</p>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-slate-900 text-primary text-[11px] font-bold">
+                          <Icon name="auto_graph" size="sm" />
+                          기대 효과: {plan.expect}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 마지막 한마디 */}
+                  <div className="text-center py-10 px-6">
+                    <div className="text-4xl mb-4">🏠</div>
+                    <p className="text-slate-800 dark:text-white text-xl font-black leading-snug break-keep max-w-[280px] mx-auto">
+                      "{harmonyAiReport.summaryQuote}"
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 text-center space-y-6 shadow-xl border border-green-500/10">
+                  <div className="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center text-3xl">
+                    🖇️
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-slate-800 dark:text-white">두 사람을 위한 기질 맞춤 리포트</h4>
+                    <p className="text-sm text-slate-500 leading-relaxed break-keep">
+                      아이와 부모의 기질이 만났을 때 생기는<br />
+                      특유의 역동성과 솔루션을 1인칭으로 분석합니다.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={generateHarmonyAIReport}
+                    variant="primary"
+                    fullWidth
+                    className="h-14 rounded-2xl bg-green-600 hover:bg-green-700"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? '조화 분석 구성 중...' : '맞춤 양육 시너지 분석하기'}
+                  </Button>
+                </div>
+              )}
             </section>
 
             {/* Footer Actions */}

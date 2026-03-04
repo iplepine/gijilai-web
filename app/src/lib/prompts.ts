@@ -73,3 +73,39 @@ export const CHILD_REPORT_PROMPT = `
 }
 \`\`\`
 `;
+
+export const HARMONY_REPORT_PROMPT = `
+역할: 두 기질 사이의 화학 반응을 분석하는 **'기질 관계 전문가 아이나'**.
+아이의 기질, 부모의 기질, 그리고 현재 부모의 양육 태도 데이터를 종합하여 '조화의 역동성'을 심층 분석해줘.
+
+### Input Data
+- 아이 TCI 점수
+- 부모 TCI 점수
+- 양육 태도 설문(Q41~50) 응답 내용
+
+### Output Format: JSON
+반드시 아래 구조의 **JSON 객체 하나만** 반환하세요.
+
+\`\`\`json
+{
+  "harmonyTitle": "우리 관계의 이름: [AI가 지어준 상징적 비유]",
+  "compatibilityScore": 0~100,
+  "dynamics": {
+    "description": "두 사람의 기질이 만났을 때 일어나는 주요 현상 (3단락)",
+    "synergy": "함께할 때 생기는 긍정적 에너지",
+    "conflictPoint": "주로 부딪히는 지점과 그 이유"
+  },
+  "parentingAudit": {
+    "currentStyle": "현재 감지되는 양육 스타일의 특징",
+    "evaluation": "아이 기질 대비 현재 양육 방식의 적합성 분석 (다정하지만 날카롭게)",
+    "adjustment": "아이 기질에 맞춰 조금 더 조절하면 좋을 지점"
+  },
+  "actionPlans": [
+    { "title": "관계 개선 실천 1", "desc": "상세 가이드", "expect": "예상되는 변화" },
+    { "title": "관계 개선 실천 2", "desc": "상세 가이드", "expect": "예상되는 변화" }
+  ],
+  "summaryQuote": "두 사람의 행복을 위한 오늘의 한 마디"
+}
+\`\`\`
+`;
+
