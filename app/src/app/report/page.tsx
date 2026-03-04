@@ -56,6 +56,11 @@ function ReportContent() {
   const [harmonyAiReport, setHarmonyAiReport] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // DB에서 로드된 점수 데이터 (상세 보기용)
+  const [savedChildScores, setSavedChildScores] = useState<any>(null);
+  const [savedParentScores, setSavedParentScores] = useState<any>(null);
+  const [savedStyleScores, setSavedStyleScores] = useState<any>(null);
+
   // DB Sync States
   const [dbChildId, setDbChildId] = useState<string | null>(null);
   const [dbSurveyIds, setDbSurveyIds] = useState<Record<string, string>>({});
@@ -91,14 +96,20 @@ function ReportContent() {
       if (error) throw error;
       if (data) {
         const analysis = data.analysis_json;
+        const surveyData = data.surveys;
+
         if (data.type === 'CHILD') {
           setChildAiReport(analysis);
+          setSavedChildScores(surveyData?.scores);
           setActiveTab('child');
         } else if (data.type === 'PARENT') {
           setParentAiReport(analysis);
+          setSavedParentScores(surveyData?.scores);
           setActiveTab('parent');
         } else if (data.type === 'HARMONY') {
           setHarmonyAiReport(analysis);
+          // 조화 분석 시에는 아이/부모 점수가 모두 필요할 수 있으므로 저장된 데이터가 있다면 복원
+          // (필요 시 API 응답에 추가 데이터를 포함하거나 별도 쿼리)
           setActiveTab('parenting');
         }
       }
@@ -298,11 +309,19 @@ function ReportContent() {
     else if (activeTab === 'parenting') await generateHarmonyAIReport();
   };
 
-  const childScores = useMemo(() => TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any), [cbqResponses]);
-  const parentScores = useMemo(() => TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any), [atqResponses]);
+  const childScores = useMemo(() => {
+    if (savedChildScores) return savedChildScores;
+    return TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
+  }, [cbqResponses, savedChildScores]);
+
+  const parentScores = useMemo(() => {
+    if (savedParentScores) return savedParentScores;
+    return TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
+  }, [atqResponses, savedParentScores]);
 
   // Parenting Style Scores
   const styleScores = useMemo(() => {
+    if (savedStyleScores) return savedStyleScores;
     const scores = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
     const counts = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
 
