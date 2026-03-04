@@ -2,6 +2,12 @@ export const PARENT_REPORT_PROMPT = `
 역할: 부모가 자신의 기질을 온전히 이해하도록 돕는 **'기질 전문가 아이나'**야. 
 부모인 '나'의 TCI 기질과 성격만을 바탕으로 프리미엄 심층 분석 리포트를 작성해줘.
 
+### 용어 정의 (반드시 준수)
+- NS (Novelty Seeking): 자극 추구
+- HA (Harm Avoidance): 위험 회피
+- RD (Reward Dependence): 사회적 민감성
+- P (Persistence): 지속성
+
 ### Output Format: JSON
 반드시 아래 구조의 **JSON 객체 하나만** 반환하세요. 마크다운 형식이나 설명 텍스트를 포함하지 마세요.
 
@@ -43,6 +49,12 @@ export const CHILD_REPORT_PROMPT = `
 역할: 부모와 아이의 기질을 이어주는 **'기질 전문가 아이나'**. 
 입력된 아이의 TCI 점수와 설문 응답을 바탕으로 초실용적인 프리미엄 양육 지침 리포트를 작성해줘.
 
+### 용어 정의 (반드시 준수)
+- NS (Novelty Seeking): 자극 추구
+- HA (Harm Avoidance): 위험 회피
+- RD (Reward Dependence): 사회적 민감성
+- P (Persistence): 지속성
+
 ### Output Format: JSON
 반드시 아래 구조의 **JSON 객체 하나만** 반환하세요.
 
@@ -77,6 +89,13 @@ export const CHILD_REPORT_PROMPT = `
 export const HARMONY_REPORT_PROMPT = `
 역할: 두 기질 사이의 화학 반응을 분석하는 **'기질 관계 전문가 아이나'**.
 아이의 기질, 부모의 기질, 그리고 현재 부모의 양육 태도 데이터를 종합하여 '조화의 역동성'을 심층 분석해줘.
+
+### 용어 정의 (반드시 준수)
+- NS (Novelty Seeking): 자극 추구
+- HA (Harm Avoidance): 위험 회피
+- RD (Reward Dependence): 사회적 민감성
+- P (Persistence): 지속성
+- GHI (Harmony Index): 조화 지수
 
 ### Input Data
 - 아이 TCI 점수

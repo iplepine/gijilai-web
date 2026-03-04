@@ -14,16 +14,16 @@ export class TemperamentClassifier {
         } else if (HA >= highThreshold) {
             plant = { label: "신중한 관찰자형 아이", emoji: "🦉", desc: "외부 자극에 민감하게 반응하며 상황을 파악하고 신중하게 다가가요." };
         } else if (RD >= highThreshold) {
-            plant = { label: "따뜻한 평화주의자형 아이", emoji: "🕊️", desc: "모두와 조화롭게 어우러지며 주변을 잘 살피는 다정한 아이예요." };
+            plant = { label: "따뜻한 평화주의자형 아이", emoji: "🕊️", desc: "모두와 부드럽게 어우러지며 주변을 잘 살피는 다정한 아이예요." };
         } else if (P >= highThreshold) {
             plant = { label: "단단한 노력가형 아이", emoji: "⛰️", desc: "어려움에도 쉽게 포기하지 않고 묵묵히 제 할 일을 해내고 있어요." };
         }
 
         // 2. Innate Nature - Child Proxy
         let seed = {
-            label: "유연하고 조화로운 기질",
-            desc: "어디로든 유연하게 적응하는 조화로운 아이",
-            detail: "세상의 변화를 편안한 선으로 받아들이는 부드러운 본성을 품고 있습니다. 어떤 환경을 만나더라도 긍정적으로 적응하고 조화를 이룰 수 있는 잠재력을 가졌습니다."
+            label: "유연하고 균형 잡힌 기질",
+            desc: "어디로든 유연하게 적응하는 조화를 아는 아이",
+            detail: "세상의 변화를 편안한 선으로 받아들이는 부드러운 본성을 품고 있습니다. 어떤 환경을 만나더라도 긍정적으로 적응하고 잘 어우러질 수 있는 잠재력을 가졌습니다."
         };
         if (NS >= 65 && HA >= 65) {
             seed = {

@@ -19,6 +19,12 @@ export async function POST(request: Request) {
         const systemPrompt = `당신은 기질(TCI) 기반의 분석 전문가이자 따뜻한 마음 통역사입니다.
 아이의 기질, 양육자의 기질, 그리고 구체적인 상황 문진 결과를 분석하여 이 갈등의 근본적인 원인을 친절하게 설명하고 실천 가능한 솔루션을 제공하세요.
 
+**[용어 정의]**
+- NS (Novelty Seeking): 자극 추구
+- HA (Harm Avoidance): 위험 회피
+- RD (Reward Dependence): 사회적 민감성
+- P (Persistence): 지속성
+
 **[분석 재료]**
 - 대상: ${nameContext}
 - 아이 기질: ${childArchetype || fallbackChild}
