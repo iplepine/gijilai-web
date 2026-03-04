@@ -27,6 +27,7 @@ import { ParentClassifier } from '@/lib/ParentClassifier';
 import { PRESCRIPTION_DATA } from '@/lib/PrescriptionData';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 
 ChartJS.register(
   RadialLinearScale,
@@ -69,13 +70,53 @@ function ReportContent() {
     }
   }, [tabParam]);
 
+  const reportId = searchParams.get('id');
+
+  // URL ID가 있을 경우 DB에서 리포트 로드
+  useEffect(() => {
+    if (reportId && user) {
+      loadSavedReport(reportId);
+    }
+  }, [reportId, user]);
+
+  const loadSavedReport = async (id: string) => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*, surveys(*)')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        const analysis = data.analysis_json;
+        if (data.type === 'CHILD') {
+          setChildAiReport(analysis);
+          setActiveTab('child');
+        } else if (data.type === 'PARENT') {
+          setParentAiReport(analysis);
+          setActiveTab('parent');
+        } else if (data.type === 'HARMONY') {
+          setHarmonyAiReport(analysis);
+          setActiveTab('parenting');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load report:', e);
+      alert('리포트를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // 안A: 아이 리포트 선공 - 아동 설문 완료 직후 자동으로 AI 리포트 생성
   useEffect(() => {
-    if (isChildOnly && !childAiReport && !isGenerating && Object.keys(cbqResponses).length > 0) {
+    if (isChildOnly && !childAiReport && !isGenerating && !reportId && Object.keys(cbqResponses).length > 0) {
       generateChildAIReport();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isChildOnly]);
+  }, [isChildOnly, reportId]);
 
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);

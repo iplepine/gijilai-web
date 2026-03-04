@@ -172,8 +172,7 @@ export default function RecordPage() {
                                     <div
                                         key={report.id}
                                         onClick={() => {
-                                            // 리포트 상세 페이지로 이동 (나중에 reportId로 로드하는 로직 추가 필요)
-                                            alert('상세 보고 기능은 곧 업데이트됩니다!');
+                                            router.push(`/report?id=${report.id}`);
                                         }}
                                         className="bg-white dark:bg-surface-dark rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 relative overflow-hidden group active:scale-[0.98] transition-all cursor-pointer"
                                     >
