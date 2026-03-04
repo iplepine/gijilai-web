@@ -966,49 +966,6 @@ function ReportContent() {
               </p>
             </section>
 
-            {/* AI 심층 분석 리포트 (Parent) */}
-            <section className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border border-primary/10">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-                  <Icon name="auto_awesome" className="text-primary" /> AI 전문가 성향 리포트
-                </h3>
-              </div>
-
-              {parentAiReport ? (
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-medium text-pretty">
-                    {parentAiReport}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 space-y-6">
-                  <p className="text-sm text-slate-500 leading-relaxed break-keep">
-                    양육자님의 내면 기질과 응답 패턴을 분석하여<br />
-                    심층적인 자기 이해 리포트를 생성합니다.
-                  </p>
-                  <Button
-                    onClick={generateAIReport}
-                    variant="primary"
-                    fullWidth
-                    className="h-14 rounded-2xl flex items-center justify-center gap-2"
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        <span>리포트 분석 중...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>AI 심층 리포트 생성하기</span>
-                        <Icon name="arrow_forward" size="sm" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-            </section>
-
             {/* Footer Actions */}
             <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
               <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
