@@ -1,3 +1,4 @@
+import { Suspense, useEffect } from 'react';
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import "./globals.css";
@@ -38,6 +39,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
+        {/* Kakao SDK */}
+        <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" integrity="sha384-lTLG7v9U6q46otPrRHXq9SdfpS8PnzPFC2g4MvT979D+SiTf7tS86P1zM8B/9/m4" crossOrigin="anonymous" async></script>
       </head>
       <body className="antialiased min-h-screen relative font-sans text-slate-800" suppressHydrationWarning>
         {/* Background handled by globals.css body style */}
@@ -57,10 +60,27 @@ export default function RootLayout({
         />
         <AuthProvider>
           <div className="max-w-md mx-auto min-h-screen bg-background-light dark:bg-background-dark">
+            <Suspense fallback={null}>
+              <ReferralHandler />
+            </Suspense>
             {children}
           </div>
         </AuthProvider>
       </body>
     </html>
   );
+}
+
+function ReferralHandler() {
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  useEffect(() => {
+    if (searchParams) {
+      const ref = searchParams.get('ref');
+      if (ref) {
+        sessionStorage.setItem('referral_code', ref);
+        console.log('Referral code saved:', ref);
+      }
+    }
+  }, [searchParams]);
+  return null;
 }

@@ -38,6 +38,7 @@ export default function ConsultPage() {
 
     // INPUT STATE
     const [problemDesc, setProblemDesc] = useState('');
+    const [currentTextAnswer, setCurrentTextAnswer] = useState('');
 
     // DIAGNOSTIC STATE
     const [empathy, setEmpathy] = useState('');
@@ -334,16 +335,19 @@ export default function ConsultPage() {
                                 <textarea
                                     className="w-full h-40 p-5 text-[15px] rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
                                     placeholder="자유롭게 적어주세요."
-                                    onBlur={(e) => {
-                                        if (e.target.value) handleAnswer(currentQuestion.id, e.target.value);
-                                    }}
+                                    value={currentTextAnswer}
+                                    onChange={(e) => setCurrentTextAnswer(e.target.value)}
                                 />
                                 <button
-                                    onClick={(e) => {
-                                        const textarea = (e.currentTarget.previousSibling as HTMLTextAreaElement);
-                                        if (textarea.value) handleAnswer(currentQuestion.id, textarea.value);
+                                    onClick={() => {
+                                        if (currentTextAnswer.trim()) {
+                                            handleAnswer(currentQuestion.id, currentTextAnswer);
+                                            setCurrentTextAnswer('');
+                                        } else {
+                                            alert('답변을 입력해주세요.');
+                                        }
                                     }}
-                                    className="w-full py-4 rounded-2xl bg-primary text-white font-bold"
+                                    className="w-full py-4 rounded-2xl bg-primary text-white font-bold transition-all active:scale-95"
                                 >
                                     다음으로
                                 </button>

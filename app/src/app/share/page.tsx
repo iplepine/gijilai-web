@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -10,19 +10,33 @@ import { useAppStore } from '@/store/useAppStore';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
 import { CHILD_QUESTIONS } from '@/data/questions';
+import { toPng } from 'html-to-image';
+import saveAs from 'file-saver';
 
 export default function SharePage() {
   const router = useRouter();
   const { intake, cbqResponses, atqResponses } = useAppStore();
   const [copied, setCopied] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isSharing, setIsSharing] = useState(false);
+
   const referralCode = 'TEMPERAMENT-CHILD-' + (intake.childName ? intake.childName.toUpperCase() : 'FRIEND');
 
-  // Calculate Temperament (Parent = Soil, Child = Seed + Plant)
+  // Initialize Kakao
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.Kakao) {
+      if (!window.Kakao.isInitialized()) {
+        const key = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || '86e2d8a4369a47468132e08e67f08c5c'; // Placeholder if not set
+        window.Kakao.init(key);
+      }
+    }
+  }, []);
+
+  // Calculate Temperament
   const temperamentInfo = (() => {
     if (!cbqResponses || Object.keys(cbqResponses).length === 0) return null;
     const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
 
-    // Parent scores for soil context
     let parentScores = { NS: 50, HA: 50, RD: 50, P: 50 };
     if (atqResponses && Object.keys(atqResponses).length > 0) {
       parentScores = TemperamentScorer.calculate(CHILD_QUESTIONS, atqResponses as any);
@@ -32,14 +46,57 @@ export default function SharePage() {
   })();
 
   const handleCopyCode = async () => {
-    await navigator.clipboard.writeText(window.location.origin + '?ref=' + referralCode);
+    const shareUrl = window.location.origin + '?ref=' + referralCode;
+    await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleKakaoShare = () => {
+    if (!window.Kakao) return;
+
+    const shareUrl = window.location.origin + '?ref=' + referralCode;
+
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: `${intake.childName || '우리 아이'}는 "${temperamentInfo?.label || '열정 탐험가'}"예요!`,
+        description: '과학적인 기질 분석으로 우리 아이의 타고난 빛을 발견해보세요.',
+        imageUrl: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=800&auto=format&fit=crop&q=80',
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl,
+        },
+      },
+      buttons: [
+        {
+          title: '결과 확인하기',
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl,
+          },
+        },
+      ],
+    });
+  };
+
+  const handleDownloadImage = async () => {
+    if (cardRef.current === null) return;
+    setIsSharing(true);
+    try {
+      const dataUrl = await toPng(cardRef.current, { cacheBust: true });
+      saveAs(dataUrl, `temperament-${intake.childName || '아이'}.png`);
+    } catch (err) {
+      console.error('Image download failed:', err);
+      alert('이미지 저장에 실패했습니다.');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-slate-50 dark:bg-slate-900 pb-20">
-      <Navbar title="결과 공유하기" showBack />
+      <Navbar title="결과 공유하기" showBack onBackClick={() => router.back()} />
 
       <div className="flex-1 px-6 py-10 max-w-md mx-auto w-full space-y-10">
         {/* Headline */}
@@ -47,14 +104,14 @@ export default function SharePage() {
           <div className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold mb-2">
             SHARE ANALYSIS
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white break-keep">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white break-keep leading-tight">
             우리 아이만의 빛나는 기질을<br />가족과 함께 나눠보세요
           </h2>
         </section>
 
         {/* Temperament Card (Share Preview) */}
         <section className="relative">
-          <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-800 shadow-2xl shadow-primary/10 border border-slate-100 dark:border-slate-700">
+          <div ref={cardRef} className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-slate-800 shadow-2xl shadow-primary/10 border border-slate-100 dark:border-slate-700">
             <div
               className="w-full aspect-[4/5] bg-cover bg-center relative"
               style={{
@@ -67,13 +124,17 @@ export default function SharePage() {
                     Temperament Report
                   </span>
                 </div>
-                <h3 className="text-3xl font-bold mb-2">
+                <h3 className="text-3xl font-bold mb-2 break-keep">
                   {intake.childName || '우리 아이'}는<br />
                   <span className="text-primary-light">"{temperamentInfo?.label || '열정 탐험가'}"</span>예요!
                 </h3>
-                <p className="text-sm opacity-80 leading-relaxed font-medium">
+                <p className="text-sm opacity-80 leading-relaxed font-medium break-keep">
                   {temperamentInfo?.desc || '호기심이 많고 에너지가 넘치는 탐험가 기질을 가지고 있어요.'}
                 </p>
+                <div className="mt-6 pt-6 border-t border-white/20 flex items-center gap-2">
+                  <img src="/gijilai_icon.png" alt="" className="w-5 h-5 brightness-0 invert opacity-50" />
+                  <span className="text-[10px] font-bold tracking-widest uppercase opacity-40">Gijilai Temperament Analysis</span>
+                </div>
               </div>
             </div>
           </div>
@@ -88,30 +149,36 @@ export default function SharePage() {
 
         {/* Sharing Options */}
         <section className="space-y-4">
-          <Button variant="kakao" size="lg" fullWidth className="h-16 rounded-2xl flex items-center justify-center gap-3 text-lg">
+          <Button
+            variant="kakao"
+            size="lg"
+            fullWidth
+            onClick={handleKakaoShare}
+            className="h-16 rounded-2xl flex items-center justify-center gap-3 text-lg bg-[#FEE500] hover:bg-[#FADA0A] text-[#191919] border-none"
+          >
             <span className="text-2xl">💬</span> 카카오톡으로 결과 보내기
           </Button>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="secondary"
-              size="lg"
-              fullWidth
+            <button
               onClick={handleCopyCode}
-              className={`h-16 rounded-2xl flex items-center justify-center gap-2 text-[14px] ${copied ? 'bg-green-50 text-green-600 border-green-200' : ''}`}
+              className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-1 text-[13px] font-bold border transition-all active:scale-95 ${copied ? 'bg-green-50 text-green-600 border-green-200' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
             >
               <Icon name={copied ? "check" : "link"} size="sm" />
-              {copied ? '링크 복사됨' : '결과 링크 복사'}
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              fullWidth
-              className="h-16 rounded-2xl flex items-center justify-center gap-2 text-[14px]"
+              {copied ? '링크 복사됨' : '링크 복사'}
+            </button>
+            <button
+              onClick={handleDownloadImage}
+              disabled={isSharing}
+              className="h-16 rounded-2xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center gap-1 text-[13px] font-bold transition-all active:scale-95 disabled:opacity-50"
             >
-              <Icon name="download" size="sm" />
-              이미지로 저장
-            </Button>
+              {isSharing ? (
+                <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Icon name="download" size="sm" />
+              )}
+              {isSharing ? '저장 중...' : '이미지로 저장'}
+            </button>
           </div>
         </section>
 
@@ -131,17 +198,6 @@ export default function SharePage() {
       <div className="px-6 py-8 text-center text-[11px] text-slate-400 font-medium uppercase tracking-[0.2em]">
         designed by temperament child
       </div>
-    </div>
-  );
-}
-
-function ShareOption({ icon, label }: { icon: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center border border-gray-200 dark:border-gray-700">
-        <Icon name={icon} className="text-[var(--navy)] dark:text-white" />
-      </div>
-      <span className="text-[10px] text-[var(--green-custom)]">{label}</span>
     </div>
   );
 }
