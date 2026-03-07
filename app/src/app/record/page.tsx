@@ -42,6 +42,8 @@ export default function RecordPage() {
     const [reports, setReports] = useState<ReportData[]>([]);
     const [consultations, setConsultations] = useState<Consultation[]>([]);
     const [missions, setMissions] = useState<ActionItem[]>([]);
+    const [children, setChildren] = useState<any[]>([]);
+    const [selectedChildId, setSelectedChildId] = useState<string | 'ALL'>('ALL');
     const [isLoading, setIsLoading] = useState(true);
     const [selectedConsult, setSelectedConsult] = useState<Consultation | null>(null);
 
@@ -83,6 +85,10 @@ export default function RecordPage() {
             if (missionError) throw missionError;
             setMissions(missionData || []);
 
+            // 4. Fetch Children
+            const childData = await db.getChildren(user.id);
+            setChildren(childData || []);
+
         } catch (error) {
             console.error('Error fetching records:', error);
         } finally {
@@ -112,44 +118,61 @@ export default function RecordPage() {
         return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
     };
 
+    const filteredReports = reports.filter(r => selectedChildId === 'ALL' || r.child_id === selectedChildId);
+    const filteredConsultations = consultations.filter(c => selectedChildId === 'ALL' || (c as any).child_id === selectedChildId);
+    const filteredMissions = missions.filter(m => selectedChildId === 'ALL' || (m as any).child_id === selectedChildId);
+
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col items-center">
             {/* Header */}
             <header className="w-full max-w-md px-6 py-8 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md sticky top-0 z-20">
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-bold text-text-main dark:text-white flex items-center gap-2 font-display tracking-tight">
-                        <span className="material-symbols-outlined text-secondary fill-1">vaccines</span>
-                        마음 약국
+                        <span className="material-symbols-outlined text-primary fill-1">bookmarks</span>
+                        나의 기록
                     </h1>
+
+                    {children.length > 1 && (
+                        <select
+                            value={selectedChildId}
+                            onChange={(e) => setSelectedChildId(e.target.value)}
+                            className="bg-slate-100 dark:bg-black/20 text-[11px] font-bold px-3 py-1.5 rounded-lg border-none focus:ring-1 focus:ring-primary outline-none"
+                        >
+                            <option value="ALL">전체 아이</option>
+                            {children.map(child => (
+                                <option key={child.id} value={child.id}>{child.name}</option>
+                            ))}
+                        </select>
+                    )}
                 </div>
 
                 <div className="flex p-1 bg-slate-100 dark:bg-black/20 rounded-2xl overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('REPORT')}
-                        className={`flex-none px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'REPORT'
+                        className={`flex-1 px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'REPORT'
                             ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
                             : 'text-slate-400 hover:text-primary'
                             }`}
                     >
-                        기질 분석
+                        분석 리포트
                     </button>
                     <button
                         onClick={() => setActiveTab('CONSULT')}
-                        className={`flex-none px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'CONSULT'
+                        className={`flex-1 px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'CONSULT'
                             ? 'bg-white dark:bg-surface-dark text-secondary shadow-sm'
                             : 'text-slate-400 hover:text-secondary'
                             }`}
                     >
-                        마음 약국
+                        상담 일지
                     </button>
                     <button
                         onClick={() => setActiveTab('MISSION')}
-                        className={`flex-none px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'MISSION'
+                        className={`flex-1 px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'MISSION'
                             ? 'bg-white dark:bg-surface-dark text-green-600 shadow-sm'
                             : 'text-slate-400 hover:text-green-600'
                             }`}
                     >
-                        미션 기록
+                        실천 미션
                     </button>
                 </div>
             </header>
@@ -163,8 +186,8 @@ export default function RecordPage() {
                 ) : activeTab === 'REPORT' ? (
                     /* Report List */
                     <div className="space-y-5">
-                        {reports.length > 0 ? (
-                            reports.map(report => {
+                        {filteredReports.length > 0 ? (
+                            filteredReports.map(report => {
                                 const analysis = report.analysis_json as any;
                                 const isHarmony = report.type === 'HARMONY';
                                 const isParent = report.type === 'PARENT';
@@ -187,8 +210,14 @@ export default function RecordPage() {
                                                     }`}>
                                                     {report.type === 'CHILD' ? TCI_TERMINOLOGY.REPORT.CHILD_NAME : isParent ? TCI_TERMINOLOGY.REPORT.PARENT_NAME : TCI_TERMINOLOGY.REPORT.HARMONY_TITLE.split(' ')[0] + ' ' + TCI_TERMINOLOGY.REPORT.HARMONY_TITLE.split(' ')[1]}
                                                 </div>
-                                                <div className="text-[11px] font-bold text-slate-400 mt-1">
+                                                <div className="text-[11px] font-bold text-slate-400 mt-1 flex items-center gap-2">
                                                     {formatDate(report.created_at)}
+                                                    {selectedChildId === 'ALL' && children.find(c => c.id === report.child_id) && (
+                                                        <span className="flex items-center gap-1 text-primary/60">
+                                                            <span className="w-0.5 h-0.5 rounded-full bg-slate-300"></span>
+                                                            {children.find(c => c.id === report.child_id)?.name}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-black/20 flex items-center justify-center text-slate-300">
@@ -212,12 +241,12 @@ export default function RecordPage() {
                                 <div className="text-6xl grayscale opacity-20">📊</div>
                                 <div className="space-y-2">
                                     <p className="text-slate-800 dark:text-white font-bold">아직 생성된 리포트가 없어요</p>
-                                    <p className="text-slate-400 text-sm break-keep">
+                                    <p className="text-slate-400 text-sm break-keep leading-relaxed px-10">
                                         기질 검사를 완료하고 나만을 위한<br />AI 심층 분석 리포트를 받아보세요!
                                     </p>
                                 </div>
-                                <Button onClick={() => router.push('/')} variant="primary" className="rounded-full px-8">
-                                    검사하러 가기
+                                <Button onClick={() => router.push('/')} variant="primary" className="rounded-full px-10 h-14 font-black">
+                                    기질 검사 시작하기
                                 </Button>
                             </div>
                         )}
@@ -225,8 +254,8 @@ export default function RecordPage() {
                 ) : activeTab === 'CONSULT' ? (
                     /* Consultation List */
                     <div className="space-y-4">
-                        {consultations.length > 0 ? (
-                            consultations.map(item => (
+                        {filteredConsultations.length > 0 ? (
+                            filteredConsultations.map(item => (
                                 <div
                                     key={item.id}
                                     onClick={() => setSelectedConsult(item)}
@@ -238,6 +267,12 @@ export default function RecordPage() {
                                         <span className="text-[12px] font-bold text-[#D08B5B] dark:text-secondary bg-[#D08B5B]/10 dark:bg-secondary/10 px-3 py-1.5 rounded-lg tracking-wide inline-flex items-center gap-1">
                                             <span className="material-symbols-outlined text-[14px]">calendar_today</span>
                                             {formatDate(item.created_at)}
+                                            {selectedChildId === 'ALL' && children.find(c => c.id === (item as any).child_id) && (
+                                                <span className="flex items-center gap-1 ml-1 opacity-70">
+                                                    <span className="w-0.5 h-0.5 rounded-full bg-secondary/30"></span>
+                                                    {children.find(c => c.id === (item as any).child_id)?.name}
+                                                </span>
+                                            )}
                                         </span>
                                         <div className="w-8 h-8 rounded-full bg-white dark:bg-black/20 flex items-center justify-center text-[#D08B5B] dark:text-secondary shadow-sm">
                                             <span className="material-symbols-outlined text-[18px] fill-1">heart_plus</span>
@@ -250,34 +285,43 @@ export default function RecordPage() {
                                         </h3>
                                     </div>
 
-                                    <div className="relative z-10 bg-[#519E8A]/5 p-4 rounded-2xl border border-[#519E8A]/10 flex flex-col gap-1.5">
-                                        <div className="text-[11px] font-bold text-[#519E8A] flex items-center gap-1">
+                                    <div className="relative z-10 bg-white dark:bg-black/10 p-5 rounded-2xl border border-secondary/10 flex flex-col gap-2 shadow-sm">
+                                        <div className="text-[11px] font-black text-secondary uppercase tracking-widest flex items-center gap-1.5 opacity-80">
                                             <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                                            처방받은 마법의 한마디
+                                            AI 마법의 한마디
                                         </div>
-                                        <p className="text-[14px] font-bold text-[#3B7A6A] dark:text-[#519E8A] leading-snug truncate">
+                                        <p className="text-[14.5px] font-bold text-slate-700 dark:text-secondary/90 leading-snug break-keep">
                                             "{item.ai_prescription?.magicWord}"
                                         </p>
+                                    </div>
+
+                                    <div className="mt-4 flex items-center justify-end text-[11px] font-bold text-secondary gap-1 group-hover:translate-x-1 transition-transform">
+                                        처방전 다시보기 <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <div className="py-24 flex flex-col items-center text-center space-y-5">
-                                <div className="w-20 h-20 bg-[#FFFDF9] dark:bg-surface-dark rounded-full shadow-inner flex items-center justify-center mb-2">
-                                    <span className="material-symbols-outlined text-4xl text-[#D08B5B]/30 font-light">vaccines</span>
+                            <div className="py-24 flex flex-col items-center text-center space-y-6">
+                                <div className="w-24 h-24 bg-secondary/5 dark:bg-secondary/10 rounded-full flex items-center justify-center mb-2">
+                                    <span className="material-symbols-outlined text-5xl text-secondary/30 font-light">vaccines</span>
                                 </div>
-                                <p className="text-text-sub dark:text-gray-400 text-[15px] leading-relaxed break-keep font-medium">
-                                    아직 기록된 처방전이 없어요.<br />
-                                    육아가 유독 버겁고 힘든 날,<br />언제든 마음 약국을 찾아와 고민을 털어놓아주세요.
-                                </p>
+                                <div className="space-y-2">
+                                    <p className="font-bold text-slate-800 dark:text-white">아직 통역된 마음이 없어요</p>
+                                    <p className="text-slate-400 text-sm leading-relaxed break-keep px-10">
+                                        육아가 유독 버겁고 힘든 날,<br />언제든 마음 상담소에서 고민을 터놓아주세요.
+                                    </p>
+                                </div>
+                                <Button onClick={() => router.push('/consult')} variant="secondary" className="rounded-full px-10 h-14 font-black">
+                                    상담 시작하기
+                                </Button>
                             </div>
                         )}
                     </div>
                 ) : (
                     /* Mission List */
                     <div className="space-y-3">
-                        {missions.length > 0 ? (
-                            missions.map(mission => (
+                        {filteredMissions.length > 0 ? (
+                            filteredMissions.map(mission => (
                                 <div
                                     key={mission.id}
                                     onClick={() => toggleMission(mission.id, mission.is_completed)}
@@ -306,12 +350,16 @@ export default function RecordPage() {
                                 </div>
                             ))
                         ) : (
-                            <div className="py-20 text-center space-y-4">
-                                <div className="text-5xl opacity-20">🎯</div>
-                                <p className="text-text-sub dark:text-gray-400 text-sm leading-relaxed">
-                                    실천 중인 미션이 없어요.<br />
-                                    처방전의 미션을 등록해 실천해보세요!
-                                </p>
+                            <div className="py-24 flex flex-col items-center text-center space-y-6">
+                                <div className="w-24 h-24 bg-green-500/5 dark:bg-green-500/10 rounded-full flex items-center justify-center mb-2">
+                                    <span className="material-symbols-outlined text-5xl text-green-500/30 font-light">task_alt</span>
+                                </div>
+                                <div className="space-y-2 text-center">
+                                    <p className="font-bold text-slate-800 dark:text-white">실천 중인 미션이 없어요</p>
+                                    <p className="text-slate-400 text-sm leading-relaxed break-keep px-10">
+                                        처방전에서 제안해드리는 미션을 등록하고<br />작은 변화를 직접 경험해보세요!
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -335,8 +383,14 @@ export default function RecordPage() {
                             </button>
 
                             <div className="mb-8 pt-4">
-                                <span className="text-[12px] font-bold text-[#D08B5B] dark:text-secondary bg-[#D08B5B]/10 dark:bg-secondary/10 px-3 py-1.5 rounded-lg tracking-wider mb-3 inline-block">
+                                <span className="text-[12px] font-bold text-[#D08B5B] dark:text-secondary bg-[#D08B5B]/10 dark:bg-secondary/10 px-3 py-1.5 rounded-lg tracking-wider mb-3 inline-flex items-center gap-2">
                                     {formatDate(selectedConsult.created_at)}
+                                    {children.find(c => c.id === (selectedConsult as any).child_id) && (
+                                        <>
+                                            <span className="w-1 h-1 rounded-full bg-secondary/30"></span>
+                                            {children.find(c => c.id === (selectedConsult as any).child_id)?.name}
+                                        </>
+                                    )}
                                 </span>
                                 <h2 className="text-[26px] font-bold text-text-main dark:text-white font-display tracking-tight break-keep leading-snug">
                                     아이를 온전히 이해하고 싶었던 날의 기록
