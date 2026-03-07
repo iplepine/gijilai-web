@@ -1,6 +1,6 @@
-import { Suspense, useEffect } from 'react';
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { ReferralHandler } from "@/components/layout/ReferralHandler";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -60,9 +60,7 @@ export default function RootLayout({
         />
         <AuthProvider>
           <div className="max-w-md mx-auto min-h-screen bg-background-light dark:bg-background-dark">
-            <Suspense fallback={null}>
-              <ReferralHandler />
-            </Suspense>
+            <ReferralHandler />
             {children}
           </div>
         </AuthProvider>
@@ -71,16 +69,3 @@ export default function RootLayout({
   );
 }
 
-function ReferralHandler() {
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  useEffect(() => {
-    if (searchParams) {
-      const ref = searchParams.get('ref');
-      if (ref) {
-        sessionStorage.setItem('referral_code', ref);
-        console.log('Referral code saved:', ref);
-      }
-    }
-  }, [searchParams]);
-  return null;
-}

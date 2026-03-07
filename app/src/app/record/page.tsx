@@ -183,6 +183,37 @@ export default function RecordPage() {
                         <span className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></span>
                         <p className="text-sm font-medium text-text-sub">기록을 불러오고 있어요</p>
                     </div>
+                ) : children.length === 0 ? (
+                    /* Onboarding for No Children */
+                    <div className="flex flex-col items-center justify-center py-16 px-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                        <div className="w-32 h-32 bg-primary/5 dark:bg-primary/10 rounded-full flex items-center justify-center text-6xl mb-10 relative">
+                            <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping opacity-20"></div>
+                            🌱
+                        </div>
+
+                        <div className="space-y-4 mb-12">
+                            <h2 className="text-2xl font-black text-slate-800 dark:text-white leading-tight">
+                                나만의 육아 아카이브를<br />시작해보세요
+                            </h2>
+                            <p className="text-slate-500 dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4 font-medium">
+                                아이의 기질을 이해하고 나눈 대화들,<br />
+                                그리고 매일의 작은 실천들이 이곳에 쌓여<br />
+                                <span className="text-primary font-bold">우리 가족만의 소중한 기록</span>이 됩니다.
+                            </p>
+                        </div>
+
+                        <Button
+                            onClick={() => router.push('/intake')}
+                            variant="primary"
+                            className="w-full h-16 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
+                        >
+                            첫 아이 등록하고 시작하기
+                        </Button>
+
+                        <p className="mt-6 text-[12px] text-slate-400 font-medium">
+                            이미 등록하셨나요? <button onClick={fetchData} className="underline text-primary/60">새로고침</button>
+                        </p>
+                    </div>
                 ) : activeTab === 'REPORT' ? (
                     /* Report List */
                     <div className="space-y-5">
