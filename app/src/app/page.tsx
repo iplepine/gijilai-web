@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import BottomNav from '@/components/layout/BottomNav';
+import LandingPage from '@/components/landing/LandingPage';
 import { db, UserProfile, ChildProfile, ReportData, SurveyData, ActionItem } from '@/lib/db';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
@@ -205,23 +206,7 @@ export default function HomePage() {
 
   // Not logged in state
   if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background-light p-6 text-center">
-        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-          <span className="material-icons-round text-primary text-4xl">child_care</span>
-        </div>
-        <h1 className="text-2xl font-bold mb-3 text-slate-800 font-display">기질아이</h1>
-        <p className="text-slate-500 mb-8 leading-relaxed">
-          아이의 신호를 올바르게 통역하고<br />
-          서로를 더 깊이 이해하는 맞춤형 솔루션
-        </p>
-        <Link href="/login" className="w-full max-w-xs">
-          <button className="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform">
-            시작하기
-          </button>
-        </Link>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   // Calculate age string
