@@ -12,7 +12,7 @@ export default function NotificationsPage() {
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen">
             <div className="max-w-md mx-auto relative min-h-screen flex flex-col">
-                <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl px-4 pt-12 pb-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
                     <button onClick={() => router.back()} className="size-10 flex items-center justify-center text-navy dark:text-white">
                         <span className="material-symbols-outlined">arrow_back_ios</span>
                     </button>

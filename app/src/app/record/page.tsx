@@ -126,7 +126,7 @@ export default function RecordPage() {
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center font-body">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
                 {/* Header */}
-                <header className="w-full max-w-md px-6 py-4 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md sticky top-0 z-20">
+                <header className="w-full max-w-md px-6 pt-12 pb-4 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md sticky top-0 z-20 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center justify-between mb-6 gap-3">
                         <div className="flex items-center gap-2">
                             <button

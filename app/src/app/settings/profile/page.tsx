@@ -74,7 +74,7 @@ export default function ProfilePage() {
         <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center justify-center font-body pb-0">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
                 {/* Sticky Header */}
-                <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl px-4 pt-12 pb-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
                     <button onClick={() => router.back()} className="size-10 flex items-center justify-center text-navy dark:text-white">
                         <span className="material-symbols-outlined">arrow_back_ios</span>
                     </button>

@@ -495,7 +495,7 @@ function ReportContent() {
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
         <main className={`flex-1 overflow-y-auto no-scrollbar ${isChildOnly ? 'pb-40' : 'pb-24'}`}>
           {/* Header Overlay */}
-          <div className="bg-primary pt-6 pb-24 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden z-10 mx-[-1px]">
+          <div className="bg-primary pt-12 pb-24 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden z-10 mx-[-1px]">
             {/* Top Navigation Bar */}
             <div className="flex items-center justify-between mb-4 relative z-20">
               <button
