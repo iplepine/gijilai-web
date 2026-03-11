@@ -226,18 +226,11 @@ export default function HomePage() {
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center justify-center font-body pb-0">
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
-        <header className="flex items-center justify-between px-6 pt-12 pb-4 bg-background-light dark:bg-background-dark sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <button className="material-symbols-outlined text-primary dark:text-white text-[28px]">menu</button>
-          </div>
+        <header className="flex items-center px-6 pt-12 pb-4 bg-background-light dark:bg-background-dark sticky top-0 z-10 border-b border-primary/5 dark:border-white/5">
           <div className="flex items-center gap-2">
             <img src="/gijilai_icon.png" alt="기질아이" className="w-8 h-8 rounded-lg object-contain" />
             <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
           </div>
-          <button className="relative p-2 rounded-full hover:bg-beige-main dark:hover:bg-surface-dark transition-colors">
-            <span className="material-symbols-outlined text-primary dark:text-white">notifications</span>
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
-          </button>
         </header>
 
         <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
