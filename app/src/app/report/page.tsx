@@ -527,47 +527,44 @@ function ReportContent() {
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
         <main className={`flex-1 overflow-y-auto no-scrollbar ${isChildOnly ? 'pb-40' : 'pb-24'}`}>
           {/* Header Overlay */}
-          <div className="bg-primary pt-12 pb-24 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden z-10 mx-[-1px]">
-            {/* Top Navigation Bar */}
-            <div className="flex items-center justify-between mb-4 relative z-20">
-              <button
-                onClick={() => router.back()}
-                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-colors"
-                aria-label="뒤로 가기"
-              >
-                <Icon name="arrow_back" size="sm" />
-              </button>
-            </div>
-            
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-            <div className="relative z-10 text-center space-y-2">
-              {isChildOnly ? (
-                <>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-2 bg-white/20 rounded-full text-[11px] font-bold text-white/90 tracking-wide backdrop-blur-sm">
-                    ✨ {childAiReport ? 'AI 정밀 분석 완료' : '아이 기질 검사 완료!'}
-                  </div>
-                  <h1 className="text-3xl font-black text-white tracking-tight">
-                    {intake.childName || '아이'}의
-                    <br /> 기질 이야기
-                  </h1>
-                  <p className="text-white/70 text-sm font-medium">기질아이가 발견한 우리 아이의 타고난 세계</p>
-                </>
+          <div className="relative z-10">
+            {/* 히어로 이미지 */}
+            <div className="relative">
+              {/* Top Navigation Bar */}
+              <div className="absolute top-0 left-0 right-0 pt-12 px-6 z-20 flex items-center justify-between">
+                <button
+                  onClick={() => router.back()}
+                  className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center text-text-main backdrop-blur-sm border border-white/40 hover:bg-white/80 transition-colors"
+                  aria-label="뒤로 가기"
+                >
+                  <Icon name="arrow_back" size="sm" />
+                </button>
+              </div>
+
+              {isChildSurveyComplete ? (
+                <img src={childType.image} alt={childType.label} className="w-full aspect-[4/3] object-cover" />
               ) : (
-                <>
-                  <h1 className="text-3xl font-black text-white tracking-tight">분석 리포트</h1>
-                  <p className="text-white/70 text-sm font-medium">기질아이가 발견한 {intake.childName || '아이'}의 세상</p>
-                </>
+                <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#FFF8F0] to-[#FFF3E4]" />
               )}
+            </div>
+
+            {/* 유형 정보 */}
+            <div className="bg-white dark:bg-surface-dark text-center px-6 py-8 space-y-2 -mt-6 rounded-t-3xl relative z-10">
+              <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}의 기질 유형</p>
+              <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
+                {childAiReport?.title?.split(':')[1]?.trim() || childType.label}
+              </h1>
+              <p className="text-text-sub text-[13px] break-keep">{childType.desc}</p>
             </div>
           </div>
 
           {/* Tab Switcher - 아이 리포트 선공 모드에서는 숨김 */}
           {!isChildOnly && (
             <div className="max-w-md mx-auto px-6 -mt-14 mb-8 relative z-30">
-              <div className="bg-white/20 backdrop-blur-xl p-1 rounded-2xl flex gap-1 border border-white/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+              <div className="bg-white p-1 rounded-2xl flex gap-1 border border-beige-main/20 shadow-lg">
                 <button
                   onClick={() => handleTabChange('child')}
-                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
                 >
                   아이 진단
                 </button>
@@ -578,7 +575,7 @@ function ReportContent() {
                       router.replace('/survey?type=PARENT');
                     }
                   }}
-                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
                 >
                   양육자 분석
                 </button>
@@ -589,7 +586,7 @@ function ReportContent() {
                       router.replace('/survey?type=STYLE');
                     }
                   }}
-                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-white text-primary shadow-md' : 'text-white/80 hover:text-white'}`}
+                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
                 >
                   기질 맞춤 양육
                 </button>
@@ -631,59 +628,35 @@ function ReportContent() {
                 </div>
               ) : (
                 <>
-                  {/* Phase 1: Archetype Discovery */}
-                  <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-card border border-beige-main/20 flex flex-col items-center text-center space-y-8 relative overflow-hidden">
-                    <div className="w-48 h-48 relative flex items-center justify-center">
-                      <div className="absolute inset-0 bg-primary/5 rounded-full"></div>
-                      <img
-                        src={childType.image}
-                        alt={childType.label}
-                        className="relative w-40 h-40 object-contain z-10 drop-shadow-xl hover:scale-110 transition-transform cursor-pointer"
-                      />
-                    </div>
-
-                    <div className="space-y-4 px-2">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-beige-light dark:bg-surface-dark font-black text-[10px] text-text-sub uppercase tracking-widest">
-                        Current Manifestation
-                      </div>
-                      <div className="space-y-2">
-                        <h2 className="text-4xl font-black text-text-main dark:text-white leading-tight">
-                          {childAiReport?.title?.split(':')[1]?.trim() || childType.label}
-                        </h2>
-                        <p className="text-text-sub dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4 font-medium">
-                          {childAiReport?.intro || childType.desc}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Phase 2: Relationship Foundation (Parent VS Child) */}
+                  {/* 아이-양육자 기질 궁합 */}
                   <div className="space-y-4">
-                    <h3 className="px-4 text-[13px] font-black text-text-sub uppercase tracking-[0.2em] flex items-center gap-2">
+                    <h3 className="px-2 text-[13px] font-black text-text-sub flex items-center gap-2">
                       <Icon name="diversity_3" size="sm" /> 아이와 나의 기질 궁합
                     </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Parent Card */}
-                      <section className="bg-gradient-to-br from-white to-orange-50/30 dark:from-surface-dark dark:to-orange-900/10 rounded-2xl p-6 shadow-card border border-orange-100/50 dark:border-orange-900/20 relative group">
-                        <div className="w-10 h-10 rounded-2xl bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-4 transition-transform group-hover:scale-110">
-                          <Icon name="person" size="sm" />
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Child Card */}
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-card border border-teal-100/50 relative overflow-hidden">
+                        <div className="flex items-center gap-2 mb-3">
+                          <img src={childType.image} alt={childType.label} className="w-10 h-10 rounded-xl object-cover" />
+                          <span className="text-[9px] font-black text-teal-500 uppercase tracking-widest">아이</span>
                         </div>
-                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">양육자 기질</span>
-                        <h4 className="text-[14px] font-black text-text-main dark:text-white mb-2 leading-tight break-keep">{parentReport?.soilName || '양육자'}</h4>
-                        <p className="text-[11px] text-text-sub dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-surface-dark/95 flex items-center rounded-2xl">
-                          {parentReport?.analysis || ''}
+                        <h4 className="text-[13px] font-black text-text-main dark:text-white leading-tight break-keep">{childType.label}</h4>
+                        <p className="text-[11px] text-text-sub dark:text-slate-400 leading-snug break-keep mt-1.5">
+                          {childType.desc}
                         </p>
                       </section>
 
-                      {/* Child Card */}
-                      <section className="bg-gradient-to-br from-white to-teal-50/30 dark:from-surface-dark dark:to-teal-900/10 rounded-2xl p-6 shadow-card border border-teal-100/50 dark:border-teal-900/20 relative group">
-                        <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4 transition-transform group-hover:scale-110">
-                          <Icon name="child_care" size="sm" />
+                      {/* Parent Card */}
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-card border border-orange-100/50 relative overflow-hidden">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                            <Icon name="person" size="sm" />
+                          </div>
+                          <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">양육자</span>
                         </div>
-                        <span className="text-[9px] font-black text-teal-400 uppercase tracking-widest block mb-1">아이 기질</span>
-                        <h4 className="text-[14px] font-black text-text-main dark:text-white mb-2 leading-tight break-keep">{childType.label}</h4>
-                        <p className="text-[11px] text-text-sub dark:text-slate-400 leading-snug break-keep opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0 p-6 bg-white/95 dark:bg-surface-dark/95 flex items-center rounded-2xl">
-                          {childType.desc}
+                        <h4 className="text-[13px] font-black text-text-main dark:text-white leading-tight break-keep">{parentReport?.soilName || '양육자'}</h4>
+                        <p className="text-[11px] text-text-sub dark:text-slate-400 leading-snug break-keep mt-1.5 line-clamp-3">
+                          {parentReport?.analysis || ''}
                         </p>
                       </section>
                     </div>
