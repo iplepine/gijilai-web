@@ -562,10 +562,10 @@ function ReportContent() {
                 ) : (
                   <div className="w-full aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-[#F5EDE4] to-[#E8DDD3] flex items-center justify-center">
                     <div className="relative w-full h-full flex items-center justify-center">
-                      <div className="w-[57%] h-[90%] rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-[-3deg] z-10 -mt-4">
+                      <div className="w-[57%] h-[90%] rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-[-3deg] z-10 -mt-8">
                         <img src={childType.image} alt={childType.label} className="w-full h-full object-cover" />
                       </div>
-                      <div className="w-[50%] h-[82%] rounded-2xl overflow-hidden border-4 border-white shadow-lg rotate-[5deg] -ml-[9%] z-0">
+                      <div className="w-[50%] h-[82%] rounded-2xl overflow-hidden border-4 border-white shadow-lg rotate-[5deg] -ml-[9%] -mt-4 z-0">
                         <img src={parentType.image} alt={parentType.label} className="w-full h-full object-cover" />
                       </div>
                     </div>
