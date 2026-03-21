@@ -398,6 +398,7 @@ function ReportContent() {
   }, [parentingResponses]);
 
   const parentReport = useMemo(() => ParentClassifier.analyze(parentScores), [parentScores]);
+  const parentType = useMemo(() => TemperamentClassifier.analyzeParent(parentScores), [parentScores]);
   const isParentSurveyComplete = useMemo(() => Object.keys(atqResponses).length >= PARENT_QUESTIONS.length, [atqResponses]);
 
   const isChildSurveyComplete = useMemo(() => {
@@ -541,65 +542,104 @@ function ReportContent() {
                 </button>
               </div>
 
-              {isChildSurveyComplete ? (
-                <img src={childType.image} alt={childType.label} className="w-full aspect-[4/3] object-cover" />
-              ) : (
-                <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#FFF8F0] to-[#FFF3E4]" />
-              )}
+              <div key={activeTab} className="animate-in fade-in duration-500">
+                {activeTab === 'child' ? (
+                  isChildSurveyComplete ? (
+                    <img src={childType.image} alt={childType.label} className="w-full aspect-[4/3] object-cover" />
+                  ) : (
+                    <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#FFF8F0] to-[#FFF3E4]" />
+                  )
+                ) : activeTab === 'parent' ? (
+                  isParentSurveyComplete ? (
+                    <img src={parentType.image} alt={parentType.label} className="w-full aspect-[4/3] object-cover" />
+                  ) : (
+                    <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#E8F5E9] to-[#C8E6C9]" />
+                  )
+                ) : (
+                  <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#FFF3E0] to-[#FFE0B2] flex items-center justify-center">
+                    <span className="text-8xl">🤝</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Tab Switcher - 아이 리포트 선공 모드에서는 숨김 */}
+            {!isChildOnly && (
+              <div className="bg-white dark:bg-surface-dark px-6 pt-6 pb-2 -mt-6 rounded-t-3xl relative z-10">
+                <div className="bg-white p-1 rounded-2xl flex gap-1 border border-beige-main/20 shadow-lg">
+                  <button
+                    onClick={() => handleTabChange('child')}
+                    className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
+                  >
+                    아이 진단
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (isParentSurveyComplete) handleTabChange('parent');
+                      else if (confirm('양육자 기질 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                        router.replace('/survey?type=PARENT');
+                      }
+                    }}
+                    className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
+                  >
+                    양육자 분석
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (isStyleSurveyComplete) handleTabChange('parenting');
+                      else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                        router.replace('/survey?type=STYLE');
+                      }
+                    }}
+                    className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
+                  >
+                    기질 맞춤 양육
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* 유형 정보 */}
-            <div className="bg-white dark:bg-surface-dark text-center px-6 pt-8 pb-4 space-y-3 -mt-6 rounded-t-3xl relative z-10">
-              <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}의 기질 유형</p>
-              <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
-                {childAiReport?.title?.split(':')[1]?.trim() || childType.label}
-              </h1>
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                {childType.keywords.map((kw: string) => (
-                  <span key={kw} className="px-3 py-1 rounded-full bg-primary/8 text-primary text-[12px] font-bold">#{kw}</span>
-                ))}
-              </div>
-              <p className="text-text-sub text-[13px] break-keep">{childType.desc}</p>
+            <div key={`info-${activeTab}`} className={`bg-white dark:bg-surface-dark text-center px-6 ${!isChildOnly ? 'pt-4' : 'pt-8 -mt-6 rounded-t-3xl'} pb-4 space-y-3 relative z-10 animate-in fade-in duration-500`}>
+              {activeTab === 'child' ? (
+                <>
+                  <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}의 기질 유형</p>
+                  <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
+                    {childAiReport?.title?.split(':')[1]?.trim() || childType.label}
+                  </h1>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {childType.keywords.map((kw: string) => (
+                      <span key={kw} className="px-3 py-1 rounded-full bg-primary/8 text-primary text-[12px] font-bold">#{kw}</span>
+                    ))}
+                  </div>
+                  <p className="text-text-sub text-[13px] break-keep">{childType.desc}</p>
+                </>
+              ) : activeTab === 'parent' ? (
+                <>
+                  <p className="text-text-sub text-sm font-medium">양육자의 양육 기질</p>
+                  <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
+                    {parentType.label}
+                  </h1>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    {parentType.keywords.map((kw: string) => (
+                      <span key={kw} className="px-3 py-1 rounded-full bg-caregiver/10 text-caregiver text-[12px] font-bold">#{kw}</span>
+                    ))}
+                  </div>
+                  <p className="text-text-sub text-[13px] break-keep">{parentType.desc}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-text-sub text-sm font-medium">기질 맞춤 양육 리포트</p>
+                  <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
+                    {intake.childName || '아이'}와 양육자
+                  </h1>
+                  <p className="text-text-sub text-[13px] break-keep">두 사람의 기질 궁합과 맞춤 양육 가이드</p>
+                </>
+              )}
             </div>
+            {/* child_only 모드: 헤더와 컨텐츠 사이 간격 */}
+            {isChildOnly && <div className="h-8" />}
           </div>
-
-          {/* Tab Switcher - 아이 리포트 선공 모드에서는 숨김 */}
-          {!isChildOnly && (
-            <div className="max-w-md mx-auto px-6 mb-8 relative z-30">
-              <div className="bg-white p-1 rounded-2xl flex gap-1 border border-beige-main/20 shadow-lg">
-                <button
-                  onClick={() => handleTabChange('child')}
-                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
-                >
-                  아이 진단
-                </button>
-                <button
-                  onClick={() => {
-                    if (isParentSurveyComplete) handleTabChange('parent');
-                    else if (confirm('양육자 기질 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
-                      router.replace('/survey?type=PARENT');
-                    }
-                  }}
-                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
-                >
-                  양육자 분석
-                </button>
-                <button
-                  onClick={() => {
-                    if (isStyleSurveyComplete) handleTabChange('parenting');
-                    else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
-                      router.replace('/survey?type=STYLE');
-                    }
-                  }}
-                  className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
-                >
-                  기질 맞춤 양육
-                </button>
-              </div>
-            </div>
-          )}
-          {/* child_only 모드: 헤더와 컨텐츠 사이 간격 */}
-          {isChildOnly && <div className="h-8" />}
 
           <div className="max-w-2xl mx-auto px-6 space-y-8 relative z-20">
             {activeTab === 'child' ? (

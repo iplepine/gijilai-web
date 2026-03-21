@@ -28,6 +28,32 @@ export class TemperamentClassifier {
         }
     }
 
+    static analyzeParent(scores: { NS: number, HA: number, RD: number, P: number }) {
+        const { NS, HA, RD } = scores;
+
+        const isNS_H = NS > 64;
+        const isHA_H = HA > 56;
+        const isRD_H = RD > 60;
+
+        if (isNS_H && !isHA_H && !isRD_H) {
+            return { label: "주도적인 지휘관", emoji: "🦅", image: "/parent_type/type_parent_hll.jpg", keywords: ["목표지향", "독립양육", "추진력"], desc: "명확한 목표를 제시하고 아이의 독립심을 강하게 키움" };
+        } else if (isNS_H && !isHA_H && isRD_H) {
+            return { label: "활기찬 페이스메이커", emoji: "🐬", image: "/parent_type/type_parent_hlh.jpg", keywords: ["소통", "에너지", "놀이중심"], desc: "아이와 친구처럼 즐겁게 놀아주며 에너지를 북돋움" };
+        } else if (isNS_H && isHA_H && !isRD_H) {
+            return { label: "철저한 전략가", emoji: "🐕", image: "/parent_type/type_parent_hhl.jpg", keywords: ["계획성", "분석력", "성취지향"], desc: "똑똑하고 예민하게 위험을 살피며 아이의 성취를 가이드함" };
+        } else if (isNS_H && isHA_H && isRD_H) {
+            return { label: "섬세한 공감자", emoji: "🦙", image: "/parent_type/type_parent_hhh.jpg", keywords: ["공감력", "정서교감", "민감함"], desc: "아이의 작은 감정 변화에도 민감하게 반응하며 정서적으로 교감함" };
+        } else if (!isNS_H && isHA_H && !isRD_H) {
+            return { label: "신중한 관찰자", emoji: "🦒", image: "/parent_type/type_parent_lhl.jpg", keywords: ["관망", "안전중시", "인내심"], desc: "높은 시야에서 멀리 내다보며 아이를 조용히 지켜봄" };
+        } else if (!isNS_H && isHA_H && isRD_H) {
+            return { label: "헌신적인 수호자", emoji: "🦘", image: "/parent_type/type_parent_lhh.jpg", keywords: ["보호본능", "헌신", "안정감"], desc: "아이를 품에 안고 헌신적으로 보호하며 함께 뛰어감" };
+        } else if (!isNS_H && !isHA_H && !isRD_H) {
+            return { label: "여유로운 조력자", emoji: "🐋", image: "/parent_type/type_parent_lll.jpg", keywords: ["평온함", "여유", "큰그림"], desc: "아이의 속도에 맞춰 느긋하게 기다려주는 평온한 양육자" };
+        } else {
+            return { label: "한결같은 동반자", emoji: "🐘", image: "/parent_type/type_parent_llh.jpg", keywords: ["성실함", "우직함", "동행"], desc: "성실함과 우직함으로 일상을 지탱하는 동반자" };
+        }
+    }
+
     static analyzeHarmony(childScores: { NS: number, HA: number, RD: number, P: number }, parentScores: { NS: number, HA: number, RD: number, P: number }) {
         const diffs = [
             { key: 'NS', label: '에너지의 속도 차이', diff: Math.abs(childScores.NS - parentScores.NS), desc: "세상을 탐색하려는 아이의 호기심 속도와 보호자님의 속도가 달라서 생기는 마찰 혹은 시너지입니다." },
