@@ -4,19 +4,32 @@ export class TemperamentClassifier {
         const highThreshold = 60;
         const lowThreshold = 40;
 
-        // 1. Current Manifestation - Child TCI
-        let plant = { label: "무한한 잠재력의 아이", emoji: "✨", desc: "언제든 자신만의 고유한 빛을 낼 준비가 된 상태예요." };
+        // 1. Current Manifestation - Child TCI (NS-HA-RD 조합 8유형)
+        // 한국인 데이터 보정 기준 (방법 B) - 평균 점수를 0-100 스케일로 환산
+        // NS > 3.2 → 64, HA > 2.8 → 56, RD > 3.0 → 60
+        const isNS_H = NS > 64;
+        const isHA_H = HA > 56;
+        const isRD_H = RD > 60;
 
-        if (NS >= highThreshold) {
-            if (HA >= highThreshold) plant = { label: "섬세한 아티스트형 아이", emoji: "🎨", desc: "호기심은 많지만 조심스럽게 세상을 탐험하는 중이에요." };
-            else if (RD >= highThreshold) plant = { label: "다정한 분위기 메이커형 아이", emoji: "💖", desc: "사람들을 향해 온기를 전하며 활발하게 자라고 있어요." };
-            else plant = { label: "에너지 넘치는 탐험가형 아이", emoji: "🦁", desc: "세상을 역동적으로 탐색하며 넘치는 호기심을 뿜어내는 중이에요." };
-        } else if (HA >= highThreshold) {
-            plant = { label: "신중한 관찰자형 아이", emoji: "🦉", desc: "외부 자극에 민감하게 반응하며 상황을 파악하고 신중하게 다가가요." };
-        } else if (RD >= highThreshold) {
-            plant = { label: "따뜻한 평화주의자형 아이", emoji: "🕊️", desc: "모두와 부드럽게 어우러지며 주변을 잘 살피는 다정한 아이예요." };
-        } else if (P >= highThreshold) {
-            plant = { label: "단단한 노력가형 아이", emoji: "⛰️", desc: "어려움에도 쉽게 포기하지 않고 묵묵히 제 할 일을 해내고 있어요." };
+        let plant: { label: string, emoji: string, desc: string };
+
+        if (isNS_H && !isHA_H && !isRD_H) {
+            plant = { label: "자유로운 탐험가", emoji: "🦁", desc: "새로운 것에 거침없이 도전하며 혼자서도 잘 노는 아이" };
+        } else if (isNS_H && !isHA_H && isRD_H) {
+            plant = { label: "인기쟁이 활동가", emoji: "⭐", desc: "사람을 좋아하고 활기차며 어디서나 주목받는 분위기 메이커" };
+        } else if (isNS_H && isHA_H && !isRD_H) {
+            plant = { label: "예민한 완벽주의자", emoji: "🎨", desc: "하고 싶은 건 많지만 겁도 많아 생각이 많고 신중한 아이" };
+        } else if (isNS_H && isHA_H && isRD_H) {
+            plant = { label: "감성 풍부한 예술가", emoji: "🦋", desc: "주변 자극과 감정에 민감하며 풍부한 감수성을 지닌 아이" };
+        } else if (!isNS_H && isHA_H && !isRD_H) {
+            plant = { label: "조용한 분석가", emoji: "🦉", desc: "낯선 상황을 충분히 관찰한 뒤에 움직이는 내실 있는 아이" };
+        } else if (!isNS_H && isHA_H && isRD_H) {
+            plant = { label: "다정한 평화주의자", emoji: "🕊️", desc: "갈등을 싫어하며 주변 사람의 기분을 잘 살피는 착한 아이" };
+        } else if (!isNS_H && !isHA_H && !isRD_H) {
+            plant = { label: "단단한 마이웨이", emoji: "⛰️", desc: "감정 기복이 적고 남의 시선보다 자기 페이스가 중요한 아이" };
+        } else {
+            // L-L-H
+            plant = { label: "성실한 조력자", emoji: "🌱", desc: "정해진 규칙을 잘 지키며 주변을 돕는 것을 좋아하는 아이" };
         }
 
         // 2. Innate Nature - Child Proxy
