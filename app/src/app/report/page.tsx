@@ -546,8 +546,8 @@ function ReportContent() {
                     ✨ {childAiReport ? 'AI 정밀 분석 완료' : '아이 기질 검사 완료!'}
                   </div>
                   <h1 className="text-3xl font-black text-white tracking-tight">
-                    {childAiReport?.title?.split(':')[0]?.trim() || intake.childName || '아이'}의
-                    <br /> {childAiReport ? '심층 리포트' : '기질 리포트'}
+                    {intake.childName || '아이'}의
+                    <br /> 기질 이야기
                   </h1>
                   <p className="text-white/70 text-sm font-medium">기질아이가 발견한 우리 아이의 타고난 세계</p>
                 </>
