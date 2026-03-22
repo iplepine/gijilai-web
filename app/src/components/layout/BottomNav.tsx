@@ -10,7 +10,7 @@ export default function BottomNav() {
         { href: '/', label: '홈', icon: 'home' },
         { href: '/report', label: '분석', icon: 'lab_profile' },
         { href: '/consult', label: '상담', icon: 'add', isCenter: true },
-        { href: '/record', label: '기록', icon: 'chat_bubble_outline' },
+        { href: '/record', label: '관찰일지', icon: 'edit_note' },
         { href: '/settings/profile', label: '내 정보', icon: 'person' },
     ];
 

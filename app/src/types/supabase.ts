@@ -236,6 +236,41 @@ export interface Database {
                     created_at?: string
                 }
             }
+            observations: {
+                Row: {
+                    id: string
+                    user_id: string
+                    child_id: string | null
+                    consultation_id: string | null
+                    situation: string
+                    my_action: string
+                    child_reaction: string
+                    note: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    child_id?: string | null
+                    consultation_id?: string | null
+                    situation: string
+                    my_action: string
+                    child_reaction: string
+                    note?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    child_id?: string | null
+                    consultation_id?: string | null
+                    situation?: string
+                    my_action?: string
+                    child_reaction?: string
+                    note?: string | null
+                    created_at?: string
+                }
+            }
         }
     }
 }

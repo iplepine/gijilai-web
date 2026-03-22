@@ -6,6 +6,7 @@ export type UserProfile = Database['public']['Tables']['profiles']['Row'];
 export type ChildProfile = Database['public']['Tables']['children']['Row'];
 export type SurveyData = Database['public']['Tables']['surveys']['Row'];
 export type ReportData = Database['public']['Tables']['reports']['Row'];
+export type ObservationData = Database['public']['Tables']['observations']['Row'];
 
 
 export const db = {
@@ -283,6 +284,50 @@ export const db = {
 
         if (error) throw error;
         return data;
+    },
+
+    // --- Observations ---
+    createObservation: async (observation: Omit<ObservationData, 'id' | 'created_at'>) => {
+        const { data, error } = await supabase
+            .from('observations')
+            .insert(observation)
+            .select()
+            .single();
+        if (error) throw error;
+        return data as ObservationData;
+    },
+
+    getObservations: async (userId: string, childId?: string) => {
+        let query = supabase
+            .from('observations')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        if (childId) {
+            query = query.eq('child_id', childId);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+        return data as ObservationData[];
+    },
+
+    deleteObservation: async (observationId: string) => {
+        const { error } = await supabase
+            .from('observations')
+            .delete()
+            .eq('id', observationId);
+        if (error) throw error;
+    },
+
+    getRecentObservations: async (userId: string, limit: number = 5) => {
+        const { data, error } = await supabase
+            .from('observations')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+        if (error) throw error;
+        return data as ObservationData[];
     },
 
     resetUserData: async (userId: string) => {

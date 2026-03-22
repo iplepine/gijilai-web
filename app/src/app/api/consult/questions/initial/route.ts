@@ -1,9 +1,20 @@
 import { NextResponse } from 'next/server';
 import { openai } from '@/lib/openai';
 
+function formatObservationsForPrompt(observations: any[]): string {
+    return observations.map((obs: any) => {
+        const date = new Date(obs.created_at).toLocaleDateString('ko-KR');
+        let entry = `[${date}] 상황: ${obs.situation} → 양육자 행동: ${obs.my_action} → 아이 반응: ${obs.child_reaction}`;
+        if (obs.note) {
+            entry += ` (메모: ${obs.note})`;
+        }
+        return entry;
+    }).join('\n');
+}
+
 export async function POST(request: Request) {
   try {
-    const { problem, childName } = await request.json();
+    const { problem, childName, recentObservations } = await request.json();
 
     if (!problem) {
       return NextResponse.json(
@@ -17,7 +28,11 @@ export async function POST(request: Request) {
     const systemPrompt = `당신은 아동 심리 및 기질 역동 분석 전문가입니다. 
 사용자의 육아 고민 상황을 듣고, 양육자의 마음을 어루만져주는 공감 멘트와 상황 분석을 위해 확인해야 할 '기초 질문' 3~5개를 생성하세요.
 
-**[응답 원칙]**
+${recentObservations && recentObservations.length > 0 ? `**[최근 양육 관찰 기록]**
+양육자가 최근 기록한 아이와의 상호작용입니다. 이 맥락을 참고하여 질문을 생성하세요.
+${formatObservationsForPrompt(recentObservations)}
+
+` : ''}**[응답 원칙]**
 1. **공감 우선 (empathy)**: 양육자의 힘든 상황을 충분히 인정하고 공감하세요. 육아의 고단함을 짚어주며 죄책감을 느끼지 않게 격려하세요.
    - 예: "정말 고생 많으셨어요. 아침 시간은 1분 1초가 급한데 아이가 협조해주지 않으면 누구라도 화가 날 수밖에 없어요."
 2. **기질적 인사이트**: 공감 멘트 끝에 아이의 기질(NS, HA, RD, P) 관점에서 왜 이런 행동이 나올 수 있는지 가벼운 힌트를 포함하세요.
