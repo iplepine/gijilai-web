@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import BottomNav from '@/components/layout/BottomNav';
 import { Button } from '@/components/ui/Button';
+import { Navbar } from '@/components/layout/Navbar';
 
 type Step = 'INPUT' | 'DIAGNOSTIC' | 'RESULT';
 
@@ -206,17 +207,7 @@ export default function ConsultPage() {
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-center font-body pb-0">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
-                {/* Nav Header */}
-                <div className="w-full max-w-md px-4 py-5 flex items-center bg-white/80 dark:bg-surface-dark/80 backdrop-blur-md sticky top-0 z-20 border-b border-primary/5">
-                    <button onClick={() => router.back()} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                        <span className="material-symbols-outlined text-text-main dark:text-white">arrow_back</span>
-                    </button>
-                    <div className="flex-1 text-center flex items-center justify-center gap-2">
-                        <img src="/gijilai_icon.png" alt="" className="w-6 h-6 object-contain" />
-                        <span className="font-logo text-lg text-primary dark:text-white">마음 통역소</span>
-                    </div>
-                    <div className="w-10"></div>
-                </div>
+                <Navbar title="마음 통역소" />
 
                 <main className="w-full max-w-md flex flex-col flex-1 p-6 pb-24">
                     {step === 'INPUT' && (

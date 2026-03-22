@@ -476,10 +476,10 @@ function ReportContent() {
               <div className="absolute top-0 left-0 right-0 pt-12 px-6 z-20 flex items-center justify-between">
                 <button
                   onClick={() => router.back()}
-                  className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center text-text-main backdrop-blur-sm border border-white/40 hover:bg-white/80 transition-colors"
+                  className="size-10 flex items-center justify-center rounded-full bg-white/60 text-text-main backdrop-blur-sm border border-white/40 hover:bg-white/80 transition-colors"
                   aria-label="뒤로 가기"
                 >
-                  <Icon name="arrow_back" size="sm" />
+                  <span className="material-symbols-outlined">arrow_back_ios</span>
                 </button>
                 {isLocalhost && (
                   <button
