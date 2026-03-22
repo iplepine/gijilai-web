@@ -23,8 +23,6 @@ import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
-import { ParentClassifier } from '@/lib/ParentClassifier';
-import { PRESCRIPTION_DATA } from '@/lib/PrescriptionData';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
@@ -321,13 +319,11 @@ function ReportContent() {
   // Temperament Classification
   const childType = useMemo(() => TemperamentClassifier.analyzeChild(childScores), [childScores]);
   const harmony = useMemo(() => TemperamentClassifier.analyzeHarmony(childScores, parentScores), [childScores, parentScores]);
-  const prescription = useMemo(() => PRESCRIPTION_DATA[childType.label] || PRESCRIPTION_DATA["무한한 잠재력의 아이"], [childType]);
 
   const isStyleSurveyComplete = useMemo(() => {
     return PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
   }, [parentingResponses]);
 
-  const parentReport = useMemo(() => ParentClassifier.analyze(parentScores), [parentScores]);
   const parentType = useMemo(() => TemperamentClassifier.analyzeParent(parentScores), [parentScores]);
   const isParentSurveyComplete = useMemo(() => Object.keys(atqResponses).length >= PARENT_QUESTIONS.length, [atqResponses]);
 
@@ -1234,49 +1230,14 @@ function ReportContent() {
                   </div>
                 )}
 
-                {/* Footer Actions & App Nudge */}
-                {harmonyAiReport && <div className="space-y-8 pt-10 pb-16">
-                  {/* App Download Nudge - 프리미엄 경험 강조 */}
-                  <div className="px-2">
-                    <div className="bg-gradient-to-br from-slate-900 to-indigo-900 rounded-[3rem] p-8 text-center relative overflow-hidden shadow-2xl">
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-3xl -mr-32 -mt-32"></div>
-                      <div className="relative z-10 space-y-6">
-                        <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto backdrop-blur-md border border-white/20">
-                          <span className="text-3xl animate-bounce-subtle">✨</span>
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="text-xl font-black text-white leading-tight">
-                            21일 맞춤형<br />실천 플랜이 생성되었습니다
-                          </h3>
-                          <p className="text-slate-300 text-[13px] leading-relaxed px-4 break-keep">
-                            {intake.childName || '아이'}의 기질에 딱 맞는 매일의 대화 처방과<br />발달 변화 기록까지, 이제 앱에서 시작하세요.
-                          </p>
-                        </div>
-                        <div className="pt-2 space-y-3">
-                          <Button
-                            variant="primary"
-                            fullWidth
-                            className="h-14 rounded-2xl bg-white !text-slate-900 font-black text-base shadow-xl"
-                            onClick={() => window.open('https://aina.garden/app', '_blank')}
-                          >
-                            <span className="text-slate-900">앱 설치하고 실천 아이템 받기</span>
-                          </Button>
-                          <p className="text-[10px] text-white/30 uppercase tracking-widest font-black">
-                            Available on iOS & Android
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-4 text-center px-4">
-                    <Button variant="secondary" onClick={() => router.replace('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg text-slate-800 font-bold">
-                      결과 공유하고 할인권 받기
-                    </Button>
-                    <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
-                      홈으로 돌아가기
-                    </Link>
-                  </div>
+                {/* Footer Actions */}
+                {harmonyAiReport && <div className="flex flex-col gap-4 pt-10 pb-16 text-center px-4">
+                  <Button variant="secondary" onClick={() => router.replace('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg text-slate-800 font-bold">
+                    결과 공유하기
+                  </Button>
+                  <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
+                    홈으로 돌아가기
+                  </Link>
                 </div>}
               </div>
             )}

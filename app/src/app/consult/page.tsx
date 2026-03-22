@@ -150,12 +150,12 @@ export default function ConsultPage() {
 
             if (Object.keys(atqResponses).length > 0) {
                 const { TemperamentScorer } = await import('@/lib/TemperamentScorer');
-                const { ParentClassifier } = await import('@/lib/ParentClassifier');
+                const { TemperamentClassifier } = await import('@/lib/TemperamentClassifier');
                 const { PARENT_QUESTIONS } = await import('@/data/questions');
 
                 const scores = TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
-                const result = ParentClassifier.analyze(scores);
-                parentArchetype = result.soilName;
+                const result = TemperamentClassifier.analyzeParent(scores);
+                parentArchetype = result.label;
             }
 
             const fullProblem = problemDesc;

@@ -11,7 +11,6 @@ import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db'
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
-import { ParentClassifier } from '@/lib/ParentClassifier';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 import { useSurveyStore } from '@/store/surveyStore';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
@@ -96,22 +95,26 @@ export default function HomePage() {
       ? childAnswers 
       : TemperamentScorer.calculate(CHILD_QUESTIONS, childAnswers as any);
 
-    // Parent scores for soil context (defaults if not surveyed yet)
+    // Parent scores: local store → DB survey → DB report → default
     let parentScores = { NS: 50, HA: 50, RD: 50, P: 50 };
-    const parentAnswers = Object.keys(atqResponses).length > 0
-      ? atqResponses
-      : (parentSurvey?.answers as Record<string, number>);
+    const parentReport = reports.find(r => r.type === 'PARENT');
+    const parentReportScores = (parentReport?.analysis_json as any)?.scores;
 
-    if (parentAnswers) {
-      parentScores = TemperamentScorer.calculate(PARENT_QUESTIONS, parentAnswers as any);
+    if (Object.keys(atqResponses).length > 0) {
+      parentScores = TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
+    } else if (parentSurvey?.answers) {
+      parentScores = TemperamentScorer.calculate(PARENT_QUESTIONS, parentSurvey.answers as any);
+    } else if (parentReportScores && 'NS' in parentReportScores) {
+      parentScores = parentReportScores;
     }
 
     const childResult = TemperamentClassifier.analyzeChild(scores as any);
-    const parentResult = ParentClassifier.analyze(parentScores);
+    const parentType = TemperamentClassifier.analyzeParent(parentScores);
+    const hasRealParentData = Object.keys(atqResponses).length > 0 || !!parentSurvey?.answers || !!parentReportScores;
 
     return {
       child: childResult,
-      parent: parentResult
+      parent: { ...parentType, hasData: hasRealParentData }
     };
   }, [mainChild, children, selectedChildIndex, cbqResponses, atqResponses, latestSurvey, parentSurvey, reports]);
 
@@ -235,10 +238,12 @@ export default function HomePage() {
   const ageString = mainChild?.birth_date ? (() => {
     const birth = new Date(mainChild.birth_date);
     const today = new Date();
-    const months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
-    if (months <= 36) return `${months}개월`;
-    const years = Math.floor(months / 12);
-    return `${years}세`;
+    const totalMonths = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
+    if (totalMonths <= 36) return `${totalMonths}개월`;
+    const years = Math.floor(totalMonths / 12);
+    const remainingMonths = totalMonths % 12;
+    if (remainingMonths === 0) return `${years}년`;
+    return `${years}년 ${remainingMonths}개월`;
   })() : "생일 정보 없음";
 
   // TODO: Implement actual db-backed isReportViewed and hasActiveCoaching
@@ -248,16 +253,11 @@ export default function HomePage() {
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center justify-center font-body pb-0">
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
-        <header className="relative flex items-center justify-between h-16 w-full px-6 pt-12 pb-4 bg-background-light dark:bg-background-dark sticky top-0 z-20 border-b border-primary/5 dark:border-white/5">
+        <header className="relative flex items-center justify-between h-16 w-full px-6 pt-12 pb-4 bg-background-light dark:bg-background-dark sticky top-0 z-20 ">
           <div className="flex items-center gap-2">
             <img src="/gijilai_icon.png" alt="기질아이" className="w-8 h-8 rounded-lg object-contain" />
             <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
           </div>
-          {user && children.length > 0 && (
-            <Link href="/settings/child/new" className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
-              <span className="material-symbols-outlined text-[20px]">add</span>
-            </Link>
-          )}
         </header>
 
         <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
@@ -300,6 +300,8 @@ export default function HomePage() {
                     <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 relative z-10 border-[3px] border-white dark:border-surface-dark shadow-md ring-1 ring-black/5 group-hover:scale-105 transition-transform">
                       {mainChild?.image_url ? (
                         <img alt={childName} className="w-full h-full object-cover" src={mainChild.image_url} />
+                      ) : temperamentInfo?.child?.image ? (
+                        <img alt={childName} className="w-full h-full object-cover" src={temperamentInfo.child.image} />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                           <span className="material-icons-round text-5xl">face</span>
@@ -315,7 +317,10 @@ export default function HomePage() {
                     )}
 
                     <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
-                      <div className="bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10">
+                      <div
+                        onClick={(e) => { if (temperamentInfo) { e.stopPropagation(); router.replace('/report?tab=child'); } }}
+                        className={`bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10 ${temperamentInfo ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                      >
                         <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
                         {temperamentInfo ? temperamentInfo.child.label : '기질 등록 필요'}
                       </div>
@@ -326,9 +331,12 @@ export default function HomePage() {
                     <h1 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">
                       {childName} ({ageString})
                     </h1>
-                    <div className="mt-2 bg-white/60 dark:bg-surface-dark/60 backdrop-blur-sm text-text-main dark:text-gray-200 px-3.5 py-1.5 rounded-full text-[12px] font-medium shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] inline-flex items-center gap-1.5 ring-1 ring-black/5 dark:ring-white/10">
+                    <div
+                      onClick={() => { if (temperamentInfo?.parent?.hasData) router.replace('/report?tab=parent'); }}
+                      className={`mt-2 bg-white/60 dark:bg-surface-dark/60 backdrop-blur-sm text-text-main dark:text-gray-200 px-3.5 py-1.5 rounded-full text-[12px] font-medium shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] inline-flex items-center gap-1.5 ring-1 ring-black/5 dark:ring-white/10 ${temperamentInfo?.parent?.hasData ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                    >
                       <span className="material-symbols-outlined text-[16px] text-caregiver">volunteer_activism</span>
-                      {TCI_TERMINOLOGY.REPORT.PARENT_NAME} <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">{temperamentInfo ? temperamentInfo.parent.soilName : '등록 필요'}</span>
+                      {TCI_TERMINOLOGY.REPORT.PARENT_NAME} <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">{temperamentInfo?.parent?.hasData ? temperamentInfo.parent.label : '검사 필요'}</span>
                     </div>
                   </div>
                 </div>
