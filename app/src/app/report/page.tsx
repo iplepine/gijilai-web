@@ -160,6 +160,14 @@ function ReportContent() {
     }
   }, [cbqResponses, savedChildScores, childAiReport]);
 
+  // 양육자 탭 진입 시 리포트가 없으면 자동 생성
+  useEffect(() => {
+    const hasAtq = Object.keys(atqResponses).length > 0 || !!savedParentScores;
+    if (activeTab === 'parent' && !isGenerating && !reportId && hasAtq && !parentAiReport) {
+      generateParentAIReport();
+    }
+  }, [activeTab, atqResponses, savedParentScores, parentAiReport]);
+
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
   };
@@ -267,12 +275,13 @@ function ReportContent() {
       const res = await fetch('/api/llm/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userName: '양육자', 
-          scores, 
-          type: 'PARENT', 
+        body: JSON.stringify({
+          userName: '양육자',
+          scores,
+          type: 'PARENT',
           answers,
-          isPreview: !isPaid
+          isPreview: !isPaid,
+          parentType: { label: parentType.label, keywords: parentType.keywords }
         })
       });
       if (!res.ok) throw new Error('Report generation failed');
@@ -858,186 +867,166 @@ function ReportContent() {
                 </>
               )
             ) : activeTab === 'parent' ? (
-              <div className="animate-fade-in space-y-12">
-                {/* Parent Report Header */}
-                <header className="text-center space-y-4 py-6">
-                  <div className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2">Parent Self-Report</div>
-                  <h2 className="text-3xl font-black text-slate-800 dark:text-white leading-snug break-keep">
-                    양육자 <span className="text-primary">나</span>의<br />중심을 잡는 마음 기질
-                  </h2>
-                  <p className="text-slate-500 text-[13px] font-medium leading-relaxed break-keep">
-                    당신은 누군가의 양육자이기 이전에,<br />그 자체로 고유한 결을 가진 소중한 사람입니다.
-                  </p>
-                </header>
-
-                {/* Parent Section 1-3: 규칙 기반 요약 (AI 리포트 없을 때만 표시) */}
-                {!parentAiReport && (
+              <div className="animate-fade-in space-y-5">
+                {parentAiReport ? (
                   <>
-                    <section className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-xl border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
-                      <div className="relative z-10 space-y-6">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-widest">01. 나의 기질 분석</span>
-                          <h3 className="text-xl font-black text-slate-800 dark:text-white">{parentReport.soilName}</h3>
-                        </div>
-                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-700">
-                          <p className="text-slate-600 dark:text-slate-300 text-[14px] leading-relaxed break-keep font-medium italic">
-                            {parentReport.analysis}
-                          </p>
-                        </div>
+                    {/* 1. 아이나의 한마디 */}
+                    <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
+                      <p className="text-[12px] font-black text-primary mb-2.5 flex items-center gap-1.5">
+                        <Icon name="chat_bubble" size="sm" /> 아이나의 한마디
+                      </p>
+                      <p className="text-[15px] text-text-main dark:text-slate-300 leading-[1.85] break-keep">
+                        {parentAiReport.intro}
+                      </p>
+                    </section>
+
+                    {/* 2. 기질 점수 카드 */}
+                    <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-6 shadow-card border border-beige-main/10 space-y-5">
+                      <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                        <Icon name="bar_chart" size="sm" /> 양육자의 기질 점수
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {([
+                          { key: 'NS', label: '자극 추구', color: '#E5A150', desc: '새로운 것에 끌리는 정도' },
+                          { key: 'HA', label: '위험 회피', color: '#6B9E8A', desc: '조심하고 경계하는 정도' },
+                          { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', desc: '타인 반응에 민감한 정도' },
+                          { key: 'P', label: '인내력', color: '#D4805E', desc: '꾸준히 해내는 정도' },
+                        ] as const).map(dim => {
+                          const score = parentScores[dim.key as keyof typeof parentScores];
+                          return (
+                            <div key={dim.key} className="bg-background-light dark:bg-background-dark rounded-xl p-4 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-text-sub">{dim.label}</span>
+                                <span className="text-[16px] font-black" style={{ color: dim.color }}>{score}</span>
+                              </div>
+                              <div className="w-full h-2 bg-white dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${score}%`, backgroundColor: dim.color }} />
+                              </div>
+                              <p className="text-[10px] text-text-sub leading-tight">{dim.desc}</p>
+                            </div>
+                          );
+                        })}
                       </div>
                     </section>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <section className="bg-[#fff9f0] rounded-[2.5rem] p-8 shadow-sm border border-orange-100 relative overflow-hidden">
-                        <div className="absolute top-4 right-6 text-2xl">✨</div>
-                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">02. 나의 마법의 계절</span>
-                        <h4 className="text-md font-bold text-slate-800 mb-2">내가 가장 빛나는 순간</h4>
-                        <p className="text-[12px] text-slate-600 leading-relaxed break-keep">
-                          {parentReport.magicSeason}
+                    {/* 3. 기질 요소별 해석 */}
+                    {parentAiReport.dimensions && (
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
+                        <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                          <Icon name="psychology" size="sm" /> 기질 요소별 해석
                         </p>
-                      </section>
-                      <section className="bg-[#f0f9ff] rounded-[2.5rem] p-8 shadow-sm border border-blue-100 relative overflow-hidden">
-                        <div className="absolute top-4 right-6 text-2xl">☁️</div>
-                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">03. 마음의 가뭄</span>
-                        <h4 className="text-md font-bold text-slate-800 mb-2">에너지가 고갈되는 신호</h4>
-                        <p className="text-[12px] text-slate-600 leading-relaxed break-keep">
-                          {parentReport.drought}
-                        </p>
-                      </section>
-                    </div>
-                  </>
-                )}
-
-                {/* 양육자 AI 심층 분석 리포트 (JSON 기반) */}
-                <section className="space-y-6">
-                  <div className="flex items-center justify-between px-2">
-                    <h3 className="font-black text-slate-800 dark:text-white text-xl flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">👤</span>
-                      양육자 기질 심층 분석
-                    </h3>
-                  </div>
-
-                  {parentAiReport ? (
-                    <div className="relative group">
-                      <div className="space-y-8 animate-fade-in-up">
-                        {/* 타이틀 카드 - 무료 공개 */}
-                        <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-10 shadow-xl border-l-[12px] border-indigo-500 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 p-4 opacity-5 text-8xl font-black italic">YOU</div>
-                          <h4 className="text-2xl font-black text-slate-800 dark:text-white mb-4 leading-tight">
-                            {parentAiReport.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
-                            {parentAiReport.intro}
-                          </p>
-                        </div>
-
-                        {/* 심층 분석 섹션 - 결제 시에만 공개 (블러 처리) */}
-                        <div className={`space-y-8 transition-all duration-1000 ${!isPaid ? 'blur-xl grayscale opacity-40 pointer-events-none select-none' : ''}`}>
-                          {/* 양육자 기질 섹션들 */}
-                          <div className="space-y-6">
-                            {parentAiReport.sections?.map((section: any) => (
-                              <div key={section.id} className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-lg border border-slate-100 dark:border-slate-700">
-                                <div className="flex items-center justify-between mb-4">
-                                  <h5 className="font-black text-slate-800 dark:text-white text-lg">{section.heading}</h5>
-                                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500">{section.badge}</span>
-                                </div>
-                                <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed break-keep whitespace-pre-wrap">
-                                  {section.content}
-                                </p>
+                        {([
+                          { key: 'NS', label: '자극 추구', color: '#E5A150', icon: '🔥' },
+                          { key: 'HA', label: '위험 회피', color: '#6B9E8A', icon: '🛡️' },
+                          { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', icon: '💙' },
+                          { key: 'P', label: '인내력', color: '#D4805E', icon: '⏳' },
+                        ] as const).map(dim => {
+                          const text = (parentAiReport.dimensions as any)?.[dim.key];
+                          if (!text) return null;
+                          return (
+                            <div key={dim.key} className="space-y-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">{dim.icon}</span>
+                                <span className="text-[12px] font-bold" style={{ color: dim.color }}>{dim.label}</span>
+                                <span className="text-[12px] font-black" style={{ color: dim.color }}>{parentScores[dim.key as keyof typeof parentScores]}점</span>
                               </div>
-                            ))}
-                          </div>
-
-                          {/* 퍼스널 솔루션 */}
-                          {parentAiReport.solutions && parentAiReport.solutions.length > 0 && (
-                            <div className="bg-indigo-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl -mr-32 -mt-32"></div>
-                              <h5 className="text-white font-black text-lg mb-8 flex items-center gap-2">
-                                <span className="text-2xl">💊</span> 나를 위한 마음 영양제
-                              </h5>
-                              <div className="space-y-6">
-                                {parentAiReport.solutions?.map((sol: any, idx: number) => (
-                                  <div key={idx} className="bg-white/10 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-                                    <h6 className="text-primary font-bold mb-2">{sol.name}</h6>
-                                    <p className="text-white text-[14px] leading-relaxed mb-3">{sol.action}</p>
-                                    <div className="text-[11px] text-white/40 flex items-center gap-2">
-                                      <span className="shrink-0">💡 근거:</span>
-                                      <span>{sol.reason}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 다정한 편지 */}
-                          <div className="bg-rose-50 dark:bg-rose-900/20 rounded-[2.5rem] p-10 text-center relative">
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 shadow-md px-4 py-1 rounded-full text-xs font-bold text-rose-500">
-                              From. 아이나
-                            </div>
-                            <p className="text-rose-700 dark:text-rose-300 italic leading-loose break-keep font-serif text-lg py-4">
-                              "{parentAiReport.letter}"
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {!isPaid && (
-                        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center px-4">
-                          <div className="w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-indigo-200 text-center animate-in zoom-in-95 duration-500 space-y-6">
-                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto text-4xl mb-2">🧘</div>
-                            <div className="space-y-2">
-                              <h4 className="text-2xl font-black text-slate-800 dark:text-white break-keep">나를 위한 쉼표가 필요하신가요?</h4>
-                              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep px-4">
-                                양육자로서의 나를 깊이 이해하고<br />
-                                지치지 않는 양육 에너지를 채워주는 전문 리포트입니다.
+                              <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.8] break-keep pl-6">
+                                {text}
                               </p>
                             </div>
-                            <div className="pt-4 space-y-4">
-                              <Button onClick={() => router.replace('/payment')} variant="primary" fullWidth className="h-16 rounded-2xl font-black text-lg bg-indigo-600 shadow-xl shadow-indigo-200 hover:bg-indigo-700">
-                                990원에 양육자 정밀 분석 열기
-                              </Button>
-                              <p className="text-[10px] text-slate-400 font-medium">나를 먼저 돌보는 인지가 조화로운 육아의 시작입니다</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-10 text-center space-y-6 shadow-xl">
-                      <div className="w-20 h-20 mx-auto bg-indigo-50 rounded-full flex items-center justify-center text-3xl">
-                        🧘
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-bold text-slate-800 dark:text-white">나의 기질 분석이 준비되었습니다</h4>
-                        <p className="text-sm text-slate-500 leading-relaxed break-keep">
-                          나의 타고난 성향을 깊이 있게 이해하고<br />
-                          지치지 않는 양육을 위한 에너지를 얻으세요.
+                          );
+                        })}
+                      </section>
+                    )}
+
+                    {/* 4. 내가 가장 빛나는 순간 */}
+                    {(parentAiReport.shining || parentAiReport.sections?.find((s: any) => s.id === 'shining')) && (
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
+                        <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                          <Icon name="auto_awesome" size="sm" /> 내가 가장 빛나는 순간
                         </p>
-                      </div>
-                      <Button
-                        onClick={generateAIReport}
-                        variant="primary"
-                        fullWidth
-                        className="h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700"
-                        disabled={isGenerating}
-                      >
-                        {isGenerating ? '분석 중...' : '양육자 전문 리포트 생성하기'}
-                      </Button>
-                    </div>
-                  )}
-                </section>
+                        <p className="text-[14px] text-text-main dark:text-slate-300 leading-[1.85] break-keep whitespace-pre-wrap">
+                          {parentAiReport.shining || parentAiReport.sections?.find((s: any) => s.id === 'shining')?.content}
+                        </p>
+                      </section>
+                    )}
+
+                    {/* 5. 나의 양육 기질 */}
+                    {parentAiReport.parentingStyle && parentAiReport.parentingStyle.length > 0 && (
+                      <section className="space-y-3">
+                        <p className="text-[12px] font-black text-primary flex items-center gap-1.5 px-1">
+                          <Icon name="child_care" size="sm" /> 나의 양육 기질
+                        </p>
+                        {parentAiReport.parentingStyle.map((item: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
+                            <p className="text-[11px] font-black text-primary/70">{item.scene}</p>
+                            <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">
+                              {item.content}
+                            </p>
+                          </div>
+                        ))}
+                      </section>
+                    )}
+
+                    {/* 6. 에너지 고갈 신호 */}
+                    {(parentAiReport.vulnerability || parentAiReport.sections?.find((s: any) => s.id === 'vulnerability')) && (
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
+                        <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                          <Icon name="battery_alert" size="sm" /> 에너지 고갈 신호
+                        </p>
+                        <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep whitespace-pre-wrap">
+                          {parentAiReport.vulnerability || parentAiReport.sections?.find((s: any) => s.id === 'vulnerability')?.content}
+                        </p>
+                      </section>
+                    )}
+
+                    {/* 6. 나를 위한 마음 영양제 */}
+                    {parentAiReport.solutions && parentAiReport.solutions.length > 0 && (
+                      <section className="space-y-3">
+                        <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
+                          <Icon name="lightbulb" size="sm" /> 나를 위한 마음 영양제
+                        </p>
+                        {parentAiReport.solutions.map((sol: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
+                            <h6 className="font-bold text-text-main dark:text-white text-[14px]">{sol.name}</h6>
+                            <p className="text-[14px] text-text-sub dark:text-slate-400 leading-relaxed break-keep">{sol.action}</p>
+                            <p className="text-[11px] text-text-sub/60 leading-relaxed break-keep">💡 {sol.reason}</p>
+                          </div>
+                        ))}
+                      </section>
+                    )}
+
+                    {/* 7. 아이나의 편지 */}
+                    {parentAiReport.letter && (
+                      <section className="bg-rose-50 dark:bg-rose-900/20 rounded-2xl px-6 py-8 shadow-card border border-beige-main/10 text-center relative">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 shadow-md px-4 py-1 rounded-full text-xs font-bold text-rose-500">
+                          From. 아이나
+                        </div>
+                        <p className="text-rose-700 dark:text-rose-300 italic leading-loose break-keep font-serif text-[15px] pt-2">
+                          &ldquo;{parentAiReport.letter}&rdquo;
+                        </p>
+                      </section>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
+                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                    <p className="text-text-sub text-sm font-bold">양육자의 기질을 분석하고 있어요...</p>
+                    <p className="text-text-sub/60 text-[12px]">잠시만 기다려주세요</p>
+                  </div>
+                )}
 
                 {/* Footer Actions */}
-                <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
-                  <Button variant="secondary" onClick={() => router.replace('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
-                    나의 결과 공유하기
-                  </Button>
-                  <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
-                    홈으로 돌아가기
-                  </Link>
-                </div>
+                {parentAiReport && (
+                  <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
+                    <Button variant="secondary" onClick={() => router.replace('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+                      나의 결과 공유하기
+                    </Button>
+                    <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
+                      홈으로 돌아가기
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="animate-fade-in space-y-6">

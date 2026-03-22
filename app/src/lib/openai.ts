@@ -30,7 +30,9 @@ export const generateReport = async (
     model: string = 'gpt-4o',
     answers?: { questionId: string; score: number }[],
     parentScores?: { NS: number; HA: number; RD: number; P: number },
-    isPreview: boolean = false
+    isPreview: boolean = false,
+    childType?: { label: string; keywords: string[] },
+    parentType?: { label: string; keywords: string[] }
 ) => {
     let defaultPrompt = CHILD_REPORT_PROMPT;
     if (type === 'PARENT') defaultPrompt = PARENT_REPORT_PROMPT;
@@ -71,8 +73,12 @@ export const generateReport = async (
     if (type === 'HARMONY') {
         payload.childScores = scores;
         payload.parentScores = parentScores;
+        if (childType) payload.childType = childType;
+        if (parentType) payload.parentType = parentType;
     } else {
         payload.scores = scores;
+        if (childType) payload.childType = childType;
+        if (parentType) payload.parentType = parentType;
     }
 
     const userMessage = JSON.stringify(payload);
