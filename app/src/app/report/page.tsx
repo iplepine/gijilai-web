@@ -51,12 +51,16 @@ function ReportContent() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, setIsPaid } = useAppStore();
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  useEffect(() => {
+    setIsLocalhost(window.location.hostname === 'localhost');
+  }, []);
 
   const [childAiReport, setChildAiReport] = useState<any>(null);
   const [parentAiReport, setParentAiReport] = useState<any>(null);
   const [harmonyAiReport, setHarmonyAiReport] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reportDates, setReportDates] = useState<Record<string, string>>({});
 
   // DB에서 로드된 점수 데이터 (상세 보기용)
   const [savedChildScores, setSavedChildScores] = useState<any>(null);
@@ -144,15 +148,7 @@ function ReportContent() {
     }
   };
 
-  // 안A: 아이 리포트 선공 - 아동 설문 완료 직후 자동으로 AI 리포트 생성
-  useEffect(() => {
-    if (isChildOnly && !childAiReport && !isGenerating && !reportId && Object.keys(cbqResponses).length > 0) {
-      generateChildAIReport();
-    }
-  }, [isChildOnly, reportId]);
-
-  // 결제 완료 시 프리미엄 리포트 재생성
-  // 아이 진단 탭 진입 시 리포트가 없으면 자동 생성
+  // 아이 진단 탭: 리포트 없으면 자동 생성 (서버가 캐시/생성 분기)
   useEffect(() => {
     const hasCbq = Object.keys(cbqResponses).length > 0 || !!savedChildScores;
     if (!isGenerating && !reportId && hasCbq && !childAiReport) {
@@ -160,7 +156,7 @@ function ReportContent() {
     }
   }, [cbqResponses, savedChildScores, childAiReport]);
 
-  // 양육자 탭 진입 시 리포트가 없으면 자동 생성
+  // 양육자 탭 진입 시 자동 생성
   useEffect(() => {
     const hasAtq = Object.keys(atqResponses).length > 0 || !!savedParentScores;
     if (activeTab === 'parent' && !isGenerating && !reportId && hasAtq && !parentAiReport) {
@@ -168,92 +164,67 @@ function ReportContent() {
     }
   }, [activeTab, atqResponses, savedParentScores, parentAiReport]);
 
+  // 기질맞춤양육 탭 진입 시 자동 생성
+  useEffect(() => {
+    const styleComplete = PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
+    if (activeTab === 'parenting' && !isGenerating && !reportId && !harmonyAiReport && styleComplete) {
+      generateHarmonyAIReport();
+    }
+  }, [activeTab, harmonyAiReport, parentingResponses]);
+
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
   };
 
-  // DB 저장 헬퍼
-  const ensureChildAndSurvey = async (type: 'CHILD' | 'PARENT' | 'PARENTING_STYLE') => {
-    if (!user) return { childId: null, surveyId: null };
 
-    try {
-      let childId = dbChildId;
-      // 1. 아이 프로필 생성/확인
-      if (!childId) {
-        const child = await db.createChild({
-          parent_id: user.id,
-          name: intake.childName || '아이',
-          gender: (intake.gender as 'male' | 'female') || 'male',
-          birth_date: intake.birthDate || new Date().toISOString().split('T')[0],
-          birth_time: intake.birthTime,
-          image_url: null,
-        });
-        childId = child.id;
-        setDbChildId(childId);
-      }
-
-      // 2. 설문 응답 저장
-      let surveyId = dbSurveyIds[type];
-      if (!surveyId) {
-        const responses = type === 'CHILD' ? cbqResponses : (type === 'PARENT' ? atqResponses : parentingResponses);
-        const scores = type === 'CHILD' ? childScores : (type === 'PARENT' ? parentScores : styleScores);
-
-        const survey = await db.saveSurvey({
-          user_id: user.id,
-          child_id: childId,
-          type,
-          answers: responses as any,
-          scores: scores as any,
-          status: 'COMPLETED'
-        });
-        surveyId = survey.id;
-        setDbSurveyIds(prev => ({ ...prev, [type]: surveyId }));
-      }
-
-      return { childId, surveyId };
-    } catch (e) {
-      console.error('DB Sync Error:', e);
-      return { childId: null, surveyId: null };
-    }
+  // 리포트 포맷 검증: 필수 필드가 있는지 확인
+  const isValidReport = (report: any, type: string): boolean => {
+    if (!report || typeof report !== 'object') return false;
+    if (type === 'CHILD') return !!(report.intro && report.analysis);
+    if (type === 'PARENT') return !!(report.intro && (report.dimensions || report.sections));
+    if (type === 'HARMONY') return !!(report.harmonyTitle || report.compatibilityScore);
+    return false;
   };
 
-  const generateChildAIReport = async () => {
+  // 공통 API 호출 함수 (포맷 불일치 시 자동 재생성)
+  const fetchReport = async (payload: any): Promise<{ report: any; createdAt: string } | null> => {
+    const res = await fetch('/api/llm/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, intake })
+    });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      console.error(`[fetchReport] ${payload.type} failed:`, res.status, errBody);
+      throw new Error('Report generation failed');
+    }
+    const data = await res.json();
+    console.log(`[fetchReport] ${payload.type}: cached=${data.cached}, createdAt=${data.createdAt}`);
+    if (!data.report) throw new Error('Empty report response');
+
+    // 캐시된 리포트의 포맷이 현재 UI와 맞지 않으면 재생성
+    if (data.cached && !isValidReport(data.report, payload.type)) {
+      console.warn(`Cached ${payload.type} report format mismatch, regenerating...`);
+      return fetchReport({ ...payload, refresh: true });
+    }
+
+    return { report: data.report, createdAt: data.createdAt };
+  };
+
+  const generateChildAIReport = async (refresh = false) => {
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const scores = childScores;
-      const answers = Object.entries(cbqResponses).map(([id, score]) => ({
-        questionId: id,
-        score: score as number
-      }));
-      const res = await fetch('/api/llm/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userName: intake.childName || '아이',
-          scores,
-          type: 'CHILD',
-          answers,
-          isPreview: !isPaid,
-          childType: { label: childType.label, keywords: childType.keywords, desc: childType.desc }
-        })
+      const answers = Object.entries(cbqResponses).map(([id, score]) => ({ questionId: id, score: score as number }));
+      const result = await fetchReport({
+        userName: intake.childName || '아이',
+        scores: childScores, type: 'CHILD', answers,
+        isPreview: !isPaid, refresh,
+        childType: { label: childType.label, keywords: childType.keywords, desc: childType.desc }
       });
-      if (!res.ok) throw new Error('Report generation failed');
-      const data = await res.json();
-      setChildAiReport(data.report);
-
-      // DB 저장
-      const { childId, surveyId } = await ensureChildAndSurvey('CHILD');
-      if (user && childId && surveyId) {
-        await db.saveReport({
-          user_id: user.id,
-          child_id: childId,
-          survey_id: surveyId,
-          type: 'CHILD',
-          analysis_json: data.report as any,
-          model_used: 'gpt-4o',
-          is_paid: isPaid
-        });
+      if (result) {
+        setChildAiReport(result.report);
+        setReportDates(prev => ({ ...prev, child: result.createdAt }));
       }
     } catch (error) {
       console.error(error);
@@ -263,43 +234,20 @@ function ReportContent() {
     }
   };
 
-  const generateParentAIReport = async () => {
+  const generateParentAIReport = async (refresh = false) => {
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      const scores = parentScores;
-      const answers = Object.entries(atqResponses).map(([id, score]) => ({
-        questionId: id,
-        score: score as number
-      }));
-      const res = await fetch('/api/llm/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userName: '양육자',
-          scores,
-          type: 'PARENT',
-          answers,
-          isPreview: !isPaid,
-          parentType: { label: parentType.label, keywords: parentType.keywords }
-        })
+      const answers = Object.entries(atqResponses).map(([id, score]) => ({ questionId: id, score: score as number }));
+      const result = await fetchReport({
+        userName: '양육자',
+        scores: parentScores, type: 'PARENT', answers,
+        isPreview: !isPaid, refresh,
+        parentType: { label: parentType.label, keywords: parentType.keywords }
       });
-      if (!res.ok) throw new Error('Report generation failed');
-      const data = await res.json();
-      setParentAiReport(data.report);
-
-      // DB 저장
-      const { childId, surveyId } = await ensureChildAndSurvey('PARENT');
-      if (user && childId && surveyId) {
-        await db.saveReport({
-          user_id: user.id,
-          child_id: childId, // Parent reports are also linked to a child
-          survey_id: surveyId,
-          type: 'PARENT',
-          analysis_json: data.report as any,
-          model_used: 'gpt-4o',
-          is_paid: isPaid
-        });
+      if (result) {
+        setParentAiReport(result.report);
+        setReportDates(prev => ({ ...prev, parent: result.createdAt }));
       }
     } catch (error) {
       console.error(error);
@@ -309,50 +257,25 @@ function ReportContent() {
     }
   };
 
-  const generateHarmonyAIReport = async () => {
+  const generateHarmonyAIReport = async (refresh = false) => {
     if (isGenerating) return;
     setIsGenerating(true);
     try {
-      // 모든 응답 통합 (양육 태도 포함)
       const answers = [
         ...Object.entries(cbqResponses),
         ...Object.entries(atqResponses),
         ...Object.entries(parentingResponses)
-      ].map(([id, score]) => ({
-        questionId: id,
-        score: score as number
-      }));
-
-      const res = await fetch('/api/llm/report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userName: intake.childName || '아이',
-          scores: childScores,
-          parentScores: parentScores,
-          type: 'HARMONY',
-          answers,
-          isPreview: false,
-          childType: { label: childType.label, keywords: childType.keywords },
-          parentType: { label: parentType.label, keywords: parentType.keywords }
-        })
+      ].map(([id, score]) => ({ questionId: id, score: score as number }));
+      const result = await fetchReport({
+        userName: intake.childName || '아이',
+        scores: childScores, parentScores, type: 'HARMONY', answers,
+        isPreview: false, refresh, styleScores,
+        childType: { label: childType.label, keywords: childType.keywords },
+        parentType: { label: parentType.label, keywords: parentType.keywords }
       });
-      if (!res.ok) throw new Error('Harmony report generation failed');
-      const data = await res.json();
-      setHarmonyAiReport(data.report);
-
-      // DB 저장 (Harmony는 우선 설문 데이터와 연결하여 'CHILD' 타입 리포트로 확장 저장)
-      const { childId, surveyId } = await ensureChildAndSurvey('PARENTING_STYLE');
-      if (user && childId && surveyId) {
-        await db.saveReport({
-          user_id: user.id,
-          child_id: childId,
-          survey_id: surveyId,
-          type: 'HARMONY', // Changed to HARMONY type
-          analysis_json: data.report as any,
-          model_used: 'gpt-4o',
-          is_paid: isPaid
-        });
+      if (result) {
+        setHarmonyAiReport(result.report);
+        setReportDates(prev => ({ ...prev, parenting: result.createdAt }));
       }
     } catch (error) {
       console.error(error);
@@ -360,12 +283,6 @@ function ReportContent() {
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const generateAIReport = async () => {
-    if (activeTab === 'child') await generateChildAIReport();
-    else if (activeTab === 'parent') await generateParentAIReport();
-    else if (activeTab === 'parenting') await generateHarmonyAIReport();
   };
 
   const childScores = useMemo(() => {
@@ -844,6 +761,22 @@ function ReportContent() {
                           ))}
                         </section>
                       )}
+
+                      {/* 분석 날짜 & 다시 분석하기 */}
+                      {reportDates.child && (
+                        <div className="flex items-center justify-between pt-4">
+                          <p className="text-[11px] text-text-sub/50">
+                            {new Date(reportDates.child).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 분석
+                          </p>
+                          <button
+                            onClick={() => { setChildAiReport(null); generateChildAIReport(true); }}
+                            disabled={isGenerating}
+                            className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
+                          >
+                            다시 분석하기
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
@@ -1007,6 +940,22 @@ function ReportContent() {
                         </p>
                       </section>
                     )}
+
+                    {/* 분석 날짜 & 다시 분석하기 */}
+                    {reportDates.parent && (
+                      <div className="flex items-center justify-between pt-4">
+                        <p className="text-[11px] text-text-sub/50">
+                          {new Date(reportDates.parent).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 분석
+                        </p>
+                        <button
+                          onClick={() => { setParentAiReport(null); generateParentAIReport(true); }}
+                          disabled={isGenerating}
+                          className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
+                        >
+                          다시 분석하기
+                        </button>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
@@ -1029,13 +978,13 @@ function ReportContent() {
                 )}
               </div>
             ) : (
-              <div className="animate-fade-in space-y-6">
-                {/* 1. 레이더 차트 - 무료 */}
-                <section className="bg-white dark:bg-surface-dark rounded-2xl px-4 pt-4 pb-2 shadow-card border border-beige-main/20 mt-2">
+              <div className="animate-fade-in space-y-5">
+                {/* 1. 레이더 차트 */}
+                <section className="bg-white dark:bg-surface-dark rounded-2xl px-4 pt-4 pb-2 shadow-card border border-beige-main/10">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="font-black text-text-main dark:text-white text-sm flex items-center gap-2">
+                    <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
                       <Icon name="analytics" size="sm" /> 기질 비교
-                    </h3>
+                    </p>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-1.5">
                         <span className="w-4 h-[2px] bg-[#3B82F6]" />
@@ -1054,177 +1003,169 @@ function ReportContent() {
 
                 {harmonyAiReport ? (
                   <>
-                    {/* 레거시 구조 감지: dynamics 필드가 있으면 기존 UI */}
+                    {/* 레거시 구조 감지: dynamics 필드가 있으면 업그레이드 유도 */}
                     {harmonyAiReport.dynamics ? (
-                      <section className="space-y-6">
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-card border border-beige-main/20 text-center space-y-4">
-                          <h4 className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.harmonyTitle}</h4>
-                          <span className="text-4xl font-black text-primary">{harmonyAiReport.compatibilityScore}%</span>
-                          <p className="text-text-sub text-[13px] leading-relaxed break-keep">{harmonyAiReport.dynamics?.description}</p>
-                          <Button
-                            onClick={() => { setHarmonyAiReport(null); }}
-                            variant="secondary"
-                            fullWidth
-                            className="h-12 rounded-2xl mt-4"
-                          >
-                            새로운 양육 가이드로 업그레이드
-                          </Button>
-                        </div>
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-card border border-beige-main/10 text-center space-y-4">
+                        <h4 className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.harmonyTitle}</h4>
+                        <span className="text-4xl font-black text-primary">{harmonyAiReport.compatibilityScore}%</span>
+                        <p className="text-text-sub text-[13px] leading-relaxed break-keep">{harmonyAiReport.dynamics?.description}</p>
+                        <Button
+                          onClick={() => { setHarmonyAiReport(null); }}
+                          variant="secondary"
+                          fullWidth
+                          className="h-12 rounded-2xl mt-4"
+                        >
+                          새로운 양육 가이드로 업그레이드
+                        </Button>
                       </section>
                     ) : (
                       <>
-                        {/* 2. 관계 카드 - 무료 */}
-                        <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-card border border-beige-main/20 text-center space-y-3">
+                        {/* 2. 관계 카드 */}
+                        <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-6 shadow-card border border-beige-main/10 text-center space-y-3">
                           <p className="text-[10px] font-black text-primary uppercase tracking-widest">Our Harmony</p>
                           <h4 className="text-2xl font-black text-text-main dark:text-white leading-tight">{harmonyAiReport.harmonyTitle}</h4>
                           <span className="inline-block text-4xl font-black text-primary">{harmonyAiReport.compatibilityScore}<span className="text-lg">%</span></span>
                           <p className="text-text-sub text-[14px] break-keep">{harmonyAiReport.oneLiner}</p>
                         </section>
 
-                        {/* 3. 상세 영역 */}
-                        <div>
-                          <div className="space-y-10">
+                        {/* 3. 핵심 기질 차이 */}
+                        {harmonyAiReport.coreGap && (
+                          <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
+                            <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                              <Icon name="compare_arrows" size="sm" /> 핵심 기질 차이
+                            </p>
+                            <div className="flex items-center justify-between bg-background-light dark:bg-background-dark rounded-xl p-4">
+                              <div className="text-center flex-1">
+                                <p className="text-[10px] font-bold text-teal-500 mb-1">아이</p>
+                                <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.childScore}</span>
+                              </div>
+                              <div className="text-center px-4">
+                                <span className="text-[11px] font-black text-text-sub px-3 py-1 rounded-full bg-white dark:bg-slate-700 shadow-sm">{harmonyAiReport.coreGap.label}</span>
+                              </div>
+                              <div className="text-center flex-1">
+                                <p className="text-[10px] font-bold text-orange-400 mb-1">양육자</p>
+                                <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.parentScore}</span>
+                              </div>
+                            </div>
+                            <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">{harmonyAiReport.coreGap.insight}</p>
+                            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                              <p className="text-primary text-[13px] font-bold break-keep">{harmonyAiReport.coreGap.reframe}</p>
+                            </div>
+                          </section>
+                        )}
 
-                            {/* 4. 핵심 기질 차이 */}
-                            {harmonyAiReport.coreGap && (
-                              <section className="bg-white dark:bg-surface-dark rounded-2xl p-7 shadow-card border border-beige-main/20 space-y-5">
-                                <h3 className="font-black text-text-main dark:text-white text-base flex items-center gap-2">
-                                  <Icon name="compare_arrows" size="sm" /> 핵심 기질 차이
-                                </h3>
-                                <div className="flex items-center justify-between bg-beige-light/50 dark:bg-slate-800 rounded-xl p-4">
-                                  <div className="text-center flex-1">
-                                    <p className="text-[10px] font-bold text-teal-500 mb-1">아이</p>
-                                    <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.childScore}</span>
+                        {/* 4. 양육 원칙 */}
+                        {harmonyAiReport.parentingPrinciples && (
+                          <section className="space-y-3">
+                            <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
+                              <Icon name="school" size="sm" /> 양육 원칙
+                            </p>
+                            {harmonyAiReport.parentingPrinciples.map((p: any, idx: number) => (
+                              <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
+                                <h4 className="font-bold text-text-main dark:text-white text-[14px]">{idx + 1}. {p.title}</h4>
+                                <p className="text-[14px] text-text-sub dark:text-slate-400 leading-relaxed break-keep">{p.why}</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="bg-green-50 dark:bg-green-900/10 rounded-lg p-3 border border-green-100">
+                                    <p className="text-[10px] font-black text-green-600 mb-1">DO</p>
+                                    <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{p.do}</p>
                                   </div>
-                                  <div className="text-center px-4">
-                                    <span className="text-[11px] font-black text-text-sub px-3 py-1 rounded-full bg-white dark:bg-slate-700 shadow-sm">{harmonyAiReport.coreGap.label}</span>
-                                  </div>
-                                  <div className="text-center flex-1">
-                                    <p className="text-[10px] font-bold text-orange-400 mb-1">양육자</p>
-                                    <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.parentScore}</span>
+                                  <div className="bg-rose-50 dark:bg-rose-900/10 rounded-lg p-3 border border-rose-100">
+                                    <p className="text-[10px] font-black text-rose-600 mb-1">DON&apos;T</p>
+                                    <p className="text-[12px] text-rose-800 dark:text-rose-300 break-keep">{p.dont}</p>
                                   </div>
                                 </div>
-                                <p className="text-text-sub text-[13px] leading-relaxed break-keep">{harmonyAiReport.coreGap.insight}</p>
-                                <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-                                  <p className="text-primary text-[13px] font-bold break-keep">{harmonyAiReport.coreGap.reframe}</p>
+                              </div>
+                            ))}
+                          </section>
+                        )}
+
+                        {/* 5. 이럴 때 이렇게 */}
+                        {harmonyAiReport.situationalTips && (
+                          <section className="space-y-3">
+                            <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
+                              <Icon name="lightbulb" size="sm" /> 이럴 때 이렇게
+                            </p>
+                            {harmonyAiReport.situationalTips.map((tip: any, idx: number) => (
+                              <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
+                                <h4 className="font-bold text-text-main dark:text-white text-[14px]">{tip.situation}</h4>
+                                <div className="bg-teal-50 dark:bg-teal-900/10 rounded-lg p-3 border border-teal-100">
+                                  <p className="text-[10px] font-black text-teal-600 mb-1">아이의 속마음</p>
+                                  <p className="text-[12px] text-teal-800 dark:text-teal-300 break-keep">{tip.childFeeling}</p>
                                 </div>
-                              </section>
-                            )}
-
-                            {/* 5. 양육 원칙 */}
-                            {harmonyAiReport.parentingPrinciples && (
-                              <section className="space-y-4">
-                                <h3 className="font-black text-text-main dark:text-white text-base flex items-center gap-2 px-1">
-                                  <Icon name="school" size="sm" /> 양육 원칙
-                                </h3>
-                                {harmonyAiReport.parentingPrinciples.map((p: any, idx: number) => (
-                                  <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl p-6 shadow-card border border-beige-main/20 space-y-3">
-                                    <h4 className="font-black text-text-main dark:text-white text-[15px]">{idx + 1}. {p.title}</h4>
-                                    <p className="text-text-sub text-[13px] leading-relaxed break-keep">{p.why}</p>
-                                    <div className="grid grid-cols-2 gap-3">
-                                      <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-3 border border-green-100">
-                                        <p className="text-[10px] font-black text-green-600 mb-1">DO</p>
-                                        <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{p.do}</p>
-                                      </div>
-                                      <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-3 border border-rose-100">
-                                        <p className="text-[10px] font-black text-rose-600 mb-1">DON&apos;T</p>
-                                        <p className="text-[12px] text-rose-800 dark:text-rose-300 break-keep">{p.dont}</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </section>
-                            )}
-
-                            {/* 6. 이럴 때 이렇게 */}
-                            {harmonyAiReport.situationalTips && (
-                              <section className="space-y-4">
-                                <h3 className="font-black text-text-main dark:text-white text-base flex items-center gap-2 px-1">
-                                  <Icon name="lightbulb" size="sm" /> 이럴 때 이렇게
-                                </h3>
-                                {harmonyAiReport.situationalTips.map((tip: any, idx: number) => (
-                                  <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl p-6 shadow-card border border-beige-main/20 space-y-4">
-                                    <h4 className="font-black text-text-main dark:text-white text-[14px]">{tip.situation}</h4>
-                                    <div className="bg-teal-50 dark:bg-teal-900/10 rounded-xl p-3 border border-teal-100">
-                                      <p className="text-[10px] font-black text-teal-600 mb-1">아이의 속마음</p>
-                                      <p className="text-[12px] text-teal-800 dark:text-teal-300 break-keep">{tip.childFeeling}</p>
-                                    </div>
-                                    <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-3 border border-amber-100">
-                                      <p className="text-[10px] font-black text-amber-600 mb-1">빠지기 쉬운 반응</p>
-                                      <p className="text-[12px] text-amber-800 dark:text-amber-300 break-keep">{tip.parentTrap}</p>
-                                    </div>
-                                    <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-3 border border-green-100">
-                                      <p className="text-[10px] font-black text-green-600 mb-1">이렇게 해보세요</p>
-                                      <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{tip.betterResponse}</p>
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                                      <p className="text-[13px] text-text-main dark:text-white font-bold italic break-keep">&ldquo;{tip.script}&rdquo;</p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </section>
-                            )}
-
-                            {/* 7. 양육 스타일 진단 */}
-                            {harmonyAiReport.parentingAudit && (
-                              <section className="bg-slate-900 rounded-2xl p-8 shadow-xl space-y-5 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-16 -mt-16"></div>
-                                <div className="relative z-10">
-                                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Parenting Style</p>
-                                  <div className="flex items-center gap-3 mb-4">
-                                    <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[12px] font-black">{harmonyAiReport.parentingAudit.currentStyle}</span>
-                                  </div>
-                                  <p className="text-slate-300 text-[13px] leading-relaxed break-keep mb-4">{harmonyAiReport.parentingAudit.evaluation}</p>
-                                  <div className="bg-white/5 rounded-xl p-5 border border-white/10">
-                                    <p className="text-[10px] font-black text-primary mb-2">조절 포인트</p>
-                                    <p className="text-white/80 text-[13px] leading-relaxed break-keep">{harmonyAiReport.parentingAudit.adjustment}</p>
-                                  </div>
+                                <div className="bg-amber-50 dark:bg-amber-900/10 rounded-lg p-3 border border-amber-100">
+                                  <p className="text-[10px] font-black text-amber-600 mb-1">빠지기 쉬운 반응</p>
+                                  <p className="text-[12px] text-amber-800 dark:text-amber-300 break-keep">{tip.parentTrap}</p>
                                 </div>
-                              </section>
-                            )}
+                                <div className="bg-green-50 dark:bg-green-900/10 rounded-lg p-3 border border-green-100">
+                                  <p className="text-[10px] font-black text-green-600 mb-1">이렇게 해보세요</p>
+                                  <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{tip.betterResponse}</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                                  <p className="text-[13px] text-text-main dark:text-white font-bold italic break-keep">&ldquo;{tip.script}&rdquo;</p>
+                                </div>
+                              </div>
+                            ))}
+                          </section>
+                        )}
 
-                            {/* 8. 오늘의 한 마디 */}
-                            {harmonyAiReport.dailyReminder && (
-                              <section className="text-center py-8 px-6">
-                                <div className="text-4xl mb-4">📌</div>
-                                <p className="text-text-main dark:text-white text-xl font-black leading-snug break-keep max-w-[300px] mx-auto">
-                                  &ldquo;{harmonyAiReport.dailyReminder}&rdquo;
-                                </p>
-                                <p className="text-text-sub text-[11px] mt-3">냉장고에 붙여두세요</p>
-                              </section>
-                            )}
-                          </div>
+                        {/* 6. 양육 스타일 진단 */}
+                        {harmonyAiReport.parentingAudit && (
+                          <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
+                            <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                              <Icon name="tune" size="sm" /> 양육 스타일 진단
+                            </p>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[12px] font-black">{harmonyAiReport.parentingAudit.currentStyle}</span>
+                            </div>
+                            <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">{harmonyAiReport.parentingAudit.evaluation}</p>
+                            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                              <p className="text-[11px] font-black text-primary mb-1">조절 포인트</p>
+                              <p className="text-[13px] text-text-main dark:text-slate-300 leading-relaxed break-keep">{harmonyAiReport.parentingAudit.adjustment}</p>
+                            </div>
+                          </section>
+                        )}
 
-                        </div>
+                        {/* 7. 오늘의 한 마디 */}
+                        {harmonyAiReport.dailyReminder && (
+                          <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-8 shadow-card border border-beige-main/10 text-center space-y-3">
+                            <p className="text-[12px] font-black text-primary flex items-center justify-center gap-1.5">
+                              <Icon name="bookmark" size="sm" /> 오늘의 한 마디
+                            </p>
+                            <p className="text-text-main dark:text-white text-[16px] font-black leading-snug break-keep">
+                              &ldquo;{harmonyAiReport.dailyReminder}&rdquo;
+                            </p>
+                            <p className="text-text-sub text-[11px]">냉장고에 붙여두세요</p>
+                          </section>
+                        )}
                       </>
+                    )}
+
+                    {/* 분석 날짜 & 다시 분석하기 */}
+                    {reportDates.parenting && (
+                      <div className="flex items-center justify-between pt-4">
+                        <p className="text-[11px] text-text-sub/50">
+                          {new Date(reportDates.parenting).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 분석
+                        </p>
+                        <button
+                          onClick={() => { setHarmonyAiReport(null); generateHarmonyAIReport(true); }}
+                          disabled={isGenerating}
+                          className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
+                        >
+                          다시 분석하기
+                        </button>
+                      </div>
                     )}
                   </>
                 ) : (
-                  <section className="bg-white dark:bg-surface-dark rounded-2xl p-10 text-center space-y-6 shadow-card border border-beige-main/20">
-                    <div className="w-20 h-20 mx-auto bg-primary/5 rounded-full flex items-center justify-center text-3xl">
-                      🤝
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-text-main dark:text-white">기질 맞춤 양육 가이드</h4>
-                      <p className="text-sm text-text-sub leading-relaxed break-keep">
-                        아이와 양육자의 기질 조합에 맞는<br />
-                        양육 원칙과 구체적인 팁을 제공합니다.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={generateHarmonyAIReport}
-                      variant="primary"
-                      fullWidth
-                      className="h-14 rounded-2xl"
-                      disabled={isGenerating}
-                    >
-                      {isGenerating ? '맞춤 양육 가이드 생성 중...' : '맞춤 양육 가이드 생성하기'}
-                    </Button>
-                  </section>
+                  <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
+                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                    <p className="text-text-sub text-sm font-bold">맞춤 양육 가이드를 생성하고 있어요...</p>
+                    <p className="text-text-sub/60 text-[12px]">잠시만 기다려주세요</p>
+                  </div>
                 )}
 
                 {/* Footer Actions & App Nudge */}
-                <div className="space-y-8 pt-10 pb-16">
+                {harmonyAiReport && <div className="space-y-8 pt-10 pb-16">
                   {/* App Download Nudge - 프리미엄 경험 강조 */}
                   <div className="px-2">
                     <div className="bg-gradient-to-br from-slate-900 to-indigo-900 rounded-[3rem] p-8 text-center relative overflow-hidden shadow-2xl">
@@ -1266,7 +1207,7 @@ function ReportContent() {
                       홈으로 돌아가기
                     </Link>
                   </div>
-                </div>
+                </div>}
               </div>
             )}
           </div>
