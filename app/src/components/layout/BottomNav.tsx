@@ -8,9 +8,9 @@ export default function BottomNav() {
 
     const navItems = [
         { href: '/', label: '홈', icon: 'home' },
-        { href: '/report', label: '분석', icon: 'lab_profile' },
-        { href: '/consult', label: '상담', icon: 'add', isCenter: true },
         { href: '/record', label: '관찰일지', icon: 'edit_note' },
+        { href: '/consult', label: '상담', icon: 'add', isCenter: true },
+        { href: '/records', label: '기록', icon: 'folder_open' },
         { href: '/settings/profile', label: '내 정보', icon: 'person' },
     ];
 
@@ -27,6 +27,7 @@ export default function BottomNav() {
                                     {isActive ? 'chat_bubble' : 'add'}
                                 </span>
                             </div>
+                            <span className="absolute -bottom-[26px] text-[10px] font-bold text-primary">{item.label}</span>
                         </Link>
                     );
                 }

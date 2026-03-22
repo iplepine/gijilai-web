@@ -7,7 +7,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import BottomNav from '@/components/layout/BottomNav';
 import LandingPage from '@/components/landing/LandingPage';
-import { db, UserProfile, ChildProfile, ReportData, SurveyData } from '@/lib/db';
+import { db, UserProfile, ChildProfile, ReportData, SurveyData, ObservationData } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
@@ -28,6 +29,9 @@ export default function HomePage() {
   const [uploading, setUploading] = useState(false);
   const [showSurveyIntro, setShowSurveyIntro] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [todayHasObservation, setTodayHasObservation] = useState(false);
+  const [magicWords, setMagicWords] = useState<{ word: string; date: string; childName?: string }[]>([]);
+  const [magicWordIndex, setMagicWordIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Gardening State
@@ -128,12 +132,37 @@ export default function HomePage() {
       }
 
       try {
-        const data = await db.getDashboardData(user.id);
+        const [data, observations, { data: recentConsult }] = await Promise.all([
+          db.getDashboardData(user.id),
+          db.getRecentObservations(user.id, 1),
+          supabase
+            .from('consultations')
+            .select('ai_prescription, created_at, child_id')
+            .eq('user_id', user.id)
+            .eq('status', 'COMPLETED')
+            .order('created_at', { ascending: false })
+            .limit(10),
+        ]);
         setProfile(data.profile);
         setChildren(data.children);
         setReports(data.reports);
         setLatestSurvey(data.latestSurvey);
         setParentSurvey(data.parentSurvey);
+
+        // 오늘 관찰일지 작성 여부
+        const today = new Date().toISOString().slice(0, 10);
+        const hasToday = observations.some((o: ObservationData) => o.created_at.slice(0, 10) === today);
+        setTodayHasObservation(hasToday);
+
+        // 최근 상담 마법의 한마디들
+        const words = (recentConsult || [])
+          .filter((c: any) => c.ai_prescription?.magicWord)
+          .map((c: any) => ({
+            word: c.ai_prescription.magicWord,
+            date: c.created_at,
+            childName: data.children.find((ch: ChildProfile) => ch.id === c.child_id)?.name,
+          }));
+        setMagicWords(words);
 
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
@@ -205,32 +234,8 @@ export default function HomePage() {
     }
   };
 
-  // Loading state (Enhanced Splash Screen)
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background-light dark:bg-background-dark">
-        <div className="relative mb-8">
-          <div className="absolute inset-0 bg-primary/10 rounded-full blur-3xl animate-pulse scale-150"></div>
-          <img
-            src="/gijilai_icon.png"
-            alt="기질아이"
-            className="w-24 h-24 relative z-10 animate-bounce-subtle object-contain drop-shadow-xl"
-          />
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="text-2xl font-logo text-primary dark:text-white tracking-widest">기질아이</h1>
-          <div className="flex gap-1.5 mt-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary/20 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-primary/20 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-            <span className="w-1.5 h-1.5 rounded-full bg-primary/20 animate-bounce" style={{ animationDelay: '300ms' }}></span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Not logged in state
-  if (!user) {
+  // Not logged in state (only after auth check completes)
+  if (!authLoading && !user) {
     return <LandingPage />;
   }
 
@@ -347,59 +352,7 @@ export default function HomePage() {
 
               {/* 기능 카드 리스트 */}
               <div className="px-6 flex flex-col gap-5 mt-8">
-                {/* 기질 검사 / 재검사 버튼 */}
-                <div className={`${cooldownStatus.isAvailable ? 'bg-primary' : 'bg-slate-200 dark:bg-surface-dark'} rounded-2xl p-6 shadow-card relative overflow-hidden mb-2 transition-colors`}>
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex flex-col gap-1">
-                        <span className={`text-white/80 text-[10px] font-bold ${cooldownStatus.isAvailable ? 'bg-white/10' : 'bg-black/10'} px-2 py-1 rounded inline-block w-fit uppercase tracking-wider`}>
-                          {temperamentInfo?.child ? 'Temperament Audit' : 'Initial Audit'}
-                        </span>
-                        <h3 className="text-xl font-bold text-white leading-snug tracking-tight">
-                          {temperamentInfo?.child ? '우리아이 기질 재검사' : '우리아이 기질 검사'}
-                        </h3>
-                      </div>
-                      {!cooldownStatus.isAvailable && (
-                        <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[14px] text-white">timer</span>
-                          <span className="text-[11px] font-bold text-white">
-                            {cooldownStatus.remainingDays ? `${cooldownStatus.remainingDays}일 후` : `${cooldownStatus.remainingHours}시간 후`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-white/90 mb-6 break-keep leading-relaxed">
-                      {temperamentInfo?.child 
-                        ? (cooldownStatus.isAvailable 
-                            ? '아이의 기질은 성장하며 조금씩 변합니다. 지금의 모습을 다시 체크해보세요.'
-                            : '아이의 변화를 관찰할 시간이 필요해요. 다음 검사 가능 시까지 기다려주세요.')
-                        : '기질아이의 과학적인 기질 검사를 시작해보세요.'
-                      }
-                    </p>
-                    
-                    {cooldownStatus.isAvailable ? (
-                      <button
-                        onClick={() => {
-                          resetSurveyOnly();
-                          useSurveyStore.getState().resetSurvey();
-                          router.push('/survey/intro');
-                        }}
-                        className="w-full py-4 rounded-xl bg-white text-primary font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                      >
-                        <span>{temperamentInfo?.child ? '재검사 시작하기' : '검사 시작하기'}</span>
-                        <span className="material-symbols-outlined text-[18px]">play_arrow</span>
-                      </button>
-                    ) : (
-                      <div className="w-full py-4 rounded-xl bg-white/20 text-white/60 font-bold text-sm flex items-center justify-center gap-2 border border-white/10">
-                        <span className="material-symbols-outlined text-[18px]">lock</span>
-                        <span>{cooldownStatus.remainingDays ? '무료 재검사 대기 중' : '하루 1회 제한 중'}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 나머지 카드들 */}
+                {/* 기능 카드들 */}
                 {(!parentSurvey && Object.keys(atqResponses).length < PARENT_QUESTIONS.length) && temperamentInfo?.child && (
                   <div className="bg-secondary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-2">
                     <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -421,48 +374,100 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {temperamentInfo?.child && (
-                  <>
-                    <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-6 shadow-soft border border-primary/10 dark:border-primary/50 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                      <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-[14px] bg-secondary flex items-center justify-center text-white shadow-md shadow-secondary/30">
-                            <span className="material-symbols-outlined">chat_bubble</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-bold text-secondary mb-0.5 mt-1">기질아이 맞춤 상담</span>
-                            <h3 className="text-lg font-bold text-text-main dark:text-white leading-tight">마음 통역소</h3>
-                          </div>
+                {/* 마법의 한마디 캐러셀 */}
+                {magicWords.length > 0 && (
+                  <div
+                    className="bg-[#519E8A] rounded-2xl p-5 text-white relative overflow-hidden select-none"
+                    style={{ touchAction: 'pan-y' }}
+                    onTouchStart={(e) => {
+                      e.currentTarget.dataset.startX = String(e.touches[0].clientX);
+                      e.currentTarget.dataset.startY = String(e.touches[0].clientY);
+                    }}
+                    onTouchMove={(e) => {
+                      const startX = Number(e.currentTarget.dataset.startX);
+                      const startY = Number(e.currentTarget.dataset.startY);
+                      const dx = Math.abs(e.touches[0].clientX - startX);
+                      const dy = Math.abs(e.touches[0].clientY - startY);
+                      if (dx > dy && dx > 10) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      const startX = Number(e.currentTarget.dataset.startX);
+                      const endX = e.changedTouches[0].clientX;
+                      const diff = startX - endX;
+                      if (Math.abs(diff) > 40) {
+                        if (diff > 0 && magicWordIndex < magicWords.length - 1) {
+                          setMagicWordIndex(i => i + 1);
+                        } else if (diff < 0 && magicWordIndex > 0) {
+                          setMagicWordIndex(i => i - 1);
+                        }
+                      }
+                    }}
+                  >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                          <span className="text-[13px] font-black">오늘의 마법의 한마디</span>
                         </div>
-                        <p className="text-sm text-text-sub dark:text-gray-300 mb-6 leading-relaxed">
-                          아이의 행동 뒤에 숨겨진 마음을 통역해드릴게요.
-                        </p>
-                        <Link href="/consult">
-                          <button className="w-full bg-secondary py-4 rounded-xl text-white font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                            <span>상담 시작하기</span>
-                            <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                          </button>
-                        </Link>
+                        {magicWords.length > 1 && (
+                          <span className="text-[11px] text-white/60 font-medium">{magicWordIndex + 1} / {magicWords.length}</span>
+                        )}
                       </div>
+                      <p key={magicWordIndex} className="text-[16px] font-medium leading-relaxed mb-2 animate-in fade-in duration-300">
+                        &ldquo;{magicWords[magicWordIndex].word}&rdquo;
+                      </p>
+                      <p className="text-[11px] text-white/60">
+                        {new Date(magicWords[magicWordIndex].date).toLocaleDateString('ko-KR')}
+                        {magicWords[magicWordIndex].childName && ` · ${magicWords[magicWordIndex].childName}`}
+                      </p>
+                      {magicWords.length > 1 && (
+                        <div className="flex justify-center gap-1.5 mt-3">
+                          {magicWords.map((_, i) => (
+                            <div key={i} className={`h-1.5 rounded-full transition-all ${i === magicWordIndex ? 'bg-white w-4' : 'bg-white/30 w-1.5'}`} />
+                          ))}
+                        </div>
+                      )}
                     </div>
+                  </div>
+                )}
 
-                    <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-5 shadow-soft border border-primary/10 dark:border-primary/50 flex justify-between items-center gap-4">
+                {/* 관찰일지 유도 카드 */}
+                {!todayHasObservation && (
+                  <Link href="/record" className="block">
+                    <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-5 shadow-soft border border-[#EACCA4]/30 active:scale-[0.99] transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <span className="material-symbols-outlined text-[20px]">description</span>
+                        <div className="w-10 h-10 rounded-full bg-[#EACCA4]/15 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[20px] text-[#D08B5B]">edit_note</span>
                         </div>
-                        <div>
-                          <h3 className="text-[15px] font-bold text-text-main dark:text-white">기질 분석 리포트</h3>
-                          <p className="text-[11px] text-text-sub dark:text-gray-400">우리아이&양육자 상세 결과</p>
+                        <div className="flex-1">
+                          <h3 className="text-[14px] font-bold text-text-main dark:text-white">오늘의 관찰일지</h3>
+                          <p className="text-[11px] text-text-sub dark:text-gray-400">오늘 아이와 있었던 순간을 기록해보세요</p>
                         </div>
+                        <span className="material-symbols-outlined text-[18px] text-[#D08B5B]/50">arrow_forward</span>
                       </div>
-                      <Link href="/report">
-                        <button className="px-4 py-2.5 rounded-xl bg-primary/5 text-primary font-bold text-[12px] border border-primary/10">결과 보기</button>
-                      </Link>
                     </div>
+                  </Link>
+                )}
 
-                  </>
+                {/* 기질 분석 리포트 */}
+                {temperamentInfo?.child && (
+                  <div className="bg-white dark:bg-surface-dark/50 rounded-2xl p-5 shadow-soft border border-primary/10 dark:border-primary/50 flex justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined text-[20px]">description</span>
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-bold text-text-main dark:text-white">기질 분석 리포트</h3>
+                        <p className="text-[11px] text-text-sub dark:text-gray-400">우리아이&양육자 상세 결과</p>
+                      </div>
+                    </div>
+                    <Link href="/report">
+                      <button className="px-4 py-2.5 rounded-xl bg-primary/5 text-primary font-bold text-[12px] border border-primary/10">결과 보기</button>
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

@@ -9,7 +9,7 @@ export function BottomNavigation() {
 
     const leftNavItems = [
         { label: 'HOME', icon: 'home', path: '/' },
-        { label: 'ANALYSIS', icon: 'content_paste_search', path: '/analysis' },
+        { label: 'RECORDS', icon: 'folder_open', path: '/records' },
     ];
 
     const rightNavItems = [
