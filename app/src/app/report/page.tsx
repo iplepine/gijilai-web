@@ -50,7 +50,8 @@ function ReportContent() {
 
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
-  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid } = useAppStore();
+  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, setIsPaid } = useAppStore();
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
   const [childAiReport, setChildAiReport] = useState<any>(null);
   const [parentAiReport, setParentAiReport] = useState<any>(null);
@@ -76,7 +77,7 @@ function ReportContent() {
     } else if (!tabParam) {
       // 기본 탭: 양육태도 설문까지 완료 시 기질맞춤양육, 아니면 아이진단
       const styleComplete = PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
-      setActiveTab(styleComplete ? 'parenting' : 'child');
+      setActiveTab('child');
     }
   }, [tabParam, parentingResponses]);
 
@@ -151,17 +152,13 @@ function ReportContent() {
   }, [isChildOnly, reportId]);
 
   // 결제 완료 시 프리미엄 리포트 재생성
+  // 아이 진단 탭 진입 시 리포트가 없으면 자동 생성
   useEffect(() => {
-    if (isPaid && !isGenerating && !reportId) {
-      if (activeTab === 'child' && childAiReport && !childAiReport.solutions) { // 요약본에는 solutions가 없음
-        generateChildAIReport();
-      } else if (activeTab === 'parent' && parentAiReport && !parentAiReport.solutions) {
-        generateParentAIReport();
-      } else if (activeTab === 'parenting' && harmonyAiReport && !harmonyAiReport.actionPlans) {
-        generateHarmonyAIReport();
-      }
+    const hasCbq = Object.keys(cbqResponses).length > 0 || !!savedChildScores;
+    if (!isGenerating && !reportId && hasCbq && !childAiReport) {
+      generateChildAIReport();
     }
-  }, [isPaid]);
+  }, [cbqResponses, savedChildScores, childAiReport]);
 
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
@@ -224,12 +221,13 @@ function ReportContent() {
       const res = await fetch('/api/llm/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userName: intake.childName || '아이', 
-          scores, 
-          type: 'CHILD', 
+        body: JSON.stringify({
+          userName: intake.childName || '아이',
+          scores,
+          type: 'CHILD',
           answers,
-          isPreview: !isPaid
+          isPreview: !isPaid,
+          childType: { label: childType.label, keywords: childType.keywords, desc: childType.desc }
         })
       });
       if (!res.ok) throw new Error('Report generation failed');
@@ -325,7 +323,9 @@ function ReportContent() {
           parentScores: parentScores,
           type: 'HARMONY',
           answers,
-          isPreview: !isPaid
+          isPreview: false,
+          childType: { label: childType.label, keywords: childType.keywords },
+          parentType: { label: parentType.label, keywords: parentType.keywords }
         })
       });
       if (!res.ok) throw new Error('Harmony report generation failed');
@@ -420,21 +420,20 @@ function ReportContent() {
       {
         label: TCI_TERMINOLOGY.REPORT.CHILD_NAME,
         data: [childScores.NS, childScores.HA, childScores.RD, childScores.P],
-        backgroundColor: 'rgba(78, 205, 196, 0.2)',
-        borderColor: '#4ECDC4',
-        borderWidth: 3,
-        pointBackgroundColor: '#4ECDC4',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+        borderColor: '#3B82F6',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#3B82F6',
         pointRadius: 4,
       },
       {
         label: TCI_TERMINOLOGY.REPORT.PARENT_NAME,
         data: [parentScores.NS, parentScores.HA, parentScores.RD, parentScores.P],
-        backgroundColor: 'rgba(255, 107, 107, 0.1)',
-        borderColor: '#FF6B6B',
+        backgroundColor: 'rgba(249, 115, 22, 0.12)',
+        borderColor: '#F97316',
         borderWidth: 2,
-        pointBackgroundColor: '#FF6B6B',
-        pointRadius: 0,
-        borderDash: [5, 5],
+        pointBackgroundColor: '#F97316',
+        pointRadius: 4,
       },
     ],
   };
@@ -454,10 +453,7 @@ function ReportContent() {
       },
     },
     plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: { boxWidth: 12, font: { size: 12, weight: 'bold' as const } }
-      }
+      legend: { display: false }
     }
   };
 
@@ -544,6 +540,14 @@ function ReportContent() {
                 >
                   <Icon name="arrow_back" size="sm" />
                 </button>
+                {isLocalhost && (
+                  <button
+                    onClick={() => setIsPaid(!isPaid)}
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-black backdrop-blur-sm border transition-colors ${isPaid ? 'bg-green-500/80 text-white border-green-400' : 'bg-red-500/80 text-white border-red-400'}`}
+                  >
+                    {isPaid ? 'PAID' : 'FREE'}
+                  </button>
+                )}
               </div>
 
               <div key={activeTab} className="animate-in fade-in duration-500">
@@ -576,19 +580,8 @@ function ReportContent() {
 
             {/* Tab Switcher - 아이 리포트 선공 모드에서는 숨김 */}
             {!isChildOnly && (
-              <div className="bg-white dark:bg-surface-dark px-6 pt-6 pb-2 -mt-6 rounded-t-3xl relative z-10">
-                <div className="bg-white p-1 rounded-2xl flex gap-1 border border-beige-main/20 shadow-lg">
-                  <button
-                    onClick={() => {
-                      if (isStyleSurveyComplete) handleTabChange('parenting');
-                      else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
-                        router.replace('/survey?type=STYLE');
-                      }
-                    }}
-                    className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
-                  >
-                    기질 맞춤 양육
-                  </button>
+              <div className="dark:bg-surface-dark px-6 pt-6 pb-2 -mt-6 rounded-t-3xl relative z-10" style={{ backgroundColor: 'var(--background-light)' }}>
+                <div className="p-1 rounded-2xl flex gap-1 border border-beige-main/20 shadow-sm" style={{ backgroundColor: 'var(--background-light)' }}>
                   <button
                     onClick={() => handleTabChange('child')}
                     className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
@@ -606,34 +599,45 @@ function ReportContent() {
                   >
                     양육자 분석
                   </button>
+                  <button
+                    onClick={() => {
+                      if (isStyleSurveyComplete) handleTabChange('parenting');
+                      else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                        router.replace('/survey?type=STYLE');
+                      }
+                    }}
+                    className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main hover:bg-beige-light/50'}`}
+                  >
+                    기질 맞춤 양육
+                  </button>
                 </div>
               </div>
             )}
 
             {/* 유형 정보 */}
-            <div key={`info-${activeTab}`} className={`bg-white dark:bg-surface-dark text-center px-6 ${!isChildOnly ? 'pt-4' : 'pt-8 -mt-6 rounded-t-3xl'} pb-4 space-y-3 relative z-10 animate-in fade-in duration-500`}>
+            <div key={`info-${activeTab}`} className={`dark:bg-surface-dark text-center px-6 ${!isChildOnly ? 'pt-4' : 'pt-8 -mt-6 rounded-t-3xl'} pb-4 space-y-3 relative z-10 animate-in fade-in duration-500`} style={{ backgroundColor: 'var(--background-light)' }}>
               {activeTab === 'child' ? (
                 <>
                   <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}의 기질 유형</p>
                   <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
-                    {childAiReport?.title?.split(':')[1]?.trim() || childType.label}
+                    {childType.label}
                   </h1>
                   <div className="flex items-center justify-center gap-2 flex-wrap">
                     {childType.keywords.map((kw: string) => (
-                      <span key={kw} className="px-3 py-1 rounded-full bg-primary/8 text-primary text-[12px] font-bold">#{kw}</span>
+                      <span key={kw} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[12px] font-bold">#{kw}</span>
                     ))}
                   </div>
                   <p className="text-text-sub text-[13px] break-keep">{childType.desc}</p>
                 </>
               ) : activeTab === 'parent' ? (
                 <>
-                  <p className="text-text-sub text-sm font-medium">양육자의 양육 기질</p>
+                  <p className="text-text-sub text-sm font-medium">양육자의 기질 유형</p>
                   <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
                     {parentType.label}
                   </h1>
                   <div className="flex items-center justify-center gap-2 flex-wrap">
                     {parentType.keywords.map((kw: string) => (
-                      <span key={kw} className="px-3 py-1 rounded-full bg-caregiver/10 text-caregiver text-[12px] font-bold">#{kw}</span>
+                      <span key={kw} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[12px] font-bold">#{kw}</span>
                     ))}
                   </div>
                   <p className="text-text-sub text-[13px] break-keep">{parentType.desc}</p>
@@ -684,245 +688,164 @@ function ReportContent() {
                 </div>
               ) : (
                 <>
-                  {/* 아이-양육자 기질 궁합 */}
-                  <div className="space-y-4">
-                    <h3 className="px-2 text-[13px] font-black text-text-sub flex items-center gap-2">
-                      <Icon name="diversity_3" size="sm" /> 아이와 나의 기질 궁합
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Child Card */}
-                      <section className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-card border border-teal-100/50 relative overflow-hidden">
-                        <div className="flex items-center gap-2 mb-3">
-                          <img src={childType.image} alt={childType.label} className="w-10 h-10 rounded-xl object-cover" />
-                          <span className="text-[9px] font-black text-teal-500 uppercase tracking-widest">아이</span>
-                        </div>
-                        <h4 className="text-[13px] font-black text-text-main dark:text-white leading-tight break-keep">{childType.label}</h4>
-                        <p className="text-[11px] text-text-sub dark:text-slate-400 leading-snug break-keep mt-1.5">
-                          {childType.desc}
+                  {childAiReport ? (
+                    <div className="space-y-5 animate-fade-in">
+                      {/* 1. 아이나의 한마디 */}
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
+                        <p className="text-[12px] font-black text-primary mb-2.5 flex items-center gap-1.5">
+                          <Icon name="chat_bubble" size="sm" /> 아이나의 한마디
+                        </p>
+                        <p className="text-[15px] text-text-main dark:text-slate-300 leading-[1.85] break-keep">
+                          {childAiReport.intro}
                         </p>
                       </section>
 
-                      {/* Parent Card */}
-                      <section className="bg-white dark:bg-surface-dark rounded-2xl p-5 shadow-card border border-orange-100/50 relative overflow-hidden">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
-                            <Icon name="person" size="sm" />
-                          </div>
-                          <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">양육자</span>
-                        </div>
-                        <h4 className="text-[13px] font-black text-text-main dark:text-white leading-tight break-keep">{parentReport?.soilName || '양육자'}</h4>
-                        <p className="text-[11px] text-text-sub dark:text-slate-400 leading-snug break-keep mt-1.5 line-clamp-3">
-                          {parentReport?.analysis || ''}
+                      {/* 2. 기질 점수 카드 */}
+                      <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-6 shadow-card border border-beige-main/10 space-y-5">
+                        <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                          <Icon name="bar_chart" size="sm" /> {intake.childName || '아이'}의 기질 점수
                         </p>
-                      </section>
-                    </div>
-                  </div>
-
-                  {/* AI 심층 분석 리포트 (JSON 기반 렌더링) */}
-                  <section className="space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                      <h3 className="font-black text-text-main dark:text-white text-xl flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">✨</span>
-                        AI 전문가 심층 리포트
-                      </h3>
-                    </div>
-
-                    {childAiReport ? (
-                      <div className="relative group space-y-8">
-                        {/* 1. 무료 공개 섹션: 별명, 서문, 핵심 분석 */}
-                        <div className="space-y-8 animate-fade-in-up">
-                          <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-card border-t-8 border-primary relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl italic font-black uppercase tracking-tighter pointer-events-none">Insight</div>
-                            <h4 className="text-2xl font-black text-text-main dark:text-white mb-4 leading-tight">
-                              {childAiReport.title}
-                            </h4>
-                            <p className="text-sm text-text-sub dark:text-slate-400 leading-relaxed break-keep font-medium">
-                              {childAiReport.intro}
-                            </p>
-                          </div>
-
-                          <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-card space-y-4">
-                            <div className="inline-flex px-3 py-1 rounded-full bg-indigo-50 text-indigo-500 text-[10px] font-black uppercase tracking-widest">Core Analysis</div>
-                            <p className="text-[14px] text-text-main dark:text-text-sub leading-relaxed break-keep whitespace-pre-wrap">
-                              {childAiReport.analysis?.summary}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* 2. 유료 리필 섹션: 시크릿 하트, 양육 팁, 스크립트 등 */}
-                        <div className={`space-y-8 transition-all duration-1000 ${!isPaid ? 'blur-xl grayscale opacity-40 pointer-events-none select-none' : ''}`}>
-                          {/* 시크릿 하트 */}
-                          <div className="bg-indigo-900 rounded-[2.5rem] p-8 shadow-xl space-y-4 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl -mr-16 -mt-16"></div>
-                            <div className="inline-flex px-3 py-1 rounded-full bg-white/10 text-white/80 text-[10px] font-black uppercase tracking-widest">Secret Heart</div>
-                            <h5 className="text-white font-bold">아이의 숨겨진 목소리</h5>
-                            <p className="text-[14px] text-indigo-100 leading-relaxed break-keep whitespace-pre-wrap italic">
-                              {childAiReport.analysis?.insight}
-                            </p>
-                          </div>
-
-                          {/* 양육 팁 */}
-                          <div className="space-y-4">
-                            <h5 className="text-sm font-black text-text-sub px-4 uppercase tracking-[0.2em]">Parenting Solutions</h5>
-                            {childAiReport.parentingTips?.map((tip: any, idx: number) => (
-                              <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl p-6 shadow-card border border-beige-main/20">
-                                <h6 className="font-bold text-text-main dark:text-white mb-3 flex items-center gap-2 text-sm">
-                                  <span className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs">{idx + 1}</span>
-                                  {tip.situation}
-                                </h6>
-                                <ul className="space-y-2">
-                                  {tip.tips?.map((t: string, i: number) => (
-                                    <li key={i} className="text-[13px] text-text-sub dark:text-slate-400 flex gap-2">
-                                      <span className="text-primary mt-1 shrink-0">•</span>
-                                      <span className="leading-snug break-keep">{t}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* 실전 스크립트 */}
-                          <div className="bg-beige-light dark:bg-surface-dark rounded-2xl p-8 space-y-6 relative overflow-hidden">
-                            <div className="flex items-center justify-between">
-                              <h5 className="text-sm font-black text-text-sub uppercase tracking-widest">Magic Scripts</h5>
-                              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">PREMIUM</span>
-                            </div>
-                            <div className="space-y-4">
-                              {childAiReport.scripts?.slice(0, 1).map((s: any, idx: number) => (
-                                <div key={idx} className="bg-white dark:bg-background-dark p-5 rounded-2xl shadow-sm border-l-4 border-primary">
-                                  <span className="text-[10px] font-bold text-text-sub block mb-1">{s.situation}</span>
-                                  <p className="text-[15px] font-black text-primary mb-2">"{s.script}"</p>
-                                  <p className="text-[11px] text-text-sub">{s.guide}</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {([
+                            { key: 'NS', label: '자극 추구', color: '#E5A150', desc: '새로운 것에 끌리는 정도' },
+                            { key: 'HA', label: '위험 회피', color: '#6B9E8A', desc: '조심하고 경계하는 정도' },
+                            { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', desc: '타인 반응에 민감한 정도' },
+                            { key: 'P', label: '인내력', color: '#D4805E', desc: '꾸준히 해내는 정도' },
+                          ] as const).map(dim => {
+                            const score = childScores[dim.key as keyof typeof childScores];
+                            return (
+                              <div key={dim.key} className="bg-background-light dark:bg-background-dark rounded-xl p-4 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-text-sub">{dim.label}</span>
+                                  <span className="text-[16px] font-black" style={{ color: dim.color }}>{score}</span>
                                 </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* 카톡 공유 메시지 */}
-                          {childAiReport.shareText && (
-                            <div className="bg-[#FAE100]/10 rounded-2xl p-6 border border-[#FAE100]/30">
-                              <div className="flex items-center gap-2 mb-3">
-                                <span className="text-lg">💬</span>
-                                <span className="text-xs font-bold text-[#3C1E1E]">배우자에게 공유하기 지침</span>
+                                <div className="w-full h-2 bg-white dark:bg-slate-700 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${score}%`, backgroundColor: dim.color }} />
+                                </div>
+                                <p className="text-[10px] text-text-sub leading-tight">{dim.desc}</p>
                               </div>
-                              <p className="text-[12px] text-[#3C1E1E]/80 leading-relaxed font-medium">
-                                {childAiReport.shareText}
+                            );
+                          })}
+                        </div>
+                      </section>
+
+                      {/* 3. 기질 요소별 해석 */}
+                      {childAiReport.analysis?.dimensions && (
+                        <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
+                          <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                            <Icon name="psychology" size="sm" /> 기질 요소별 해석
+                          </p>
+                          {([
+                            { key: 'NS', label: '자극 추구', color: '#E5A150', icon: '🔥' },
+                            { key: 'HA', label: '위험 회피', color: '#6B9E8A', icon: '🛡️' },
+                            { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', icon: '💙' },
+                            { key: 'P', label: '인내력', color: '#D4805E', icon: '⏳' },
+                          ] as const).map(dim => {
+                            const text = (childAiReport.analysis?.dimensions as any)?.[dim.key];
+                            if (!text) return null;
+                            return (
+                              <div key={dim.key} className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">{dim.icon}</span>
+                                  <span className="text-[12px] font-bold" style={{ color: dim.color }}>{dim.label}</span>
+                                  <span className="text-[12px] font-black" style={{ color: dim.color }}>{childScores[dim.key as keyof typeof childScores]}점</span>
+                                </div>
+                                <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.8] break-keep pl-6">
+                                  {text}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </section>
+                      )}
+
+                      {/* 4. 아이의 숨겨진 속마음 */}
+                      {childAiReport.analysis?.insight && (
+                        <section className="space-y-3">
+                          <p className="text-[12px] font-black text-primary flex items-center gap-1.5 px-1">
+                            <Icon name="favorite" size="sm" /> 아이의 숨겨진 속마음
+                          </p>
+                          {Array.isArray(childAiReport.analysis.insight) ? (
+                            childAiReport.analysis.insight.map((item: any, idx: number) => (
+                              <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
+                                <p className="text-[11px] font-black text-primary/70">{item.scene}</p>
+                                <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">
+                                  {item.content}
+                                </p>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
+                              <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep whitespace-pre-wrap">
+                                {childAiReport.analysis.insight}
                               </p>
                             </div>
                           )}
-                        </div>
+                        </section>
+                      )}
 
-                        {/* 3. 결제 유도 섹션 */}
-                        {!isPaid && (
-                          <div className="mt-8 relative z-30 flex flex-col items-center justify-center px-4">
-                            <div className="w-full bg-white/95 dark:bg-surface-dark/95 backdrop-blur-xl p-8 rounded-2xl shadow-card border border-primary/20 text-center animate-in zoom-in-95 duration-500 space-y-6">
-                              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-4xl mb-2">🔒</div>
-                              <div className="space-y-2">
-                                <h4 className="text-2xl font-black text-text-main dark:text-white break-keep">더 깊은 통역이 필요한가요?</h4>
-                                <p className="text-text-sub dark:text-slate-400 text-sm leading-relaxed break-keep px-4">
-                                  기질 전문가가 분석한 정밀 리포트와<br />
-                                  오늘 저녁 바로 써먹는 [마법의 한마디]를 확인하세요.
-                                </p>
-                              </div>
-                              <div className="pt-4 space-y-4">
-                                <Button onClick={() => router.replace('/payment')} variant="primary" fullWidth className="h-16 rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
-                                  990원에 심층 리포트 열기
-                                </Button>
-                                <p className="text-[10px] text-slate-400 font-medium">커피 한 잔보다 가벼운 우리 아이를 위한 이해</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="bg-white dark:bg-surface-dark rounded-2xl p-10 text-center space-y-6 shadow-card border border-primary/10">
-                        <div className="w-20 h-20 mx-auto bg-primary/5 rounded-full flex items-center justify-center text-3xl animate-pulse">
-                          🧬
-                        </div>
-                        <div className="space-y-2">
-                          <h4 className="font-bold text-text-main dark:text-white">준비된 리포트가 없습니다</h4>
-                          <p className="text-sm text-text-sub leading-relaxed break-keep">
-                            아이의 세부 문항 응답 데이터까지 분석하여<br />
-                            가장 정확한 양육 가이드를 생성합니다.
+                      {/* 6. 강점 + 성장 가능성 */}
+                      {childAiReport.analysis?.strengths && (
+                        <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
+                          <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
+                            <Icon name="emoji_events" size="sm" /> 강점과 성장 가능성
                           </p>
-                        </div>
-                        <Button
-                          onClick={generateChildAIReport}
-                          variant="primary"
-                          fullWidth
-                          className="h-14 rounded-2xl"
-                          disabled={isGenerating}
-                        >
-                          {isGenerating ? (
-                            <div className="flex items-center gap-2">
-                              <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                              <span>분석 보고서 작성 중...</span>
+                          <p className="text-[14px] text-text-main dark:text-slate-300 leading-[1.85] break-keep whitespace-pre-wrap">
+                            {childAiReport.analysis.strengths}
+                          </p>
+                        </section>
+                      )}
+
+                      {/* 7. 양육 가이드 */}
+                      {childAiReport.parentingTips && childAiReport.parentingTips.length > 0 && (
+                        <section className="space-y-3">
+                          <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
+                            <Icon name="lightbulb" size="sm" /> 양육 가이드
+                          </p>
+                          {childAiReport.parentingTips.map((tip: any, idx: number) => (
+                            <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
+                              <h6 className="font-bold text-text-main dark:text-white mb-3 text-[14px]">
+                                {tip.situation}
+                              </h6>
+                              <ul className="space-y-2.5">
+                                {tip.tips?.map((t: string, i: number) => (
+                                  <li key={i} className="text-[14px] text-text-sub dark:text-slate-400 flex gap-2">
+                                    <span className="text-primary mt-0.5 shrink-0">•</span>
+                                    <span className="leading-relaxed break-keep">{t}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                          ) : 'AI 정밀 리포트 생성하기'}
-                        </Button>
-                      </div>
-                    )}
-                  </section>
+                          ))}
+                        </section>
+                      )}
 
-                  {/* Scientific Indicators */}
-                  <div className="space-y-8">
-                    {/* Radar Chart Section */}
-                    <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl space-y-8">
-                      <h3 className="font-black text-slate-800 dark:text-white text-lg flex items-center gap-2">
-                        <Icon name="analytics" className="text-primary" /> 기질 분석 데이터
-                      </h3>
-                      <div className="h-64 relative">
-                        <Radar data={radarData} options={radarOptions} />
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl text-[11px] text-slate-400 leading-relaxed text-center italic text-balance">
-                        * 양육자의 **기질**과 아이의 **기질**이 만나 <br />어떤 **시너지**를 내고 있는지 데이터 지표로 보여줍니다.
-                      </div>
+                      {/* 7. 마법의 한마디 */}
+                      {childAiReport.scripts && childAiReport.scripts.length > 0 && (
+                        <section className="space-y-3">
+                          <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
+                            <Icon name="record_voice_over" size="sm" /> 마법의 한마디
+                          </p>
+                          {childAiReport.scripts.map((s: any, idx: number) => (
+                            <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
+                              <p className="text-[12px] font-bold text-text-sub">{s.situation}</p>
+                              <p className="text-[16px] font-black text-primary leading-snug break-keep">&ldquo;{s.script}&rdquo;</p>
+                              <p className="text-[13px] text-text-sub leading-relaxed break-keep">{s.guide}</p>
+                            </div>
+                          ))}
+                        </section>
+                      )}
                     </div>
-
-                    {/* GHI Section */}
-                    <div className={`bg-white dark:bg-slate-800 rounded-[2.5rem] p-8 shadow-xl border-2 transition-all ${analysisResult.type === 'CRISIS' ? 'border-rose-400' : (analysisResult.type === 'MITIGATED' ? 'border-teal-400' : 'border-transparent')}`}>
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-black text-slate-800 dark:text-white text-lg">조화 지수 (GHI)</h3>
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${ghiScore < 40 ? 'bg-teal-100 text-teal-600' : 'bg-rose-100 text-rose-600'}`}>
-                          {ghiLabel}
-                        </span>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="relative">
-                          <div className="flex justify-between items-end mb-2">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Similarity Gap</span>
-                            <span className={`text-2xl font-black ${ghiColor}`}>{Math.round(ghiScore)}</span>
-                          </div>
-                          <div className="h-3 w-full bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
-                            <div
-                              style={{ width: `${Math.min(100, ghiScore)}%` }}
-                              className={`h-full transition-all duration-1000 ease-out ${ghiBg}`}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                  ) : (
+                    <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
+                      <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                      <p className="text-text-sub text-sm font-bold">아이의 기질을 분석하고 있어요...</p>
+                      <p className="text-text-sub/60 text-[12px]">잠시만 기다려주세요</p>
                     </div>
-
-                    {/* Locked Content Preview (Only for Child-focused premium results) */}
-                    {!isPaid && (
-                      <div className="bg-slate-800 rounded-[2.5rem] p-10 text-center space-y-6">
-                        <div className="text-4xl mb-2">🔒</div>
-                        <h4 className="text-xl font-bold text-white">더 깊은 처방이 필요한가요?</h4>
-                        <p className="text-slate-400 text-sm leading-relaxed px-4">
-                          아이의 행동을 통역해주는 [마음 처방전]과<br />
-                          오늘 밤 바로 써먹는 [마법의 한마디]를 확인하세요.
-                        </p>
-                        <Button onClick={() => router.replace('/payment')} variant="primary" fullWidth className="h-14 rounded-2xl">
-                          990원에 처방전 구매하기
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  )}
 
                   {/* Footer Actions */}
-                  {!isChildOnly && (
+                  {!isChildOnly && childAiReport && (
                     <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
                       <Button variant="secondary" onClick={() => router.replace('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
                         결과 공유하고 할인권 받기
@@ -947,41 +870,44 @@ function ReportContent() {
                   </p>
                 </header>
 
-                {/* Parent Section 1: Temperament Analysis (Individual) */}
-                <section className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-xl border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
-                  <div className="relative z-10 space-y-6">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">01. 나의 기질 분석</span>
-                      <h3 className="text-xl font-black text-slate-800 dark:text-white">{parentReport.soilName}</h3>
-                    </div>
-                    <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-700">
-                      <p className="text-slate-600 dark:text-slate-300 text-[14px] leading-relaxed break-keep font-medium italic">
-                        {parentReport.analysis}
-                      </p>
-                    </div>
-                  </div>
-                </section>
+                {/* Parent Section 1-3: 규칙 기반 요약 (AI 리포트 없을 때만 표시) */}
+                {!parentAiReport && (
+                  <>
+                    <section className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 shadow-xl border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
+                      <div className="relative z-10 space-y-6">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-primary uppercase tracking-widest">01. 나의 기질 분석</span>
+                          <h3 className="text-xl font-black text-slate-800 dark:text-white">{parentReport.soilName}</h3>
+                        </div>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-700">
+                          <p className="text-slate-600 dark:text-slate-300 text-[14px] leading-relaxed break-keep font-medium italic">
+                            {parentReport.analysis}
+                          </p>
+                        </div>
+                      </div>
+                    </section>
 
-                {/* Parent Section 2: Magic Season & Drought */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <section className="bg-[#fff9f0] rounded-[2.5rem] p-8 shadow-sm border border-orange-100 relative overflow-hidden">
-                    <div className="absolute top-4 right-6 text-2xl">✨</div>
-                    <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">02. 나의 마법의 계절</span>
-                    <h4 className="text-md font-bold text-slate-800 mb-2">내가 가장 빛나는 순간</h4>
-                    <p className="text-[12px] text-slate-600 leading-relaxed break-keep">
-                      {parentReport.magicSeason}
-                    </p>
-                  </section>
-                  <section className="bg-[#f0f9ff] rounded-[2.5rem] p-8 shadow-sm border border-blue-100 relative overflow-hidden">
-                    <div className="absolute top-4 right-6 text-2xl">☁️</div>
-                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">03. 마음의 가뭄</span>
-                    <h4 className="text-md font-bold text-slate-800 mb-2">에너지가 고갈되는 신호</h4>
-                    <p className="text-[12px] text-slate-600 leading-relaxed break-keep">
-                      {parentReport.drought}
-                    </p>
-                  </section>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <section className="bg-[#fff9f0] rounded-[2.5rem] p-8 shadow-sm border border-orange-100 relative overflow-hidden">
+                        <div className="absolute top-4 right-6 text-2xl">✨</div>
+                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block mb-1">02. 나의 마법의 계절</span>
+                        <h4 className="text-md font-bold text-slate-800 mb-2">내가 가장 빛나는 순간</h4>
+                        <p className="text-[12px] text-slate-600 leading-relaxed break-keep">
+                          {parentReport.magicSeason}
+                        </p>
+                      </section>
+                      <section className="bg-[#f0f9ff] rounded-[2.5rem] p-8 shadow-sm border border-blue-100 relative overflow-hidden">
+                        <div className="absolute top-4 right-6 text-2xl">☁️</div>
+                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">03. 마음의 가뭄</span>
+                        <h4 className="text-md font-bold text-slate-800 mb-2">에너지가 고갈되는 신호</h4>
+                        <p className="text-[12px] text-slate-600 leading-relaxed break-keep">
+                          {parentReport.drought}
+                        </p>
+                      </section>
+                    </div>
+                  </>
+                )}
 
                 {/* 양육자 AI 심층 분석 리포트 (JSON 기반) */}
                 <section className="space-y-6">
@@ -1103,17 +1029,6 @@ function ReportContent() {
                   )}
                 </section>
 
-                {/* Parent Section 4: Letter */}
-                <section className="bg-primary/5 rounded-[3rem] p-10 border-2 border-dashed border-primary/20 text-center space-y-6">
-                  <div className="w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center mx-auto -mt-14">
-                    <span className="text-3xl">💌</span>
-                  </div>
-                  <h3 className="text-lg font-black text-slate-800">나에게 보내는 다정한 편지</h3>
-                  <p className="text-slate-600 text-[14px] leading-relaxed italic break-keep px-4">
-                    "{parentReport.letter}"
-                  </p>
-                </section>
-
                 {/* Footer Actions */}
                 <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
                   <Button variant="secondary" onClick={() => router.replace('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
@@ -1125,153 +1040,199 @@ function ReportContent() {
                 </div>
               </div>
             ) : (
-              <div className="animate-fade-in space-y-12">
-                {/* AI 조화 분석 리포트 (Harmony & Style) */}
-                <section className="space-y-6">
-                  <div className="flex items-center justify-between px-2">
-                    <h3 className="font-black text-slate-800 dark:text-white text-xl flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600">🤝</span>
-                      두 기질의 화학 반응 분석
+              <div className="animate-fade-in space-y-6">
+                {/* 1. 레이더 차트 - 무료 */}
+                <section className="bg-white dark:bg-surface-dark rounded-2xl px-4 pt-4 pb-2 shadow-card border border-beige-main/20 mt-2">
+                  <div className="flex items-start justify-between mb-1">
+                    <h3 className="font-black text-text-main dark:text-white text-sm flex items-center gap-2">
+                      <Icon name="analytics" size="sm" /> 기질 비교
                     </h3>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-4 h-[2px] bg-[#3B82F6]" />
+                        <span className="text-[10px] font-bold text-text-sub w-[52px] text-right">아이기질</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-4 h-[2px] bg-[#F97316]" />
+                        <span className="text-[10px] font-bold text-text-sub w-[52px] text-right">양육자기질</span>
+                      </div>
+                    </div>
                   </div>
+                  <div className="max-w-[280px] mx-auto">
+                    <Radar data={radarData} options={radarOptions} />
+                  </div>
+                </section>
 
-                  {harmonyAiReport ? (
-                    <div className="relative group">
-                      <div className="space-y-8 animate-fade-in-up">
-                        {/* 관계 타이틀 및 점수 - 무료 공개 */}
-                        <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] p-10 shadow-xl border-b-8 border-green-500 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 p-8 text-7xl font-black opacity-5">MATCH</div>
-                          <div className="flex justify-between items-start mb-6">
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Our Harmony Name</span>
-                              <h4 className="text-2xl font-black text-slate-800 dark:text-white leading-tight">
-                                {harmonyAiReport.harmonyTitle}
-                              </h4>
-                            </div>
-                            <div className="text-right">
-                              <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Fit Score</span>
-                              <span className="text-4xl font-black text-green-500">{harmonyAiReport.compatibilityScore}%</span>
-                            </div>
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed break-keep font-medium">
-                            {harmonyAiReport.dynamics?.description}
-                          </p>
+                {harmonyAiReport ? (
+                  <>
+                    {/* 레거시 구조 감지: dynamics 필드가 있으면 기존 UI */}
+                    {harmonyAiReport.dynamics ? (
+                      <section className="space-y-6">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-card border border-beige-main/20 text-center space-y-4">
+                          <h4 className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.harmonyTitle}</h4>
+                          <span className="text-4xl font-black text-primary">{harmonyAiReport.compatibilityScore}%</span>
+                          <p className="text-text-sub text-[13px] leading-relaxed break-keep">{harmonyAiReport.dynamics?.description}</p>
+                          <Button
+                            onClick={() => { setHarmonyAiReport(null); }}
+                            variant="secondary"
+                            fullWidth
+                            className="h-12 rounded-2xl mt-4"
+                          >
+                            새로운 양육 가이드로 업그레이드
+                          </Button>
                         </div>
+                      </section>
+                    ) : (
+                      <>
+                        {/* 2. 관계 카드 - 무료 */}
+                        <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-card border border-beige-main/20 text-center space-y-3">
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">Our Harmony</p>
+                          <h4 className="text-2xl font-black text-text-main dark:text-white leading-tight">{harmonyAiReport.harmonyTitle}</h4>
+                          <span className="inline-block text-4xl font-black text-primary">{harmonyAiReport.compatibilityScore}<span className="text-lg">%</span></span>
+                          <p className="text-text-sub text-[14px] break-keep">{harmonyAiReport.oneLiner}</p>
+                        </section>
 
-                        {/* 상세 분석 섹션 - 결제 시에만 공개 (블러 처리) */}
-                        <div className={`space-y-8 transition-all duration-1000 ${!isPaid ? 'blur-xl grayscale opacity-40 pointer-events-none select-none' : ''}`}>
-                          {/* 시너지 & 갈등 포인트 */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-green-50 dark:bg-green-900/10 rounded-[2rem] p-7 border border-green-100 dark:border-green-800/50">
-                              <h5 className="font-bold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
-                                <span>✨</span> 우리만의 시너지
-                              </h5>
-                              <p className="text-[13px] text-green-800/70 dark:text-green-300/60 leading-relaxed break-keep">
-                                {harmonyAiReport.dynamics?.synergy}
-                              </p>
-                            </div>
-                            <div className="bg-rose-50 dark:bg-rose-900/10 rounded-[2rem] p-7 border border-rose-100 dark:border-rose-800/50">
-                              <h5 className="font-bold text-rose-700 dark:text-rose-400 mb-3 flex items-center gap-2">
-                                <span>⚠️</span> 조심해야 할 스파크
-                              </h5>
-                              <p className="text-[13px] text-rose-800/70 dark:text-rose-300/60 leading-relaxed break-keep">
-                                {harmonyAiReport.dynamics?.conflictPoint}
-                              </p>
-                            </div>
-                          </div>
+                        {/* 3. 상세 영역 */}
+                        <div>
+                          <div className="space-y-10">
 
-                          {/* 양육 태도 진단 */}
-                          <div className="bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl space-y-8 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl -mr-16 -mt-16"></div>
-                            <div>
-                              <span className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-2 block">Parenting Audit</span>
-                              <h5 className="text-white text-xl font-black mb-4">현재 나의 양육 온도</h5>
-                              <p className="text-slate-400 text-[14px] leading-relaxed break-keep border-l-2 border-green-500/30 pl-4">
-                                <strong>[{harmonyAiReport.parentingAudit?.currentStyle}]</strong> {harmonyAiReport.parentingAudit?.evaluation}
-                              </p>
-                            </div>
-                            <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-                              <h6 className="text-green-400 text-xs font-black uppercase mb-2">Key Adjustment</h6>
-                              <p className="text-white/80 text-[13px] leading-relaxed break-keep">
-                                {harmonyAiReport.parentingAudit?.adjustment}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* 실전 액션 플랜 */}
-                          {harmonyAiReport.actionPlans && harmonyAiReport.actionPlans.length > 0 && (
-                            <div className="space-y-6 relative">
-                              <div className="flex items-center justify-between px-4">
-                                <h5 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Action Plans</h5>
-                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">APP ONLY</span>
-                              </div>
-                              {harmonyAiReport.actionPlans?.slice(0, 1).map((plan: any, idx: number) => (
-                                <div key={idx} className="bg-white dark:bg-slate-800 rounded-[2rem] p-8 shadow-lg border border-slate-100 dark:border-slate-700 relative group overflow-hidden opacity-90">
-                                  <h6 className="text-lg font-black text-slate-800 dark:text-white mb-2">{plan.title}</h6>
-                                  <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed mb-4 break-keep">{plan.desc}</p>
-                                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-slate-900 text-primary text-[11px] font-bold">
-                                    기대 효과: {plan.expect}
+                            {/* 4. 핵심 기질 차이 */}
+                            {harmonyAiReport.coreGap && (
+                              <section className="bg-white dark:bg-surface-dark rounded-2xl p-7 shadow-card border border-beige-main/20 space-y-5">
+                                <h3 className="font-black text-text-main dark:text-white text-base flex items-center gap-2">
+                                  <Icon name="compare_arrows" size="sm" /> 핵심 기질 차이
+                                </h3>
+                                <div className="flex items-center justify-between bg-beige-light/50 dark:bg-slate-800 rounded-xl p-4">
+                                  <div className="text-center flex-1">
+                                    <p className="text-[10px] font-bold text-teal-500 mb-1">아이</p>
+                                    <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.childScore}</span>
+                                  </div>
+                                  <div className="text-center px-4">
+                                    <span className="text-[11px] font-black text-text-sub px-3 py-1 rounded-full bg-white dark:bg-slate-700 shadow-sm">{harmonyAiReport.coreGap.label}</span>
+                                  </div>
+                                  <div className="text-center flex-1">
+                                    <p className="text-[10px] font-bold text-orange-400 mb-1">양육자</p>
+                                    <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.parentScore}</span>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                                <p className="text-text-sub text-[13px] leading-relaxed break-keep">{harmonyAiReport.coreGap.insight}</p>
+                                <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                                  <p className="text-primary text-[13px] font-bold break-keep">{harmonyAiReport.coreGap.reframe}</p>
+                                </div>
+                              </section>
+                            )}
 
-                          {/* 마지막 한마디 */}
-                          <div className="text-center py-10 px-6">
-                            <div className="text-4xl mb-4">🏠</div>
-                            <p className="text-slate-800 dark:text-white text-xl font-black leading-snug break-keep max-w-[280px] mx-auto">
-                              "{harmonyAiReport.summaryQuote}"
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                            {/* 5. 양육 원칙 */}
+                            {harmonyAiReport.parentingPrinciples && (
+                              <section className="space-y-4">
+                                <h3 className="font-black text-text-main dark:text-white text-base flex items-center gap-2 px-1">
+                                  <Icon name="school" size="sm" /> 양육 원칙
+                                </h3>
+                                {harmonyAiReport.parentingPrinciples.map((p: any, idx: number) => (
+                                  <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl p-6 shadow-card border border-beige-main/20 space-y-3">
+                                    <h4 className="font-black text-text-main dark:text-white text-[15px]">{idx + 1}. {p.title}</h4>
+                                    <p className="text-text-sub text-[13px] leading-relaxed break-keep">{p.why}</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-3 border border-green-100">
+                                        <p className="text-[10px] font-black text-green-600 mb-1">DO</p>
+                                        <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{p.do}</p>
+                                      </div>
+                                      <div className="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-3 border border-rose-100">
+                                        <p className="text-[10px] font-black text-rose-600 mb-1">DON&apos;T</p>
+                                        <p className="text-[12px] text-rose-800 dark:text-rose-300 break-keep">{p.dont}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </section>
+                            )}
 
-                      {!isPaid && (
-                        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center px-4">
-                          <div className="w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl border border-green-200 text-center animate-in zoom-in-95 duration-500 space-y-6">
-                            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto text-4xl mb-2">🤝</div>
-                            <div className="space-y-2">
-                              <h4 className="text-2xl font-black text-slate-800 dark:text-white break-keep">두 기질의 완벽한 조화를 찾고 싶나요?</h4>
-                              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep px-4">
-                                아이와 양육자의 기질이 만났을 때 생기는<br />
-                                특유의 역동성과 관계 해법을 분석해 드립니다.
-                              </p>
-                            </div>
-                            <div className="pt-4 space-y-4">
-                              <Button onClick={() => router.replace('/payment')} variant="primary" fullWidth className="h-16 rounded-2xl font-black text-lg bg-green-600 shadow-xl shadow-green-200 hover:bg-green-700">
-                                990원에 조화 분석 열기
-                              </Button>
-                              <p className="text-[10px] text-slate-400 font-medium">서로의 결을 맞추는 것이 행복한 육아의 지름길입니다</p>
-                            </div>
+                            {/* 6. 이럴 때 이렇게 */}
+                            {harmonyAiReport.situationalTips && (
+                              <section className="space-y-4">
+                                <h3 className="font-black text-text-main dark:text-white text-base flex items-center gap-2 px-1">
+                                  <Icon name="lightbulb" size="sm" /> 이럴 때 이렇게
+                                </h3>
+                                {harmonyAiReport.situationalTips.map((tip: any, idx: number) => (
+                                  <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl p-6 shadow-card border border-beige-main/20 space-y-4">
+                                    <h4 className="font-black text-text-main dark:text-white text-[14px]">{tip.situation}</h4>
+                                    <div className="bg-teal-50 dark:bg-teal-900/10 rounded-xl p-3 border border-teal-100">
+                                      <p className="text-[10px] font-black text-teal-600 mb-1">아이의 속마음</p>
+                                      <p className="text-[12px] text-teal-800 dark:text-teal-300 break-keep">{tip.childFeeling}</p>
+                                    </div>
+                                    <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-3 border border-amber-100">
+                                      <p className="text-[10px] font-black text-amber-600 mb-1">빠지기 쉬운 반응</p>
+                                      <p className="text-[12px] text-amber-800 dark:text-amber-300 break-keep">{tip.parentTrap}</p>
+                                    </div>
+                                    <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-3 border border-green-100">
+                                      <p className="text-[10px] font-black text-green-600 mb-1">이렇게 해보세요</p>
+                                      <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{tip.betterResponse}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                                      <p className="text-[13px] text-text-main dark:text-white font-bold italic break-keep">&ldquo;{tip.script}&rdquo;</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </section>
+                            )}
+
+                            {/* 7. 양육 스타일 진단 */}
+                            {harmonyAiReport.parentingAudit && (
+                              <section className="bg-slate-900 rounded-2xl p-8 shadow-xl space-y-5 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-16 -mt-16"></div>
+                                <div className="relative z-10">
+                                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Parenting Style</p>
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[12px] font-black">{harmonyAiReport.parentingAudit.currentStyle}</span>
+                                  </div>
+                                  <p className="text-slate-300 text-[13px] leading-relaxed break-keep mb-4">{harmonyAiReport.parentingAudit.evaluation}</p>
+                                  <div className="bg-white/5 rounded-xl p-5 border border-white/10">
+                                    <p className="text-[10px] font-black text-primary mb-2">조절 포인트</p>
+                                    <p className="text-white/80 text-[13px] leading-relaxed break-keep">{harmonyAiReport.parentingAudit.adjustment}</p>
+                                  </div>
+                                </div>
+                              </section>
+                            )}
+
+                            {/* 8. 오늘의 한 마디 */}
+                            {harmonyAiReport.dailyReminder && (
+                              <section className="text-center py-8 px-6">
+                                <div className="text-4xl mb-4">📌</div>
+                                <p className="text-text-main dark:text-white text-xl font-black leading-snug break-keep max-w-[300px] mx-auto">
+                                  &ldquo;{harmonyAiReport.dailyReminder}&rdquo;
+                                </p>
+                                <p className="text-text-sub text-[11px] mt-3">냉장고에 붙여두세요</p>
+                              </section>
+                            )}
                           </div>
+
                         </div>
-                      )}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <section className="bg-white dark:bg-surface-dark rounded-2xl p-10 text-center space-y-6 shadow-card border border-beige-main/20">
+                    <div className="w-20 h-20 mx-auto bg-primary/5 rounded-full flex items-center justify-center text-3xl">
+                      🤝
                     </div>
-                  ) : (
-                    <div className="bg-white dark:bg-slate-800 rounded-[3rem] p-10 text-center space-y-6 shadow-xl border border-green-500/10">
-                      <div className="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center text-3xl">
-                        🖇️
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="font-bold text-slate-800 dark:text-white">두 사람을 위한 기질 맞춤 리포트</h4>
-                        <p className="text-sm text-slate-500 leading-relaxed break-keep">
-                          아이와 양육자의 기질이 만났을 때 생기는<br />
-                          특유의 역동성과 솔루션을 1인칭으로 분석합니다.
-                        </p>
-                      </div>
-                      <Button
-                        onClick={generateHarmonyAIReport}
-                        variant="primary"
-                        fullWidth
-                        className="h-14 rounded-2xl bg-green-600 hover:bg-green-700"
-                        disabled={isGenerating}
-                      >
-                        {isGenerating ? '조화 분석 구성 중...' : '맞춤 양육 시너지 분석하기'}
-                      </Button>
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-text-main dark:text-white">기질 맞춤 양육 가이드</h4>
+                      <p className="text-sm text-text-sub leading-relaxed break-keep">
+                        아이와 양육자의 기질 조합에 맞는<br />
+                        양육 원칙과 구체적인 팁을 제공합니다.
+                      </p>
                     </div>
-                  )}
-                </section>
+                    <Button
+                      onClick={generateHarmonyAIReport}
+                      variant="primary"
+                      fullWidth
+                      className="h-14 rounded-2xl"
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? '맞춤 양육 가이드 생성 중...' : '맞춤 양육 가이드 생성하기'}
+                    </Button>
+                  </section>
+                )}
 
                 {/* Footer Actions & App Nudge */}
                 <div className="space-y-8 pt-10 pb-16">
@@ -1295,10 +1256,10 @@ function ReportContent() {
                           <Button
                             variant="primary"
                             fullWidth
-                            className="h-14 rounded-2xl bg-white text-slate-900 font-black text-base shadow-xl"
+                            className="h-14 rounded-2xl bg-white !text-slate-900 font-black text-base shadow-xl"
                             onClick={() => window.open('https://aina.garden/app', '_blank')}
                           >
-                            앱 설치하고 실천 아이템 받기
+                            <span className="text-slate-900">앱 설치하고 실천 아이템 받기</span>
                           </Button>
                           <p className="text-[10px] text-white/30 uppercase tracking-widest font-black">
                             Available on iOS & Android
