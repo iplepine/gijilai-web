@@ -6,7 +6,7 @@ export type UserProfile = Database['public']['Tables']['profiles']['Row'];
 export type ChildProfile = Database['public']['Tables']['children']['Row'];
 export type SurveyData = Database['public']['Tables']['surveys']['Row'];
 export type ReportData = Database['public']['Tables']['reports']['Row'];
-export type ActionItem = Database['public']['Tables']['action_items']['Row'];
+
 
 export const db = {
     // --- Profile ---
@@ -116,40 +116,13 @@ export const db = {
         return data as ReportData;
     },
 
-    // --- Actions ---
-    getActionItems: async (userId: string) => {
-        const { data, error } = await supabase
-            .from('action_items')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(10);
-        if (error) throw error;
-        return data as ActionItem[];
-    },
-
-    toggleActionItem: async (itemId: string, isCompleted: boolean) => {
-        const { data, error } = await supabase
-            .from('action_items')
-            .update({
-                is_completed: isCompleted,
-                completed_at: isCompleted ? new Date().toISOString() : null
-            })
-            .eq('id', itemId)
-            .select()
-            .single();
-        if (error) throw error;
-        return data as ActionItem;
-    },
-
     // --- Dashboard Data Aggregation ---
     getDashboardData: async (userId: string) => {
-        const [profile, children, reports, surveys, actionItems] = await Promise.all([
+        const [profile, children, reports, surveys] = await Promise.all([
             db.getUserProfile(userId).catch(() => null),
             db.getChildren(userId).catch(() => []),
             db.getReports(userId).catch(() => []),
             db.getSurveys(userId).catch(() => []),
-            db.getActionItems(userId).catch(() => [])
         ]);
 
         return {
@@ -157,7 +130,6 @@ export const db = {
             children,
             reports,
             surveys,
-            actionItems,
             latestSurvey: surveys.find(s => s.type === 'CHILD') || null,
             parentSurvey: surveys.find(s => s.type === 'PARENT') || null
         };
@@ -319,7 +291,7 @@ export const db = {
             supabase.from('children').delete().eq('parent_id', userId),
             supabase.from('surveys').delete().eq('user_id', userId),
             supabase.from('reports').delete().eq('user_id', userId),
-            supabase.from('action_items').delete().eq('user_id', userId),
+
             supabase.from('consultations').delete().eq('user_id', userId), // 테이블 없으면 무시
         ]);
 

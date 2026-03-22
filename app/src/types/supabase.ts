@@ -140,44 +140,6 @@ export interface Database {
                     created_at?: string
                 }
             }
-            action_items: {
-                Row: {
-                    id: string
-                    consultation_id: string | null
-                    user_id: string
-                    child_id: string | null
-                    target_date: string | null
-                    title: string
-                    type: string | null
-                    is_completed: boolean
-                    completed_at: string | null
-                    created_at: string
-                }
-                Insert: {
-                    id?: string
-                    consultation_id?: string | null
-                    user_id: string
-                    child_id?: string | null
-                    target_date?: string | null
-                    title: string
-                    type?: string | null
-                    is_completed?: boolean
-                    completed_at?: string | null
-                    created_at?: string
-                }
-                Update: {
-                    id?: string
-                    consultation_id?: string | null
-                    user_id?: string
-                    child_id?: string | null
-                    target_date?: string | null
-                    title?: string
-                    type?: string | null
-                    is_completed?: boolean
-                    completed_at?: string | null
-                    created_at?: string
-                }
-            }
             consultations: {
                 Row: {
                     id: string

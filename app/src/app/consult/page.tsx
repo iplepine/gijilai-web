@@ -201,27 +201,6 @@ export default function ConsultPage() {
         }
     };
 
-    const handleSaveActionItem = async () => {
-        if (!user || !prescription) return;
-        try {
-            const { data: children } = await supabase.from('children').select('id').eq('parent_id', user.id).limit(1);
-            const childId = children?.[0]?.id || null;
-
-            await supabase.from('action_items').insert({
-                user_id: user.id,
-                child_id: childId,
-                title: prescription.actionItem,
-                type: 'DAILY_MISSION'
-            });
-
-            alert('홈 미션으로 등록되었습니다!');
-            router.replace('/');
-        } catch (error) {
-            console.error(error);
-            alert('미션 등록에 실패했습니다.');
-        }
-    };
-
     const currentQuestion = questions[currentQuestionIndex];
 
     return (
@@ -423,11 +402,11 @@ export default function ConsultPage() {
                                         {prescription.actionItem}
                                     </div>
                                     <button
-                                        onClick={handleSaveActionItem}
+                                        onClick={() => router.replace('/')}
                                         className="w-full bg-white text-primary font-bold py-4 rounded-2xl hover:bg-beige-light transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
                                     >
-                                        <span>미션으로 등록하고 실천하기</span>
-                                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                                        <span>홈으로 돌아가기</span>
+                                        <span className="material-symbols-outlined text-[20px]">home</span>
                                     </button>
                                 </div>
                             </div>

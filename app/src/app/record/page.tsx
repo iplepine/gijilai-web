@@ -11,7 +11,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
 
-type TabType = 'REPORT' | 'CONSULT' | 'MISSION';
+type TabType = 'REPORT' | 'CONSULT';
 
 interface Consultation {
     id: string;
@@ -28,20 +28,12 @@ interface Consultation {
     };
 }
 
-interface ActionItem {
-    id: string;
-    created_at: string;
-    title: string;
-    is_completed: boolean;
-}
-
 export default function RecordPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
     const [activeTab, setActiveTab] = useState<TabType>('REPORT');
     const [reports, setReports] = useState<ReportData[]>([]);
     const [consultations, setConsultations] = useState<Consultation[]>([]);
-    const [missions, setMissions] = useState<ActionItem[]>([]);
     const [children, setChildren] = useState<any[]>([]);
     const [selectedChildId, setSelectedChildId] = useState<string | 'ALL'>('ALL');
     const [isLoading, setIsLoading] = useState(true);
@@ -75,17 +67,7 @@ export default function RecordPage() {
             if (consultError) throw consultError;
             setConsultations(consultData || []);
 
-            // 3. Fetch Action Items (Missions)
-            const { data: missionData, error: missionError } = await supabase
-                .from('action_items')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
-
-            if (missionError) throw missionError;
-            setMissions(missionData || []);
-
-            // 4. Fetch Children
+            // 3. Fetch Children
             const childData = await db.getChildren(user.id);
             setChildren(childData || []);
 
@@ -96,23 +78,6 @@ export default function RecordPage() {
         }
     };
 
-    const toggleMission = async (id: string, currentStatus: boolean) => {
-        try {
-            const { error } = await supabase
-                .from('action_items')
-                .update({ is_completed: !currentStatus })
-                .eq('id', id);
-
-            if (error) throw error;
-
-            setMissions(prev => prev.map(m =>
-                m.id === id ? { ...m, is_completed: !currentStatus } : m
-            ));
-        } catch (error) {
-            console.error('Error updating mission:', error);
-        }
-    };
-
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
@@ -120,7 +85,6 @@ export default function RecordPage() {
 
     const filteredReports = reports.filter(r => selectedChildId === 'ALL' || r.child_id === selectedChildId);
     const filteredConsultations = consultations.filter(c => selectedChildId === 'ALL' || (c as any).child_id === selectedChildId);
-    const filteredMissions = missions.filter(m => selectedChildId === 'ALL' || (m as any).child_id === selectedChildId);
 
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center font-body">
@@ -192,15 +156,6 @@ export default function RecordPage() {
                                 }`}
                         >
                             상담 일지
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('MISSION')}
-                            className={`flex-1 px-4 py-2.5 rounded-xl text-[12px] font-black transition-all ${activeTab === 'MISSION'
-                                ? 'bg-white dark:bg-surface-dark text-green-600 shadow-sm'
-                                : 'text-slate-400 hover:text-green-600'
-                                }`}
-                        >
-                            실천 미션
                         </button>
                     </div>
                 </header>
@@ -388,53 +343,7 @@ export default function RecordPage() {
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        /* Mission List */
-                        <div className="space-y-3">
-                            {filteredMissions.length > 0 ? (
-                                filteredMissions.map(mission => (
-                                    <div
-                                        key={mission.id}
-                                        onClick={() => toggleMission(mission.id, mission.is_completed)}
-                                        className={`flex items-center gap-4 p-5 rounded-3xl border-2 transition-all cursor-pointer active:scale-[0.98] ${mission.is_completed
-                                            ? 'bg-primary/5 border-primary/20 opacity-80'
-                                            : 'bg-white dark:bg-surface-dark border-primary/5 shadow-soft hover:border-primary/20'
-                                            }`}
-                                    >
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${mission.is_completed
-                                            ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                            : 'bg-beige-light dark:bg-black/20 text-primary'
-                                            }`}>
-                                            <span className="material-symbols-outlined text-[28px]">
-                                                {mission.is_completed ? 'check_circle' : 'task_alt'}
-                                            </span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className={`text-[15px] font-bold leading-snug transition-all ${mission.is_completed ? 'text-text-sub line-through opacity-70' : 'text-text-main dark:text-white'
-                                                }`}>
-                                                {mission.title}
-                                            </h4>
-                                            <span className="text-[10px] text-text-sub font-medium opacity-60">
-                                                {formatDate(mission.created_at)} 처방
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="py-24 flex flex-col items-center text-center space-y-6">
-                                    <div className="w-24 h-24 bg-green-500/5 dark:bg-green-500/10 rounded-full flex items-center justify-center mb-2">
-                                        <span className="material-symbols-outlined text-5xl text-green-500/30 font-light">task_alt</span>
-                                    </div>
-                                    <div className="space-y-2 text-center">
-                                        <p className="font-bold text-slate-800 dark:text-white">실천 중인 미션이 없어요</p>
-                                        <p className="text-slate-400 text-sm leading-relaxed break-keep px-10">
-                                            처방전에서 제안해드리는 미션을 등록하고<br />작은 변화를 직접 경험해보세요!
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )
+                    ) : null
                     }
 
                     {/* App Download Nudge - 하단 고정형이 아닌 목록 끝 배너 */}
