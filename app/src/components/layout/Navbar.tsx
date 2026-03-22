@@ -28,7 +28,7 @@ export function Navbar({ title, showBack = true, onBackClick, rightElement }: Na
           )}
         </div>
 
-        <h1 className="text-lg font-display text-text-main dark:text-white text-center">
+        <h1 className="text-xl font-display text-text-main dark:text-white text-center leading-none translate-y-[1px]">
           {title}
         </h1>
 
