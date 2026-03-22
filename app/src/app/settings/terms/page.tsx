@@ -1,23 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { Navbar } from '@/components/layout/Navbar';
 
 export default function TermsPage() {
-    const router = useRouter();
-
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen">
             <div className="max-w-md mx-auto relative min-h-screen flex flex-col">
-                <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl pt-12 pb-4 border-b border-gray-100 dark:border-gray-800">
-                    <div className="relative flex items-center justify-center w-full px-4 min-h-[40px]">
-                        <div className="absolute left-4">
-                            <button onClick={() => router.back()} className="size-10 flex items-center justify-center text-navy dark:text-white">
-                                <span className="material-symbols-outlined">arrow_back_ios</span>
-                            </button>
-                        </div>
-                        <h1 className="text-lg font-bold text-navy dark:text-white text-center">서비스 이용약관</h1>
-                    </div>
-                </header>
+                <Navbar title="서비스 이용약관" />
 
                 <main className="flex-1 px-6 py-8">
                     <div className="bg-white dark:bg-surface-dark rounded-[2rem] p-6 shadow-soft border border-gray-100 dark:border-gray-800 overflow-y-auto" style={{ maxHeight: '75vh' }}>

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { db } from '@/lib/db'; // Import db
 import { Icon } from '@/components/ui/Icon';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { Navbar } from '@/components/layout/Navbar';
 
 export default function EditChildPage() {
     const router = useRouter();
@@ -141,18 +142,14 @@ export default function EditChildPage() {
         <div className="min-h-screen bg-[#FAFCFA] dark:bg-[#0F170F] text-[#1A2E1A] dark:text-gray-100 font-sans flex justify-center">
             <div className="relative flex h-full min-h-screen w-full max-w-[480px] flex-col overflow-x-hidden bg-[#FAFCFA] dark:bg-[#0F170F]">
                 {/* Header */}
-                <header className="flex items-center p-4 justify-between sticky top-0 z-30 bg-[#FAFCFA]/90 dark:bg-[#0F170F]/90 backdrop-blur-xl">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex w-10 h-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                    >
-                        <Icon name="arrow_back_ios_new" className="text-gray-700 dark:text-gray-300" />
-                    </button>
-                    <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">아이 정보 수정</h1>
-                    <button onClick={handleDelete} className="text-red-500 font-medium text-sm px-2">
-                        삭제
-                    </button>
-                </header>
+                <Navbar
+                    title="아이 정보 수정"
+                    rightElement={
+                        <button onClick={handleDelete} className="text-red-500 font-medium text-sm">
+                            삭제
+                        </button>
+                    }
+                />
 
                 <main className="flex-1 px-6 pb-32">
                     {/* Avatar Upload Section */}

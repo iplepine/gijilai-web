@@ -7,8 +7,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import BottomNav from '@/components/layout/BottomNav';
 
 import { db } from '@/lib/db';
-import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
+import { Navbar } from '@/components/layout/Navbar';
 
 interface Consultation {
     id: string;
@@ -78,52 +78,36 @@ export default function RecordPage() {
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center font-body">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
                 {/* Header */}
-                <header className="w-full max-w-md px-6 pt-12 pb-4 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-md sticky top-0 z-20 border-b border-gray-100 dark:border-gray-800">
-                    <div className="relative flex items-center justify-center h-10 mb-4 w-full">
-                        <div className="absolute left-0">
-                            <button
-                                onClick={() => router.back()}
-                                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white hover:bg-slate-200 transition-colors"
-                                aria-label="뒤로 가기"
-                            >
-                                <Icon name="arrow_back" size="sm" />
-                            </button>
-                        </div>
+                <Navbar title="상담 기록" />
 
-                        <h1 className="text-xl font-bold text-text-main dark:text-white flex items-center gap-1.5 font-display tracking-tight text-center">
-                            상담 기록
-                        </h1>
-                    </div>
-
-                    {/* Child Filter Chips */}
-                    {children.length > 0 && (
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {/* Child Filter Chips */}
+                {children.length > 0 && (
+                    <div className="flex gap-2 px-6 py-3 overflow-x-auto no-scrollbar border-b border-gray-100 dark:border-gray-800">
+                        <button
+                            onClick={() => setSelectedChildId('ALL')}
+                            className={`px-4 py-2 rounded-full text-[12px] font-black whitespace-nowrap transition-all ${
+                                selectedChildId === 'ALL'
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-white dark:bg-surface-dark text-slate-400 border border-slate-100 dark:border-slate-800'
+                            }`}
+                        >
+                            전체
+                        </button>
+                        {children.map((child: any) => (
                             <button
-                                onClick={() => setSelectedChildId('ALL')}
+                                key={child.id}
+                                onClick={() => setSelectedChildId(child.id)}
                                 className={`px-4 py-2 rounded-full text-[12px] font-black whitespace-nowrap transition-all ${
-                                    selectedChildId === 'ALL'
+                                    selectedChildId === child.id
                                         ? 'bg-primary text-white shadow-md'
                                         : 'bg-white dark:bg-surface-dark text-slate-400 border border-slate-100 dark:border-slate-800'
                                 }`}
                             >
-                                전체
+                                {child.name}
                             </button>
-                            {children.map((child: any) => (
-                                <button
-                                    key={child.id}
-                                    onClick={() => setSelectedChildId(child.id)}
-                                    className={`px-4 py-2 rounded-full text-[12px] font-black whitespace-nowrap transition-all ${
-                                        selectedChildId === child.id
-                                            ? 'bg-primary text-white shadow-md'
-                                            : 'bg-white dark:bg-surface-dark text-slate-400 border border-slate-100 dark:border-slate-800'
-                                    }`}
-                                >
-                                    {child.name}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </header>
+                        ))}
+                    </div>
+                )}
 
                 <main className="w-full max-w-md p-6 pb-32">
                     {isLoading ? (
