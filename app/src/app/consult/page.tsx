@@ -54,6 +54,39 @@ export default function ConsultPage() {
     // RESULT STATE
     const [prescription, setPrescription] = useState<Prescription | null>(null);
 
+    // 기질 프로필 (초기 로드 시 1회 계산)
+    const [childProfile, setChildProfile] = useState<any>(null);
+    const [parentProfile, setParentProfile] = useState<any>(null);
+    const [harmonyAnalysis, setHarmonyAnalysis] = useState<any>(null);
+
+    useEffect(() => {
+        (async () => {
+            const { TemperamentScorer } = await import('@/lib/TemperamentScorer');
+            const { TemperamentClassifier } = await import('@/lib/TemperamentClassifier');
+
+            let childScores: any = null;
+            let parentScores: any = null;
+
+            if (Object.keys(cbqResponses).length > 0) {
+                const { CHILD_QUESTIONS } = await import('@/data/questions');
+                childScores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
+                const result = TemperamentClassifier.analyzeChild(childScores);
+                setChildProfile({ label: result.label, keywords: result.keywords, description: result.desc, scores: childScores });
+            }
+
+            if (Object.keys(atqResponses).length > 0) {
+                const { PARENT_QUESTIONS } = await import('@/data/questions');
+                parentScores = TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
+                const result = TemperamentClassifier.analyzeParent(parentScores);
+                setParentProfile({ label: result.label, keywords: result.keywords, description: result.desc, scores: parentScores });
+            }
+
+            if (childScores && parentScores) {
+                setHarmonyAnalysis(TemperamentClassifier.analyzeHarmony(childScores, parentScores));
+            }
+        })();
+    }, [cbqResponses, atqResponses]);
+
     // 지난 상담 모달
     const [showPastConsults, setShowPastConsults] = useState(false);
     const [pastConsults, setPastConsults] = useState<any[]>([]);
@@ -110,6 +143,9 @@ export default function ConsultPage() {
                 body: JSON.stringify({
                     problem: fullProblem,
                     childName: intake.childName,
+                    childProfile,
+                    parentProfile,
+                    harmonyAnalysis,
                     recentObservations
                 }),
             });
@@ -177,30 +213,6 @@ export default function ConsultPage() {
     const handleGeneratePrescription = async (allAnswers: Record<string, string>) => {
         setIsLoading(true);
         try {
-            // Calculate archetypes
-            let childArchetype = "알 수 없음 (기질 데이터 부족)";
-            let parentArchetype = "알 수 없음 (기질 데이터 부족)";
-
-            if (Object.keys(cbqResponses).length > 0) {
-                const { TemperamentScorer } = await import('@/lib/TemperamentScorer');
-                const { TemperamentClassifier } = await import('@/lib/TemperamentClassifier');
-                const { CHILD_QUESTIONS } = await import('@/data/questions');
-
-                const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
-                const result = TemperamentClassifier.analyzeChild(scores);
-                childArchetype = result.label;
-            }
-
-            if (Object.keys(atqResponses).length > 0) {
-                const { TemperamentScorer } = await import('@/lib/TemperamentScorer');
-                const { TemperamentClassifier } = await import('@/lib/TemperamentClassifier');
-                const { PARENT_QUESTIONS } = await import('@/data/questions');
-
-                const scores = TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
-                const result = TemperamentClassifier.analyzeParent(scores);
-                parentArchetype = result.label;
-            }
-
             const fullProblem = problemDesc;
 
             let recentObservations: any[] = [];
@@ -218,8 +230,9 @@ export default function ConsultPage() {
                 body: JSON.stringify({
                     problem: fullProblem,
                     answers: allAnswers,
-                    childArchetype,
-                    parentArchetype,
+                    childProfile,
+                    parentProfile,
+                    harmonyAnalysis,
                     recentObservations
                 }),
             });
@@ -407,7 +420,7 @@ export default function ConsultPage() {
                                     <span className="material-symbols-outlined text-secondary text-3xl fill-1">verified_user</span>
                                 </div>
                                 <h2 className="text-2xl font-bold text-text-main dark:text-white">오늘의 마음 처방전</h2>
-                                <p className="text-sm text-text-sub mt-2">아이의 기질과 상황을 종합한 최선의 솔루션입니다.</p>
+                                <p className="text-sm text-text-sub mt-2">{intake.childName ? `${intake.childName}의` : '아이의'} 기질과 상황을 종합한 최선의 솔루션입니다.</p>
                             </div>
 
                             <div className="bg-white dark:bg-surface-dark rounded-[2.5rem] p-8 shadow-card border border-primary/5 dark:border-white/5 flex flex-col gap-8 relative overflow-hidden">
@@ -416,7 +429,7 @@ export default function ConsultPage() {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-2 text-secondary">
                                         <span className="material-symbols-outlined text-xl">psychology</span>
-                                        <span className="font-bold text-sm tracking-tight">아이의 속마음 통역</span>
+                                        <span className="font-bold text-sm tracking-tight">{intake.childName ? `${intake.childName}의 속마음 통역` : '아이의 속마음 통역'}</span>
                                     </div>
                                     <div className="text-[15px] text-text-main dark:text-gray-200 leading-relaxed bg-secondary/5 p-5 rounded-2xl border border-secondary/10">
                                         {prescription.interpretation}
@@ -426,7 +439,7 @@ export default function ConsultPage() {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-2 text-primary dark:text-primary-light">
                                         <span className="material-symbols-outlined text-xl">diversity_2</span>
-                                        <span className="font-bold text-sm tracking-tight">우리의 케미스트리</span>
+                                        <span className="font-bold text-sm tracking-tight">아이와 나</span>
                                     </div>
                                     <div className="text-[15px] text-text-main dark:text-gray-200 leading-relaxed bg-primary/5 p-5 rounded-2xl border border-primary/10">
                                         {prescription.chemistry}
@@ -453,7 +466,7 @@ export default function ConsultPage() {
                                         <span className="material-symbols-outlined text-xl">task_alt</span>
                                         <span className="text-xs font-bold uppercase tracking-widest">Daily Mission</span>
                                     </div>
-                                    <div className="font-bold text-xl leading-snug mb-8">
+                                    <div className="font-bold text-[15px] leading-relaxed mb-8">
                                         {prescription.actionItem}
                                     </div>
                                     <button
@@ -472,13 +485,13 @@ export default function ConsultPage() {
                 {/* 앱 다운로드 유도 섹션 (결과 확인 후) */}
                 {step === 'RESULT' && (
                     <div className="px-6 pb-20">
-                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-center relative overflow-hidden shadow-xl">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full"></div>
-                            <p className="text-white font-bold text-sm mb-4 relative z-10">📱 아이나의 알림과 함께라면<br />실천이 더 쉬워져요</p>
+                        <div className="bg-secondary/10 dark:bg-secondary/20 rounded-[2.5rem] p-8 text-center relative overflow-hidden border border-secondary/20">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/10 blur-3xl rounded-full"></div>
+                            <p className="text-text-main dark:text-white font-bold text-sm mb-4 relative z-10">아이나의 알림과 함께라면<br />실천이 더 쉬워져요</p>
                             <Button
                                 size="sm"
                                 variant="primary"
-                                className="w-full rounded-xl bg-white text-slate-900 h-12 font-black shadow-lg relative z-10"
+                                className="w-full rounded-xl bg-secondary text-white h-12 font-black shadow-lg shadow-secondary/20 relative z-10"
                                 onClick={() => window.open('https://aina.garden/app', '_blank')}
                             >
                                 앱 설치하고 푸시 알림 받기
@@ -533,7 +546,7 @@ export default function ConsultPage() {
                                                 마음 처방전
                                             </div>
                                             <div>
-                                                <div className="text-[11px] font-bold text-slate-400 mb-1">아이의 속마음</div>
+                                                <div className="text-[11px] font-bold text-slate-400 mb-1">{intake.childName ? `${intake.childName}의 속마음` : '아이의 속마음'}</div>
                                                 <p className="text-[13px] text-text-main dark:text-gray-200 leading-relaxed">{selectedPastConsult.ai_prescription.interpretation}</p>
                                             </div>
                                             <div className="bg-[#519E8A]/10 p-4 rounded-xl border border-[#519E8A]/20">

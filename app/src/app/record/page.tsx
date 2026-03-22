@@ -37,6 +37,7 @@ export default function RecordPage() {
     const [recentConsults, setRecentConsults] = useState<Consultation[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
+    const [latestActionItem, setLatestActionItem] = useState<{ actionItem: string; date: string; consultId: string } | null>(null);
 
     useEffect(() => {
         if (!authLoading) {
@@ -52,12 +53,30 @@ export default function RecordPage() {
         if (!user) return;
         setIsLoading(true);
         try {
-            const [obsData, childData] = await Promise.all([
+            const [obsData, childData, consultData] = await Promise.all([
                 db.getObservations(user.id),
                 db.getChildren(user.id),
+                supabase
+                    .from('consultations')
+                    .select('id, created_at, ai_prescription')
+                    .eq('user_id', user.id)
+                    .eq('status', 'COMPLETED')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .then(r => r.data),
             ]);
             setObservations(obsData || []);
             setChildren(childData || []);
+            if (consultData?.[0]?.ai_prescription) {
+                const p = consultData[0].ai_prescription as any;
+                if (p.actionItem) {
+                    setLatestActionItem({
+                        actionItem: p.actionItem,
+                        date: consultData[0].created_at,
+                        consultId: consultData[0].id,
+                    });
+                }
+            }
             if (childData?.length === 1) {
                 setModalChildId(childData[0].id);
             }
@@ -194,6 +213,30 @@ export default function RecordPage() {
                 )}
 
                 <main className="w-full max-w-md p-6 pb-32">
+                    {/* 최근 상담 액션 아이템 */}
+                    {!isLoading && latestActionItem && children.length > 0 && (
+                        <div className="mb-6 bg-gradient-to-br from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-[1.5rem] p-5 border border-primary/15 animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <span className="material-symbols-outlined text-[16px] text-primary">target</span>
+                                <span className="text-[11px] font-bold text-primary tracking-wide">오늘의 실천 과제</span>
+                                <span className="text-[11px] text-slate-400 ml-auto">{formatDate(latestActionItem.date)} 상담</span>
+                            </div>
+                            <p className="text-[14px] font-bold text-text-main dark:text-white leading-relaxed">
+                                {latestActionItem.actionItem}
+                            </p>
+                            <button
+                                onClick={async () => {
+                                    await openModal();
+                                    setModalConsultId(latestActionItem.consultId);
+                                }}
+                                className="mt-3 text-[12px] font-bold text-primary flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-[14px]">edit_note</span>
+                                실천 기록 남기기
+                            </button>
+                        </div>
+                    )}
+
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
                             <span className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></span>

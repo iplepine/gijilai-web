@@ -14,7 +14,7 @@ function formatObservationsForPrompt(observations: any[]): string {
 
 export async function POST(request: Request) {
     try {
-        const { problem, answers, childArchetype, parentArchetype, childName, recentObservations } = await request.json();
+        const { problem, answers, childProfile, parentProfile, harmonyAnalysis, childName, recentObservations } = await request.json();
 
         if (!problem || !answers) {
             return NextResponse.json(
@@ -24,8 +24,6 @@ export async function POST(request: Request) {
         }
 
         const nameContext = childName ? `${childName} 아이` : '아이';
-        const fallbackChild = "기질 데이터 없음 (보편적 아이)";
-        const fallbackParent = "기질 데이터 없음 (보편적 양육자)";
 
         const systemPrompt = `당신은 기질(TCI) 기반의 분석 전문가이자 따뜻한 마음 통역사입니다.
 아이의 기질, 양육자의 기질, 그리고 구체적인 상황 문진 결과를 분석하여 이 갈등의 근본적인 원인을 친절하게 설명하고 실천 가능한 솔루션을 제공하세요.
@@ -38,8 +36,14 @@ export async function POST(request: Request) {
 
 **[분석 재료]**
 - 대상: ${nameContext}
-- 아이 기질: ${childArchetype || fallbackChild}
-- 양육자 기질: ${parentArchetype || fallbackParent}
+${childProfile ? `- 아이 기질 유형: ${childProfile.label} (${childProfile.keywords.join(', ')})
+  - 설명: ${childProfile.description}
+  - 차원별 점수 (0~100): NS(자극추구)=${childProfile.scores.NS}, HA(위험회피)=${childProfile.scores.HA}, RD(사회적민감성)=${childProfile.scores.RD}, P(지속성)=${childProfile.scores.P}` : '- 아이 기질: 검사 데이터 없음 (보편적 아동 기질로 분석)'}
+${parentProfile ? `- 양육자 기질 유형: ${parentProfile.label} (${parentProfile.keywords.join(', ')})
+  - 설명: ${parentProfile.description}
+  - 차원별 점수 (0~100): NS=${parentProfile.scores.NS}, HA=${parentProfile.scores.HA}, RD=${parentProfile.scores.RD}, P=${parentProfile.scores.P}` : '- 양육자 기질: 검사 데이터 없음 (보편적 양육자 기질로 분석)'}
+${harmonyAnalysis ? `- 양육자-아이 기질 조화: 가장 큰 차이 차원 = "${harmonyAnalysis.title}" (차이 ${harmonyAnalysis.score}점)
+  - ${harmonyAnalysis.desc}` : ''}
 - 고민 상황: ${problem}
 - 상황별 상세 문진 결과: ${JSON.stringify(answers)}${recentObservations && recentObservations.length > 0 ? `
 - 최근 양육 관찰 기록:
@@ -47,8 +51,8 @@ ${formatObservationsForPrompt(recentObservations)}` : ''}
 
 **[응답 가이드]**
 1. **아이의 속마음 통역**: 아이의 행동이 나쁜 의도가 아님을 설명하고, 기질적 욕구로 인해 발생한 현상임을 아이의 입장에서 번역해 주세요. (3~4줄)
-2. **우리의 케미스트리**: 양육자를 탓하지 마세요. "양육자의 신중한 기질과 아이의 높은 활동성이 만났을 때 생길 수 있는 자연스러운 마찰"과 같이 기질 간의 역동으로 설명하세요.
-3. **마법의 한마디**: 상황을 반전시킬 수 있는 구체적인 대화 스크립트를 쌍따옴표 안에 제공하세요.
+2. **아이와 나**: 양육자를 탓하지 마세요. "양육자의 신중한 기질과 아이의 높은 활동성이 만났을 때 생길 수 있는 자연스러운 마찰"과 같이 기질 간의 역동으로 설명하세요.
+3. **마법의 한마디**: 상황을 반전시킬 수 있는 구체적인 대화 스크립트를 제공하세요. 따옴표는 포함하지 마세요.
 4. **데일리 액션 아이템**: 오늘 혹은 내일부터 바로 실천할 수 있는 아주 구체적이고 작은 행동 하나를 제안하세요.${recentObservations && recentObservations.length > 0 ? `
 5. **관찰 기록 연계**: 양육자의 최근 관찰 기록을 참고하여, 이전에 시도한 방법 중 효과적이었던 것은 강화하고 효과가 없었던 것은 다른 접근을 제안하세요. 관찰 기록이 있으면 "지난번에 ~를 시도하셨는데"와 같이 자연스럽게 언급하세요.` : ''}
 
