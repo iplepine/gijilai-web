@@ -25,7 +25,7 @@ export const TCI_TERMINOLOGY = {
         },
         P: {
             code: 'P',
-            name: '지속성',
+            name: '인내력',
             en: 'Persistence',
             desc: '보상이 없어도 한 가지 일을 꾸준히 해내는 성향'
         }

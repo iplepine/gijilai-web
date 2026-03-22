@@ -472,7 +472,7 @@ export const PARENT_QUESTIONS: Question[] = [
     },
     {
         id: 32, type: 'PARENT', category: 'RD', facet: '사회적 부착',
-        context: "혼자 있을 때와 누군가와 함께 있을 때, 나는?",
+        context: "나는 혼자 있는 것과 사람들과 함께 있는 것 중 어느 쪽이 더 편한가요?",
         choices: [
             "혼자 일하거나 시간을 보내는 것이 훨씬 효율적이고 편하다.",
             "가끔 사람들을 만나지만 혼자가 좋을 때가 많다.",
