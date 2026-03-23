@@ -830,7 +830,7 @@ function ReportContent() {
                   {!isChildOnly && childAiReport && (
                     <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
                       <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
-                        결과 공유하고 할인권 받기
+                        결과 공유하기
                       </Button>
                       <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
                         홈으로 돌아가기

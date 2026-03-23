@@ -395,7 +395,27 @@ export default function HomePage() {
 
               {/* 기능 카드 리스트 */}
               <div className="px-6 flex flex-col gap-5 mt-8">
-                {/* 기능 카드들 */}
+                {/* 아이 기질 검사 유도 카드 */}
+                {!temperamentInfo && (
+                  <div className="bg-primary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-2">
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                    <div className="relative z-10">
+                      <div className="flex flex-col gap-1 mb-4">
+                        <span className="text-white/80 text-xs font-medium bg-black/10 px-2 py-1 rounded inline-block w-fit">첫 번째 단계</span>
+                        <h3 className="text-xl font-bold text-white leading-snug tracking-tight">{childName}의 기질 검사</h3>
+                      </div>
+                      <p className="text-sm text-white/90 mb-6">아이의 타고난 기질을 알면 소통이 달라집니다.</p>
+                      <Link href="/survey/intro">
+                        <button className="w-full py-4 rounded-xl bg-white text-primary font-bold text-sm shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                          <span>기질 검사 시작하기</span>
+                          <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {/* 양육자 검사 유도 카드 */}
                 {(!parentSurvey && Object.keys(atqResponses).length < PARENT_QUESTIONS.length) && temperamentInfo?.child && (
                   <div className="bg-secondary dark:bg-surface-dark rounded-2xl p-6 shadow-card relative overflow-hidden mb-2">
                     <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
