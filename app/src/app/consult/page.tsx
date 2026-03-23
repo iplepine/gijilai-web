@@ -35,7 +35,17 @@ const CATEGORIES = [
 export default function ConsultPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { intake, cbqResponses, atqResponses } = useAppStore();
+    const { intake, cbqResponses, atqResponses, selectedChildId } = useAppStore();
+    const [childName, setChildName] = useState<string | null>(intake.childName || null);
+
+    useEffect(() => {
+        if (!user) return;
+        supabase.from('children').select('id, name').eq('parent_id', user.id).then(({ data }) => {
+            if (!data || data.length === 0) { setChildName(intake.childName || null); return; }
+            const selected = selectedChildId ? data.find(c => c.id === selectedChildId) : data[0];
+            setChildName(selected?.name || data[0].name);
+        });
+    }, [user, selectedChildId, intake.childName]);
 
     const [step, setStep] = useState<Step>('INPUT');
     const [isLoading, setIsLoading] = useState(false);
@@ -112,7 +122,7 @@ export default function ConsultPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     problem: fullProblem,
-                    childName: intake.childName,
+                    childName: childName || intake.childName,
                     childProfile,
                     parentProfile,
                     harmonyAnalysis,
@@ -215,12 +225,9 @@ export default function ConsultPage() {
 
             // Save history
             if (user) {
-                const { data: children } = await supabase.from('children').select('id').eq('parent_id', user.id).limit(1);
-                const childId = children?.[0]?.id || null;
-
                 await supabase.from('consultations').insert({
                     user_id: user.id,
-                    child_id: childId,
+                    child_id: selectedChildId || null,
                     category: '자유 입력',
                     problem_description: problemDesc,
                     ai_options: questions,
@@ -250,7 +257,7 @@ export default function ConsultPage() {
                         <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-bold text-text-main dark:text-white leading-tight">
-                                    {intake.childName ? `${intake.childName} 양육자님,` : '양육자님,'}<br />오늘 어떤 일이 가장 힘드셨나요?
+                                    {childName ? `${childName} 양육자님,` : '양육자님,'}<br />오늘 어떤 일이 가장 힘드셨나요?
                                 </h2>
                                 <p className="text-sm text-text-sub dark:text-gray-400">아이의 기질에 딱 맞는 솔루션을 찾아드릴게요.</p>
                             </div>
@@ -379,7 +386,7 @@ export default function ConsultPage() {
                                     <span className="material-symbols-outlined text-secondary text-3xl fill-1">verified_user</span>
                                 </div>
                                 <h2 className="text-2xl font-bold text-text-main dark:text-white">오늘의 마음 처방전</h2>
-                                <p className="text-sm text-text-sub mt-2">{intake.childName ? `${intake.childName}의` : '아이의'} 기질과 상황을 종합한 최선의 솔루션입니다.</p>
+                                <p className="text-sm text-text-sub mt-2">{childName ? `${childName}의` : '아이의'} 기질과 상황을 종합한 최선의 솔루션입니다.</p>
                             </div>
 
                             <div className="bg-white dark:bg-surface-dark rounded-[2.5rem] p-8 shadow-card border border-primary/5 dark:border-white/5 flex flex-col gap-8 relative overflow-hidden">
@@ -388,7 +395,7 @@ export default function ConsultPage() {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-2 text-secondary">
                                         <span className="material-symbols-outlined text-xl">psychology</span>
-                                        <span className="font-bold text-sm tracking-tight">{intake.childName ? `${intake.childName}의 속마음 통역` : '아이의 속마음 통역'}</span>
+                                        <span className="font-bold text-sm tracking-tight">{childName ? `${childName}의 속마음 통역` : '아이의 속마음 통역'}</span>
                                     </div>
                                     <div className="text-[15px] text-text-main dark:text-gray-200 leading-relaxed bg-secondary/5 p-5 rounded-2xl border border-secondary/10">
                                         {prescription.interpretation}

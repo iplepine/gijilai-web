@@ -19,7 +19,7 @@ import { TCI_TERMINOLOGY } from '@/constants/terminology';
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, resetSurveyOnly, resetAll } = useAppStore();
+  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, resetSurveyOnly, resetAll, selectedChildId, setSelectedChildId } = useAppStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [reports, setReports] = useState<ReportData[]>([]);
@@ -29,7 +29,7 @@ export default function HomePage() {
   const [showSurveyIntro, setShowSurveyIntro] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [todayHasObservation, setTodayHasObservation] = useState(false);
-  const [magicWords, setMagicWords] = useState<{ word: string; date: string; childName?: string }[]>([]);
+  const [allMagicWords, setAllMagicWords] = useState<{ word: string; date: string; childId?: string; childName?: string }[]>([]);
   const [magicWordIndex, setMagicWordIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,12 +57,18 @@ export default function HomePage() {
   ]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedChildIndex, setSelectedChildIndex] = useState(0);
   const [cooldownStatus, setCooldownStatus] = useState<{ isAvailable: boolean; remainingDays?: number; remainingHours?: number }>({ isAvailable: true });
+  const [showChildDropdown, setShowChildDropdown] = useState(false);
 
   // Derived Child Profile (DB first, then local intake store)
   const mainChild = useMemo(() => {
-    if (children.length > 0) return children[selectedChildIndex] || children[0];
+    if (children.length > 0) {
+      if (selectedChildId) {
+        const found = children.find(c => c.id === selectedChildId);
+        if (found) return found;
+      }
+      return children[0];
+    }
     if (intake.childName) {
       return {
         id: 'temporary-intake-id',
@@ -73,7 +79,7 @@ export default function HomePage() {
       } as any as ChildProfile;
     }
     return null;
-  }, [children, selectedChildIndex, intake]);
+  }, [children, selectedChildId, intake]);
 
   // Derived per-child surveys
   const latestSurvey = useMemo(() => {
@@ -87,28 +93,22 @@ export default function HomePage() {
 
   // Handle Child Selection
   const handleChildSelect = (index: number) => {
-    setSelectedChildIndex(index);
+    const child = children[index];
+    if (child) setSelectedChildId(child.id);
+    setMagicWordIndex(0);
   };
+
+  // 선택된 아이의 마법의 한마디
+  const magicWords = useMemo(() => {
+    if (!mainChild) return allMagicWords;
+    return allMagicWords.filter(w => w.childId === mainChild.id);
+  }, [allMagicWords, mainChild]);
 
   const childName = mainChild?.name || "우리 아이";
 
   // Derived Temperament (Parent = Soil, Child = Seed + Plant)
-  const temperamentInfo = useMemo(() => {
-    // 해당 아이의 리포트나 설문 데이터 찾기
-    const childSurvey = reports.find(r => r.child_id === mainChild?.id && r.type === 'CHILD');
-    
-    // Check DB report/survey first, then fall back to local store for temporary intake
-    const childAnswers = (childSurvey?.analysis_json as any)?.scores
-      || (latestSurvey?.answers as Record<string, number>)
-      || (mainChild?.id === 'temporary-intake-id' && Object.keys(cbqResponses).length > 0 ? cbqResponses : null);
-
-    if (!childAnswers) return null;
-    
-    const scores = typeof childAnswers === 'object' && 'NS' in childAnswers 
-      ? childAnswers 
-      : TemperamentScorer.calculate(CHILD_QUESTIONS, childAnswers as any);
-
-    // Parent scores: local store → DB survey → DB report → default
+  // 양육자 기질은 아이와 무관하게 하나
+  const parentTemperament = useMemo(() => {
     let parentScores = { NS: 50, HA: 50, RD: 50, P: 50 };
     const parentReport = reports.find(r => r.type === 'PARENT');
     const parentReportScores = (parentReport?.analysis_json as any)?.scores;
@@ -121,15 +121,31 @@ export default function HomePage() {
       parentScores = parentReportScores;
     }
 
-    const childResult = TemperamentClassifier.analyzeChild(scores as any);
     const parentType = TemperamentClassifier.analyzeParent(parentScores);
     const hasRealParentData = Object.keys(atqResponses).length > 0 || !!parentSurvey?.answers || !!parentReportScores;
 
-    return {
-      child: childResult,
-      parent: { ...parentType, hasData: hasRealParentData }
-    };
-  }, [mainChild, children, selectedChildIndex, cbqResponses, atqResponses, latestSurvey, parentSurvey, reports]);
+    return { ...parentType, hasData: hasRealParentData };
+  }, [atqResponses, parentSurvey, reports]);
+
+  const temperamentInfo = useMemo(() => {
+    // 해당 아이의 리포트나 설문 데이터 찾기
+    const childSurvey = reports.find(r => r.child_id === mainChild?.id && r.type === 'CHILD');
+
+    // Check DB report/survey first, then fall back to local store for temporary intake
+    const childAnswers = (childSurvey?.analysis_json as any)?.scores
+      || (latestSurvey?.answers as Record<string, number>)
+      || (mainChild?.id === 'temporary-intake-id' && Object.keys(cbqResponses).length > 0 ? cbqResponses : null);
+
+    if (!childAnswers) return null;
+
+    const scores = typeof childAnswers === 'object' && 'NS' in childAnswers
+      ? childAnswers
+      : TemperamentScorer.calculate(CHILD_QUESTIONS, childAnswers as any);
+
+    const childResult = TemperamentClassifier.analyzeChild(scores as any);
+
+    return { child: childResult };
+  }, [mainChild, children, selectedChildId, cbqResponses, latestSurvey, reports]);
 
   useEffect(() => {
     async function fetchData() {
@@ -168,9 +184,10 @@ export default function HomePage() {
           .map((c: any) => ({
             word: c.ai_prescription.magicWord,
             date: c.created_at,
+            childId: c.child_id,
             childName: data.children.find((ch: ChildProfile) => ch.id === c.child_id)?.name,
           }));
-        setMagicWords(words);
+        setAllMagicWords(words);
 
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
@@ -279,24 +296,6 @@ export default function HomePage() {
             <div className="animate-in fade-in duration-700">
               {/* 상단 프로필 섹션 */}
               <div className="relative w-full flex flex-col items-center p-2 pt-8">
-                {/* 아이 선택 탭 (다중 아이인 경우) */}
-                {children.length > 1 && (
-                  <div className="flex gap-2 mb-8 px-6 overflow-x-auto no-scrollbar w-full justify-center">
-                    {children.map((child, idx) => (
-                      <button
-                        key={child.id}
-                        onClick={() => handleChildSelect(idx)}
-                        className={`px-4 py-2 rounded-2xl text-xs font-black transition-all whitespace-nowrap ${
-                          selectedChildIndex === idx
-                            ? 'bg-primary text-white shadow-md'
-                            : 'bg-white dark:bg-surface-dark text-slate-400 border border-slate-100 dark:border-slate-800'
-                        }`}
-                      >
-                        {child.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 <div className="flex flex-col items-center justify-center w-full mb-4">
                   <div
@@ -335,21 +334,57 @@ export default function HomePage() {
                         className={`bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10 ${temperamentInfo ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
                       >
                         <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
-                        {temperamentInfo ? temperamentInfo.child.label : '기질 등록 필요'}
+                        {temperamentInfo ? temperamentInfo.child.label : '기질 검사하기'}
                       </div>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-center justify-center mt-6">
-                    <h1 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">
-                      {childName} ({ageString})
-                    </h1>
+                    <div className="relative">
+                      <h1
+                        className={`text-2xl font-bold text-text-main dark:text-white tracking-tight inline-flex items-center gap-1 ${children.length > 1 ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
+                        onClick={() => { if (children.length > 1) setShowChildDropdown(!showChildDropdown); }}
+                      >
+                        {childName} ({ageString})
+                        {children.length > 1 && (
+                          <span className={`material-symbols-outlined text-[20px] text-gray-400 transition-transform ${showChildDropdown ? 'rotate-180' : ''}`}>expand_more</span>
+                        )}
+                      </h1>
+                      {showChildDropdown && children.length > 1 && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowChildDropdown(false)} />
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 py-1 min-w-[160px] z-50 animate-in fade-in zoom-in-95 duration-200">
+                            {children.map((child, idx) => (
+                              <button
+                                key={child.id}
+                                onClick={() => { handleChildSelect(idx); setShowChildDropdown(false); }}
+                                className={`w-full px-5 py-3 text-sm font-bold text-left transition-colors ${
+                                  mainChild?.id === child.id
+                                    ? 'text-primary bg-primary/5'
+                                    : 'text-text-main dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                              >
+                                {child.name}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                     <div
-                      onClick={() => { if (temperamentInfo?.parent?.hasData) router.push('/report?tab=parent'); }}
-                      className={`mt-2 bg-white/60 dark:bg-surface-dark/60 backdrop-blur-sm text-text-main dark:text-gray-200 px-3.5 py-1.5 rounded-full text-[12px] font-medium shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] inline-flex items-center gap-1.5 ring-1 ring-black/5 dark:ring-white/10 ${temperamentInfo?.parent?.hasData ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
+                      onClick={() => {
+                        if (!parentTemperament?.hasData) return;
+                        if (!temperamentInfo) {
+                          alert(`${childName}의 기질 검사를 먼저 완료해주세요.`);
+                          router.push('/survey/intro');
+                          return;
+                        }
+                        router.push('/report?tab=parent');
+                      }}
+                      className={`mt-2 bg-white/60 dark:bg-surface-dark/60 backdrop-blur-sm text-text-main dark:text-gray-200 px-3.5 py-1.5 rounded-full text-[12px] font-medium shadow-[0_2px_10px_-2px_rgba(0,0,0,0.05)] inline-flex items-center gap-1.5 ring-1 ring-black/5 dark:ring-white/10 ${parentTemperament?.hasData ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
                     >
                       <span className="material-symbols-outlined text-[16px] text-caregiver">volunteer_activism</span>
-                      {TCI_TERMINOLOGY.REPORT.PARENT_NAME} <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">{temperamentInfo?.parent?.hasData ? temperamentInfo.parent.label : '검사 필요'}</span>
+                      {TCI_TERMINOLOGY.REPORT.PARENT_NAME} <span className="mx-0.5 text-gray-300 dark:text-gray-600">|</span> <span className="font-bold text-caregiver">{parentTemperament?.hasData ? parentTemperament.label : '검사 필요'}</span>
                     </div>
                   </div>
                 </div>

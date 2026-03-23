@@ -119,7 +119,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="space-y-3">
                             {children.map((child) => (
-                                <Link key={child.id} href={`/settings/child/edit?id=${child.id}`} className="block">
+                                <Link key={child.id} href={`/settings/child/${child.id}`} className="block">
                                     <div className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all active:scale-[0.99]">
                                         <div className="size-12 rounded-xl bg-primary/5 flex items-center justify-center overflow-hidden">
                                             {child.image_url ? (

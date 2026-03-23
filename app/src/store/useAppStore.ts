@@ -26,6 +26,10 @@ interface AppState {
   isPaid: boolean;
   setIsPaid: (paid: boolean) => void;
 
+  // Selected Child
+  selectedChildId: string | null;
+  setSelectedChildId: (id: string | null) => void;
+
   // Reset all
   resetAll: () => void;
   resetSurveyOnly: () => void;
@@ -74,6 +78,10 @@ export const useAppStore = create<AppState>()(
           parentingResponses: { ...state.parentingResponses, [questionId]: score },
         })),
 
+      // Selected Child
+      selectedChildId: null,
+      setSelectedChildId: (id) => set({ selectedChildId: id }),
+
       // Analysis
       analysisResult: null,
       setAnalysisResult: (result) => set({ analysisResult: result }),
@@ -111,6 +119,7 @@ export const useAppStore = create<AppState>()(
         parentingResponses: state.parentingResponses,
         surveyProgress: state.surveyProgress,
         isPaid: state.isPaid,
+        selectedChildId: state.selectedChildId,
       }),
     }
   )
