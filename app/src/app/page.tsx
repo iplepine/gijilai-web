@@ -273,7 +273,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+        <main className="flex-1 overflow-y-auto no-scrollbar pb-32">
           {mainChild ? (
             /* [기존 사용자] 아이가 등록된 상태 */
             <div className="animate-in fade-in duration-700">
@@ -611,25 +611,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Debug Reset Button */}
-          {user && process.env.NODE_ENV === 'development' && (
-            <div className="flex justify-center mt-12 mb-8 opacity-20 hover:opacity-100 transition-opacity">
-              <button
-                onClick={async () => {
-                  if (!window.confirm("데이터를 초기화하시겠습니까?")) return;
-                  await db.resetUserData(user.id);
-                  // Zustand persist localStorage 키도 함께 삭제
-                  localStorage.removeItem('temperament-storage');
-                  localStorage.removeItem('survey-storage');
-                  resetAll();
-                  window.location.reload();
-                }}
-                className="text-xs text-red-500 underline"
-              >
-                [Debug] 데이터 초기화
-              </button>
-            </div>
-          )}
         </main>
 
         <BottomNav />
