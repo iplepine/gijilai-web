@@ -236,7 +236,7 @@ export default function RecordPage() {
                                     await openModal();
                                     setModalConsultId(latestActionItem.consultId);
                                 }}
-                                className="mt-3 text-[12px] font-bold text-primary flex items-center gap-1"
+                                className="mt-3 text-[12px] font-bold text-primary flex items-center gap-1 ml-auto"
                             >
                                 <span className="material-symbols-outlined text-[14px]">edit_note</span>
                                 실천 기록 남기기
@@ -395,7 +395,7 @@ export default function RecordPage() {
 
                                 {/* 상황 */}
                                 <div className="mb-5">
-                                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">상황</label>
+                                    <label className="text-[13px] font-bold text-slate-600 dark:text-slate-300 tracking-wide mb-2 block">상황</label>
                                     <textarea
                                         value={situation}
                                         onChange={e => setSituation(e.target.value)}
@@ -411,7 +411,7 @@ export default function RecordPage() {
 
                                 {/* 내 행동 */}
                                 <div className="mb-5">
-                                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">내 대응</label>
+                                    <label className="text-[13px] font-bold text-slate-600 dark:text-slate-300 tracking-wide mb-2 block">내 대응</label>
                                     <textarea
                                         value={myAction}
                                         onChange={e => setMyAction(e.target.value)}
@@ -427,7 +427,7 @@ export default function RecordPage() {
 
                                 {/* 아이 반응 */}
                                 <div className="mb-5">
-                                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">아이 반응</label>
+                                    <label className="text-[13px] font-bold text-slate-600 dark:text-slate-300 tracking-wide mb-2 block">아이 반응</label>
                                     <textarea
                                         value={childReaction}
                                         onChange={e => setChildReaction(e.target.value)}
