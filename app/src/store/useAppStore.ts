@@ -30,6 +30,13 @@ interface AppState {
   selectedChildId: string | null;
   setSelectedChildId: (id: string | null) => void;
 
+  // Restore from DB
+  restoreSurveyFromDB: (data: {
+    cbqResponses?: Record<string, number>;
+    atqResponses?: Record<string, number>;
+    parentingResponses?: Record<string, number>;
+  }) => void;
+
   // Reset all
   resetAll: () => void;
   resetSurveyOnly: () => void;
@@ -89,6 +96,14 @@ export const useAppStore = create<AppState>()(
       // Payment
       isPaid: false,
       setIsPaid: (paid) => set({ isPaid: paid }),
+
+      // Restore from DB
+      restoreSurveyFromDB: (data) =>
+        set((state) => ({
+          cbqResponses: data.cbqResponses ?? state.cbqResponses,
+          atqResponses: data.atqResponses ?? state.atqResponses,
+          parentingResponses: data.parentingResponses ?? state.parentingResponses,
+        })),
 
       // Reset
       resetAll: () =>

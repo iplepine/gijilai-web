@@ -85,6 +85,57 @@ export const db = {
         return data as SurveyData[];
     },
 
+    // --- Survey Responses Sync ---
+    saveSurveyResponses: async (
+        userId: string,
+        type: 'CHILD' | 'PARENT' | 'PARENTING_STYLE',
+        answers: Record<string, number>,
+        status: 'IN_PROGRESS' | 'COMPLETED' = 'IN_PROGRESS'
+    ) => {
+        // 기존 레코드 찾기
+        const { data: existing } = await supabase
+            .from('surveys')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('type', type)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (existing) {
+            const { error } = await supabase
+                .from('surveys')
+                .update({ answers, status, step: Object.keys(answers).length })
+                .eq('id', existing.id);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase
+                .from('surveys')
+                .insert({ user_id: userId, type, answers, status, step: Object.keys(answers).length });
+            if (error) throw error;
+        }
+    },
+
+    getLatestSurveyResponses: async (userId: string) => {
+        // 각 type별 최신 레코드 하나씩 가져오기
+        const { data, error } = await supabase
+            .from('surveys')
+            .select('*')
+            .eq('user_id', userId)
+            .in('type', ['CHILD', 'PARENT', 'PARENTING_STYLE'])
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        // type별 최신 1건만 추출
+        const latest: Record<string, any> = {};
+        for (const row of (data || [])) {
+            if (!latest[row.type]) {
+                latest[row.type] = row;
+            }
+        }
+        return latest;
+    },
+
     // --- Reports ---
     saveReport: async (report: Partial<ReportData>) => {
         const { data, error } = await supabase

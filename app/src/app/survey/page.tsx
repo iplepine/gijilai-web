@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
+import { useSurveySync } from '@/hooks/useSurveySync';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 
 type SurveyModule = 'child' | 'parent' | 'parenting';
@@ -24,6 +25,9 @@ function SurveyContent() {
     setAtqResponse,
     setParentingResponse
   } = useAppStore();
+
+  // 설문 응답을 Supabase에 자동 동기화
+  useSurveySync();
 
   const [currentModule, setCurrentModule] = useState<SurveyModule>(() => {
     if (typeParam === 'PARENT') return 'parent';

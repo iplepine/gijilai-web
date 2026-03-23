@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ReferralHandler } from "@/components/layout/ReferralHandler";
+import { SurveyRestoreProvider } from "@/components/layout/SurveyRestoreProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -61,6 +62,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="min-h-screen bg-background-light dark:bg-background-dark">
             <ReferralHandler />
+            <SurveyRestoreProvider />
             {children}
           </div>
         </AuthProvider>
