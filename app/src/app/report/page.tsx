@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, Suspense } from 'react';
+import React, { useMemo, useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
@@ -58,6 +58,7 @@ function ReportContent() {
   const [parentAiReport, setParentAiReport] = useState<any>(null);
   const [harmonyAiReport, setHarmonyAiReport] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const generatingRef = useRef<Set<string>>(new Set());
   const [reportDates, setReportDates] = useState<Record<string, string>>({});
 
   // DB에서 로드된 점수 데이터 (상세 보기용)
@@ -210,7 +211,8 @@ function ReportContent() {
   };
 
   const generateChildAIReport = async (refresh = false) => {
-    if (isGenerating) return;
+    if (generatingRef.current.has('CHILD')) return;
+    generatingRef.current.add('CHILD');
     setIsGenerating(true);
     try {
       const answers = Object.entries(cbqResponses).map(([id, score]) => ({ questionId: id, score: score as number }));
@@ -228,12 +230,14 @@ function ReportContent() {
       console.error(error);
       alert('리포트 생성 중 오류가 발생했습니다.');
     } finally {
-      setIsGenerating(false);
+      generatingRef.current.delete('CHILD');
+      setIsGenerating(generatingRef.current.size > 0);
     }
   };
 
   const generateParentAIReport = async (refresh = false) => {
-    if (isGenerating) return;
+    if (generatingRef.current.has('PARENT')) return;
+    generatingRef.current.add('PARENT');
     setIsGenerating(true);
     try {
       const answers = Object.entries(atqResponses).map(([id, score]) => ({ questionId: id, score: score as number }));
@@ -251,12 +255,14 @@ function ReportContent() {
       console.error(error);
       alert('리포트 생성 중 오류가 발생했습니다.');
     } finally {
-      setIsGenerating(false);
+      generatingRef.current.delete('PARENT');
+      setIsGenerating(generatingRef.current.size > 0);
     }
   };
 
   const generateHarmonyAIReport = async (refresh = false) => {
-    if (isGenerating) return;
+    if (generatingRef.current.has('HARMONY')) return;
+    generatingRef.current.add('HARMONY');
     setIsGenerating(true);
     try {
       const answers = [
@@ -279,7 +285,8 @@ function ReportContent() {
       console.error(error);
       alert('조화 분석 리포트 생성 중 오류가 발생했습니다.');
     } finally {
-      setIsGenerating(false);
+      generatingRef.current.delete('HARMONY');
+      setIsGenerating(generatingRef.current.size > 0);
     }
   };
 
