@@ -238,6 +238,123 @@ interface AnalysisResult {
 
 ---
 
+## 9. 상담 세션 & 실천 시스템 (Consultation Sessions & Practices)
+
+### 목적
+상담을 일회성 이벤트가 아닌 고민별 지속 케어 흐름으로 전환. 실천 항목을 관리 가능한 범위로 유지.
+
+### 핵심 개념
+
+| 개념 | 설명 |
+|------|------|
+| 상담 세션 | 하나의 고민 주제에 대한 지속적인 케어 스레드. 동시 활성 최대 **3개** |
+| 추가 상담 | 기존 세션 안에서 후속 상담. 실천 항목이 진전에 맞게 업데이트됨 |
+| 실천 항목 | 상담에서 나온 액션 아이템. 전체 활성 최대 **5개** (3개 세션 합산) |
+
+### 상담 세션
+
+```typescript
+interface ConsultationSession {
+  id: string;
+  child_id: string;
+  user_id: string;
+  title: string;              // 고민 주제 요약 (LLM 자동 생성)
+  status: 'ACTIVE' | 'RESOLVED' | 'ARCHIVED';
+  created_at: Date;
+  updated_at: Date;
+}
+```
+
+- 새 상담 시작 시 활성 세션이 3개이면 → "진행 중인 고민이 3개예요. 기존 고민에 이어서 상담하거나, 해결된 고민을 정리해주세요" 안내
+- 세션 상태 전환: ACTIVE → RESOLVED (양육자가 "해결됨" 표시) → ARCHIVED (자동, 30일 후)
+- 각 세션에 속한 상담 이력(consultations)은 시간순으로 누적
+
+### 추가 상담 흐름
+
+1. 실천 탭 또는 세션 상세에서 "추가 상담하기" 진입
+2. 이전 상담 맥락 + 실천 기록이 LLM 컨텍스트로 자동 주입
+3. LLM이 기존 실천 항목을 평가하고 업데이트된 실천 항목 제안
+4. 기존 실천 항목 중 유지/교체/완료 처리를 양육자가 선택
+
+### 실천 항목
+
+```typescript
+interface PracticeItem {
+  id: string;
+  session_id: string;
+  consultation_id: string;     // 이 항목을 생성/갱신한 상담
+  title: string;               // 실천 항목 제목 (한 줄)
+  description: string;         // 구체적 실천 방법
+  duration: number;            // 권장 기간 (일 단위, 1~14)
+  encouragement: string;       // 기간 안내 응원 메시지
+  status: 'ACTIVE' | 'COMPLETED' | 'DROPPED';
+  created_at: Date;
+}
+
+interface PracticeLog {
+  id: string;
+  practice_id: string;
+  date: string;                // YYYY-MM-DD
+  done: boolean;               // 오늘 실천 여부
+  memo: string | null;         // 한줄 메모 (선택)
+}
+
+interface PracticeReview {
+  id: string;
+  practice_id: string;
+  content: string;             // 종합 회고 (자유 텍스트)
+  created_at: Date;
+}
+```
+
+- 새 실천 등록 시 활성 항목이 5개이면 → 기존 항목 중 완료/포기 처리 후 등록
+- 매일 실천 체크: 했다/못했다 + 한줄 메모 (선택)
+- 기간 완료 시 종합 회고 유도: "해보니 어떠셨어요?"
+
+### 처방전 JSON 구조 변경
+
+```typescript
+// 기존: actionItem (단수 문자열)
+// 변경: actionItems (배열)
+interface Prescription {
+  interpretation: string;
+  chemistry: string;
+  questionAnalysis?: QuestionAnalysisItem[];
+  magicWord: string;
+  actionItems: {
+    title: string;
+    description: string;
+    duration: number;          // 1~14일
+    encouragement: string;
+  }[];
+}
+```
+
+### 실천 탭 (`/practices`)
+
+| 상태 | 표시 |
+|------|------|
+| 진행 중인 실천 있음 | 세션별 그룹핑, 아이템마다 진행률 + 오늘 체크 버튼 |
+| 기간 완료 | 회고 작성 유도 카드 |
+| 진행 중 없음 | 빈 상태 + 상담 시작 CTA |
+
+- 다자녀 시 아이별 필터 칩
+- 세션 카드에서 "추가 상담하기" 버튼 → 해당 세션 컨텍스트로 상담 진입
+
+### 홈 화면 연동
+
+- 기존 "오늘의 관찰일지" 카드 → "오늘의 실천" 카드로 교체
+- 진행 중인 실천이 있으면: 오늘 체크 안 한 항목 수 표시 + 실천 탭 이동
+- 없으면: 카드 미표시
+
+### LLM 컨텍스트 주입
+
+- 추가 상담 시 해당 세션의 전체 상담 이력 + 실천 로그 주입
+- 새 세션 시작 시에도 다른 세션의 실천 요약 경량 주입 (교차 참조)
+- 주입 포맷: `[세션: {title}] 실천: {item} | {done_days}/{duration}일 실천 | 회고: {review}`
+
+---
+
 ## ✅ 개발 체크리스트
 
 - [x] 홈 화면 디자인 하모나이징
