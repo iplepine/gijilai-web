@@ -21,8 +21,8 @@ export function DatePicker({ value, onChange, label, error }: DatePickerProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   const currentYear = new Date().getFullYear();
-  // 연도 범위: 올해부터 15년 전까지
-  const years = Array.from({ length: 16 }, (_, i) => currentYear - i);
+  // 연도 범위: 올해부터 100년 전까지
+  const years = Array.from({ length: 101 }, (_, i) => currentYear - i);
 
   const selectedDate = value ? new Date(value) : null;
 
