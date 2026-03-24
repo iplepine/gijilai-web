@@ -1,11 +1,8 @@
 import OpenAI from 'openai';
-import { 
-    PARENT_REPORT_PROMPT, 
-    CHILD_REPORT_PROMPT, 
+import {
+    PARENT_REPORT_PROMPT,
+    CHILD_REPORT_PROMPT,
     HARMONY_REPORT_PROMPT,
-    CHILD_PREVIEW_PROMPT,
-    PARENT_PREVIEW_PROMPT,
-    HARMONY_PREVIEW_PROMPT
 } from '@/lib/prompts';
 
 const apiKey = process.env.OPENAI_API_KEY;
@@ -38,13 +35,10 @@ export const generateReport = async (
     if (type === 'PARENT') defaultPrompt = PARENT_REPORT_PROMPT;
     if (type === 'HARMONY') defaultPrompt = HARMONY_REPORT_PROMPT;
 
-    // 프리뷰 모드일 경우 모델 고정 및 전 전용 프롬프트 사용
+    // 프리뷰(무료)는 싼 모델, 유료는 비싼 모델 — 프롬프트는 동일
     let activeModel = model;
     if (isPreview) {
         activeModel = 'gpt-4o-mini';
-        if (type === 'CHILD') defaultPrompt = CHILD_PREVIEW_PROMPT;
-        if (type === 'PARENT') defaultPrompt = PARENT_PREVIEW_PROMPT;
-        if (type === 'HARMONY') defaultPrompt = HARMONY_PREVIEW_PROMPT;
     }
 
     const promptToUse = systemPrompt || defaultPrompt;
