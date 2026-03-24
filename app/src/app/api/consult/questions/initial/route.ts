@@ -46,6 +46,8 @@ ${formatObservationsForPrompt(recentObservations)}
 2. **기질적 인사이트**: 공감 멘트 끝에 아이의 기질 관점에서 왜 이런 행동이 나올 수 있는지 가벼운 힌트를 포함하세요. 단, NS/HA/RD/P 같은 영문 약어는 절대 사용하지 말고 한글 용어(자극추구, 위험회피, 사회적민감성, 인내력)를 사용하세요.
 3. **질문 생성 (questions)**: 상황의 맥락(장소, 시간), 아이의 상태, 양육자의 반응 등을 파악하기 위한 질문을 생성하세요.
    - 객관식(CHOICE) 위주로 구성하되, 질문 톤은 상담사가 묻는 것처럼 부드럽게 작성하세요.
+   - 양육자의 구체적인 경험이나 감정을 직접 들어야 정확한 분석이 가능한 질문은 주관식(TEXT)으로 생성하세요.
+   - 객관식 선택지로 대부분 커버되지만 양육자의 상황이 다를 수 있는 경우, 마지막 선택지에 "freeText": true를 추가하세요. 이 선택지를 탭하면 자유 텍스트 입력창이 열립니다.
 
 **[Output Format (JSON Only)]**
 {
@@ -53,12 +55,18 @@ ${formatObservationsForPrompt(recentObservations)}
   "questions": [
     {
       "id": "q1",
-      "text": "질문 내용",
-      "type": "CHOICE", // "CHOICE" 또는 "TEXT"
+      "text": "질문 내용 (객관식)",
+      "type": "CHOICE",
       "options": [
         { "id": "opt1", "text": "선택지 1" },
-        { "id": "opt2", "text": "선택지 2" }
+        { "id": "opt2", "text": "선택지 2" },
+        { "id": "opt3", "text": "기타 (직접 입력)", "freeText": true }
       ]
+    },
+    {
+      "id": "q2",
+      "text": "질문 내용 (주관식)",
+      "type": "TEXT"
     }
   ]
 }

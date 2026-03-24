@@ -19,6 +19,7 @@ export async function POST(request: Request) {
 1. 1차 답변만으로 기질적 특성(NS, HA, RD, P 등)과 환경적 요인이 충분히 설명된다면 "needsFollowUp": false로 설정하세요.
 2. 특정 기질적 특성을 더 명확히 확인해야 하거나(예: 고집의 이유가 자극추구인지 위험회피인지 등), 갈등의 트리거를 더 구체화해야 한다면 "needsFollowUp": true로 설정하고 '심층 질문' 1~2개를 생성하세요.
 3. 질문은 1차 답변 내용을 언급하며 날카롭되 다정하게 물어보세요.
+4. 심층 질문도 CHOICE와 TEXT를 적절히 사용하세요. 구체적 경험이나 감정을 직접 들어야 할 때는 TEXT 타입으로 생성하세요. 객관식 선택지로 대부분 커버되지만 양육자의 상황이 다를 수 있는 경우, 마지막 선택지에 "freeText": true를 추가하세요.
 
 **[Output Format (JSON Only)]**
 {
@@ -27,9 +28,17 @@ export async function POST(request: Request) {
   "followUpQuestions": [
     {
       "id": "f1",
-      "text": "심층 질문 내용",
-      "type": "CHOICE", // "CHOICE" 또는 "TEXT"
-      "options": [{ "id": "f1_a", "text": "선택지 텍스트" }, ...]
+      "text": "심층 질문 내용 (객관식)",
+      "type": "CHOICE",
+      "options": [
+        { "id": "f1_a", "text": "선택지 텍스트" },
+        { "id": "f1_b", "text": "기타 (직접 입력)", "freeText": true }
+      ]
+    },
+    {
+      "id": "f2",
+      "text": "심층 질문 내용 (주관식)",
+      "type": "TEXT"
     }
   ]
 }
