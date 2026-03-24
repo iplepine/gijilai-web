@@ -264,6 +264,27 @@ export default function HomePage() {
     return <LandingPage />;
   }
 
+  // 데이터 로딩 중 스켈레톤 표시 (뒤로가기 시 번쩍임 방지)
+  if (loading || authLoading) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-center font-body">
+        <div className="w-full max-w-md min-h-screen flex flex-col shadow-2xl relative">
+          <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl pt-12 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-3 min-h-[40px] px-4">
+              <img src="/gijilai_icon.png" alt="기질아이" className="w-7 h-7 rounded-lg object-contain" />
+              <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
+            </div>
+          </header>
+          <main className="flex-1 flex flex-col items-center pt-12 px-6">
+            <div className="w-32 h-32 rounded-full bg-gray-100 dark:bg-surface-dark animate-pulse" />
+            <div className="w-24 h-4 bg-gray-100 dark:bg-surface-dark rounded-full mt-8 animate-pulse" />
+            <div className="w-40 h-3 bg-gray-50 dark:bg-surface-dark/50 rounded-full mt-3 animate-pulse" />
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate age string
   const ageString = mainChild?.birth_date ? (() => {
     const birth = new Date(mainChild.birth_date);
@@ -299,7 +320,7 @@ export default function HomePage() {
 
                 <div className="flex flex-col items-center justify-center w-full mb-4">
                   <div
-                    className="relative w-32 h-32 mb-4 cursor-pointer group"
+                    className="relative w-32 h-32 cursor-pointer group"
                     onClick={handleProfileClick}
                   >
                     <input
@@ -327,15 +348,15 @@ export default function HomePage() {
                         <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       </div>
                     )}
+                  </div>
 
-                    <div className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap">
-                      <div
-                        onClick={(e) => { if (temperamentInfo) { e.stopPropagation(); router.push('/report?tab=child'); } }}
-                        className={`bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10 ${temperamentInfo ? 'cursor-pointer active:scale-95 transition-transform' : ''}`}
-                      >
-                        <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
-                        {temperamentInfo ? temperamentInfo.child.label : '기질 검사하기'}
-                      </div>
+                  <div className="relative -mt-5 z-20 whitespace-nowrap">
+                    <div
+                      onClick={() => router.push(temperamentInfo ? '/report?tab=child' : '/survey/intro')}
+                      className="bg-white dark:bg-surface-dark text-primary dark:text-white px-3 py-1 rounded-full text-[12px] font-bold shadow-sm inline-flex items-center gap-1 border border-primary/10 cursor-pointer active:scale-95 transition-transform"
+                    >
+                      <span className="material-symbols-outlined text-[14px] text-child">child_care</span>
+                      {temperamentInfo ? temperamentInfo.child.label : '기질 검사하기'}
                     </div>
                   </div>
 
