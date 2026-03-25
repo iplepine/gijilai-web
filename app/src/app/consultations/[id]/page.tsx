@@ -54,7 +54,30 @@ export default function ConsultationDetailPage() {
 
     const handleResolve = async () => {
         if (!session) return;
+
+        // 연결된 ACTIVE 실천 항목 확인
+        const { data: activePractices } = await supabase
+            .from('practice_items')
+            .select('id, title')
+            .eq('session_id', session.id)
+            .eq('status', 'ACTIVE');
+
         await db.updateSession(session.id, { status: 'RESOLVED' });
+
+        if (activePractices && activePractices.length > 0) {
+            const names = activePractices.map(p => `• ${p.title}`).join('\n');
+            const dropPractices = window.confirm(
+                `진행 중인 실천이 ${activePractices.length}개 있어요.\n\n${names}\n\n실천도 함께 종료할까요?`
+            );
+            if (dropPractices) {
+                await Promise.all(
+                    activePractices.map(p =>
+                        supabase.from('practice_items').update({ status: 'DROPPED' }).eq('id', p.id)
+                    )
+                );
+            }
+        }
+
         setSession(prev => prev ? { ...prev, status: 'RESOLVED' } : prev);
     };
 
