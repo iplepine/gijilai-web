@@ -1,10 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 
-const TEMPERAMENT_TYPES = [
+const CHILD_TYPES = [
     { src: '/child_type/type_hll.jpg', label: '열정 탐험가' },
     { src: '/child_type/type_hlh.jpg', label: '사교적 리더' },
     { src: '/child_type/type_lll.jpg', label: '평화로운 관찰자' },
@@ -13,6 +14,17 @@ const TEMPERAMENT_TYPES = [
     { src: '/child_type/type_lhl.jpg', label: '조용한 사색가' },
     { src: '/child_type/type_hhh.jpg', label: '창의적 몽상가' },
     { src: '/child_type/type_lhh.jpg', label: '세심한 돌봄이' },
+];
+
+const PARENT_TYPES = [
+    { src: '/parent_type/type_parent_hll.jpg', label: '열정형 부모' },
+    { src: '/parent_type/type_parent_hlh.jpg', label: '사교형 부모' },
+    { src: '/parent_type/type_parent_lll.jpg', label: '안정형 부모' },
+    { src: '/parent_type/type_parent_llh.jpg', label: '섬세형 부모' },
+    { src: '/parent_type/type_parent_hhl.jpg', label: '전략형 부모' },
+    { src: '/parent_type/type_parent_lhl.jpg', label: '사색형 부모' },
+    { src: '/parent_type/type_parent_hhh.jpg', label: '몽상형 부모' },
+    { src: '/parent_type/type_parent_lhh.jpg', label: '돌봄형 부모' },
 ];
 
 const STEPS = [
@@ -43,6 +55,19 @@ const STEPS = [
 ];
 
 export default function LandingPage() {
+    const ALL_TYPES = [...CHILD_TYPES.map(t => ({ ...t, kind: 'child' as const })), ...PARENT_TYPES.map(t => ({ ...t, kind: 'parent' as const }))];
+    const QUESTIONS = { child: '우리 아이는 어떤 유형일까', parent: '나는 어떤 부모일까' };
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % ALL_TYPES.length);
+        }, 1800);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark overflow-x-hidden">
             {/* Hero Section */}
@@ -52,35 +77,47 @@ export default function LandingPage() {
                 <div className="container max-w-6xl mx-auto px-6 flex flex-col items-center text-center">
                     <h1 className="text-[32px] sm:text-[40px] md:text-6xl lg:text-7xl font-black text-text-main dark:text-white leading-[1.15] mb-6 tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000 break-keep">
                         우리 아이는<br />
-                        어떤 <span className="text-primary italic">기질</span>일까?
+                        어떤 <span className="text-primary">기질</span>일까
                     </h1>
 
                     <p className="max-w-xl text-text-sub dark:text-slate-400 text-base md:text-lg leading-relaxed mb-10 break-keep animate-in fade-in duration-1000 delay-200 px-4">
-                        과학적 기질 검사(CBQ/ATQ)로 아이의 타고난 성향을 이해하고,<br className="hidden md:block" />
-                        기질에 맞는 대화법과 양육 가이드를 받아보세요.
+                        과학적 기질 검사로 아이와 부모의 성향을 분석하고,<br className="hidden md:block" />
+                        우리 가족에게 맞는 대화법과 양육 가이드를 받아보세요.
                     </p>
 
                     <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
                         <Link href="/login">
                             <Button size="lg" fullWidth className="h-16 rounded-2xl text-lg font-black shadow-glow hover:scale-[1.02] transition-transform bg-primary text-white">
-                                무료로 아이 기질 검사 시작
+                                무료로 기질 검사 시작하기
                             </Button>
                         </Link>
-                        <p className="mt-3 text-[12px] text-text-sub">아이 기질 리포트는 무료 / 심층 분석 990원</p>
+                        <p className="mt-3 text-[12px] text-text-sub">기본 리포트 무료 / 심층 분석 990원</p>
                     </div>
 
-                    {/* Character Grid */}
-                    <div className="mt-16 md:mt-20 w-full max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-600">
-                        <div className="grid grid-cols-4 gap-3 md:gap-4">
-                            {TEMPERAMENT_TYPES.slice(0, 4).map((type) => (
-                                <div key={type.label} className="group relative rounded-2xl overflow-hidden shadow-card hover:shadow-lg transition-shadow">
-                                    <img src={type.src} alt={type.label} className="w-full aspect-square object-cover" />
-                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 md:p-3">
-                                        <p className="text-white text-[10px] md:text-xs font-bold text-center">{type.label}</p>
-                                    </div>
-                                </div>
+                    {/* Animated Type Cycling — single card */}
+                    <div className="mt-16 md:mt-20 w-full max-w-[280px] md:max-w-[320px] mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-600">
+                        <div className="relative aspect-square rounded-3xl overflow-hidden shadow-card">
+                            {mounted && ALL_TYPES.map((type, i) => (
+                                <img
+                                    key={type.src}
+                                    src={type.src}
+                                    alt="기질 유형"
+                                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                                        i === currentIndex ? 'opacity-100' : 'opacity-0'
+                                    }`}
+                                />
                             ))}
+                            {/* Dark overlay + blur */}
+                            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+                            {/* Question + hint text */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                <span className="text-white/90 text-xl md:text-2xl font-black">
+                                    {mounted ? QUESTIONS[ALL_TYPES[currentIndex].kind] : '우리 아이는 어떤 유형일까'}
+                                </span>
+                                <span className="text-white/40 text-xs tracking-widest">검사로 알아보세요</span>
+                            </div>
                         </div>
+                        <p className="text-center text-sm text-text-sub mt-5 break-keep">검사 후 결과가 공개됩니다</p>
                     </div>
                 </div>
             </section>
@@ -153,32 +190,6 @@ export default function LandingPage() {
                                 구체적인 육아 고민을 AI에게 상담하고, 맞춤 실천 과제를 받아 매일 체크하며 변화를 만들어가세요.
                             </p>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Temperament Types Gallery */}
-            <section className="py-20 md:py-28 bg-white dark:bg-background-dark">
-                <div className="container max-w-5xl mx-auto px-6">
-                    <div className="text-center mb-16 space-y-4">
-                        <span className="text-primary font-black tracking-widest text-xs uppercase">8 Temperament Types</span>
-                        <h2 className="text-3xl md:text-4xl font-black text-text-main dark:text-white tracking-tight break-keep">
-                            우리 아이는 어떤 유형일까요?
-                        </h2>
-                        <p className="text-text-sub text-sm md:text-base break-keep">
-                            기질 검사 결과에 따라 8가지 유형 중 하나로 분류됩니다.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                        {TEMPERAMENT_TYPES.map((type) => (
-                            <div key={type.label} className="group relative rounded-2xl overflow-hidden shadow-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                                <img src={type.src} alt={type.label} className="w-full aspect-square object-cover" />
-                                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 md:p-4">
-                                    <p className="text-white text-xs md:text-sm font-bold text-center">{type.label}</p>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 </div>
             </section>
