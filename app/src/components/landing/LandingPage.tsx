@@ -261,10 +261,10 @@ export default function LandingPage() {
                             </p>
                         </div>
                         <div className="flex flex-wrap justify-center gap-8 text-[11px] font-bold text-text-sub uppercase tracking-widest">
-                            <Link href="/settings/terms" className="hover:text-primary transition-colors">Terms</Link>
-                            <Link href="/settings/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-                            <Link href="/settings/refund" className="hover:text-primary transition-colors">Refund</Link>
-                            <Link href="/settings/support" className="hover:text-primary transition-colors">Support</Link>
+                            <Link href="/legal/terms" className="hover:text-primary transition-colors">Terms</Link>
+                            <Link href="/legal/privacy" className="hover:text-primary transition-colors">Privacy</Link>
+                            <Link href="/legal/refund" className="hover:text-primary transition-colors">Refund</Link>
+                            <Link href="/legal/support" className="hover:text-primary transition-colors">Support</Link>
                         </div>
                     </div>
                     <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
