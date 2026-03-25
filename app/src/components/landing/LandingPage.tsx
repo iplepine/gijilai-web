@@ -91,7 +91,6 @@ export default function LandingPage() {
                                 무료로 기질 검사 시작하기
                             </Button>
                         </Link>
-                        <p className="mt-3 text-[12px] text-text-sub">기본 리포트 무료 / 심층 분석 990원</p>
                     </div>
 
                     {/* Animated Type Cycling — single card */}
