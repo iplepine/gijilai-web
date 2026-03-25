@@ -4,131 +4,211 @@ import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 
+const TEMPERAMENT_TYPES = [
+    { src: '/child_type/type_hll.jpg', label: '열정 탐험가' },
+    { src: '/child_type/type_hlh.jpg', label: '사교적 리더' },
+    { src: '/child_type/type_lll.jpg', label: '평화로운 관찰자' },
+    { src: '/child_type/type_llh.jpg', label: '섬세한 예술가' },
+    { src: '/child_type/type_hhl.jpg', label: '신중한 전략가' },
+    { src: '/child_type/type_lhl.jpg', label: '조용한 사색가' },
+    { src: '/child_type/type_hhh.jpg', label: '창의적 몽상가' },
+    { src: '/child_type/type_lhh.jpg', label: '세심한 돌봄이' },
+];
+
+const STEPS = [
+    {
+        step: '01',
+        icon: 'edit_note' as const,
+        title: '기질 설문',
+        desc: '아이와 양육자의 기질을 CBQ/ATQ 기반 설문으로 측정합니다.',
+    },
+    {
+        step: '02',
+        icon: 'psychology' as const,
+        title: 'AI 기질 분석',
+        desc: '설문 결과를 분석해 아이의 기질 유형과 부모-자녀 궁합을 파악합니다.',
+    },
+    {
+        step: '03',
+        icon: 'description' as const,
+        title: '맞춤 리포트',
+        desc: '기질별 양육 가이드와 "마법의 한마디" 대화 스크립트를 받아보세요.',
+    },
+    {
+        step: '04',
+        icon: 'forum' as const,
+        title: '상담 & 실천',
+        desc: '구체적인 육아 고민을 AI 상담으로 해결하고, 매일 실천해보세요.',
+    },
+];
+
 export default function LandingPage() {
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark overflow-x-hidden">
             {/* Hero Section */}
-            <section className="relative pt-32 pb-24 flex flex-col items-center overflow-hidden">
-                {/* Decorative Background Elements */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[800px] bg-gradient-to-b from-primary/5 via-primary/2 to-transparent rounded-full blur-[100px] -z-10"></div>
-                <div className="absolute top-40 -left-20 w-80 h-80 bg-secondary/5 rounded-full blur-[80px] -z-10"></div>
-                <div className="absolute top-60 -right-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+            <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 flex flex-col items-center overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[800px] bg-gradient-to-b from-primary/5 via-primary/2 to-transparent rounded-full blur-[100px] -z-10" />
 
                 <div className="container max-w-6xl mx-auto px-6 flex flex-col items-center text-center">
-                    <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/80 dark:bg-surface-dark backdrop-blur-md shadow-soft border border-primary/10 mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
-                        <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
-                        <span className="text-[12px] font-black text-primary tracking-[0.2em] uppercase">990원으로 시작하는 데이터 기반 맞춤 육아</span>
-                    </div>
-
-                    <h1 className="text-[36px] sm:text-[44px] md:text-7xl lg:text-8xl font-black text-text-main dark:text-white leading-[1.1] mb-8 tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 break-keep">
-                        아이의 신호를<br />
-                        <span className="text-primary italic whitespace-nowrap">올바르게 통역</span>하세요
+                    <h1 className="text-[32px] sm:text-[40px] md:text-6xl lg:text-7xl font-black text-text-main dark:text-white leading-[1.15] mb-6 tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000 break-keep">
+                        우리 아이는<br />
+                        어떤 <span className="text-primary italic">기질</span>일까?
                     </h1>
 
-                    <p className="max-w-2xl text-text-sub dark:text-slate-400 text-base md:text-xl leading-relaxed mb-12 break-keep animate-in fade-in duration-1000 delay-400 px-4">
-                        과학적 기질 분석(TCI/CBQ)과 AI 전문가의 통찰을 결합하여<br className="hidden md:block" />
-                        우리 아이만을 위한 정밀한 대화 처방과 성장 지도를 제공합니다.
+                    <p className="max-w-xl text-text-sub dark:text-slate-400 text-base md:text-lg leading-relaxed mb-10 break-keep animate-in fade-in duration-1000 delay-200 px-4">
+                        과학적 기질 검사(CBQ/ATQ)로 아이의 타고난 성향을 이해하고,<br className="hidden md:block" />
+                        기질에 맞는 대화법과 양육 가이드를 받아보세요.
                     </p>
 
-                    <div className="w-full max-w-md flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-600">
+                    <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
                         <Link href="/login">
-                            <Button size="lg" fullWidth className="h-20 rounded-2xl text-xl font-black shadow-glow hover:scale-[1.02] transition-transform bg-primary text-white">
-                                우리 아이 맞춤 가이드 받기 (990원)
+                            <Button size="lg" fullWidth className="h-16 rounded-2xl text-lg font-black shadow-glow hover:scale-[1.02] transition-transform bg-primary text-white">
+                                무료로 아이 기질 검사 시작
                             </Button>
                         </Link>
-                        <div className="flex items-center justify-center gap-3">
-                            <div className="flex -space-x-2">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-beige-light overflow-hidden">
-                                        <img src={`https://i.pravatar.cc/100?u=user${i}`} alt="" />
-                                    </div>
-                                ))}
-                            </div>
-                            <p className="text-[13px] font-medium text-text-sub">현재 <span className="text-text-main dark:text-white font-bold">12,482명</span>의 양육자가 분석 중</p>
-                        </div>
+                        <p className="mt-3 text-[12px] text-text-sub">아이 기질 리포트는 무료 / 심층 분석 990원</p>
                     </div>
 
-                    <div className="mt-24 relative w-full max-w-5xl mx-auto px-4 md:px-10 animate-in fade-in zoom-in duration-1500 delay-800">
-                        <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 rounded-2xl blur-2xl"></div>
-                        <div className="relative bg-white/40 dark:bg-surface-dark/40 backdrop-blur-sm p-4 rounded-2xl border border-white/20 shadow-card">
-                            <img
-                                src="/landing_hero.png"
-                                alt="Gijilai Sample Report"
-                                className="w-full rounded-2xl shadow-lg"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Premium Features Section */}
-            <section className="py-32 bg-white dark:bg-background-dark">
-                <div className="container max-w-6xl mx-auto px-6">
-                    <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
-                        <span className="text-primary font-black tracking-widest text-xs uppercase">Why Gijilai?</span>
-                        <h2 className="text-4xl md:text-5xl font-black text-text-main dark:text-white tracking-tight">전문가들이 설계한<br />체계적인 분석 시스템</h2>
-                        <p className="text-text-sub text-lg break-keep">양육자의 94%가 아이의 기질을 이해한 후 양육 효능감이 높아졌다고 응답했습니다.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        <div className="group p-10 rounded-2xl bg-background-light dark:bg-surface-dark border border-beige-main/30 hover:shadow-card transition-all duration-500">
-                            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                <Icon name="psychology" className="text-primary w-8 h-8" />
-                            </div>
-                            <h3 className="text-xl font-black text-text-main dark:text-white mb-4">과학적 검증 데이터</h3>
-                            <p className="text-text-sub leading-relaxed break-keep">TCI 및 CBQ 기반의 공인된 아동 발달 이론을 바탕으로 아이의 기질을 정밀하게 타격합니다.</p>
-                        </div>
-
-                        <div className="group p-10 rounded-2xl bg-background-light dark:bg-surface-dark border border-beige-main/30 hover:shadow-card transition-all duration-500">
-                            <div className="w-16 h-16 rounded-2xl bg-secondary/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                <Icon name="forum" className="text-secondary w-8 h-8" />
-                            </div>
-                            <h3 className="text-xl font-black text-text-main dark:text-white mb-4">맞춤형 대화 처방</h3>
-                            <p className="text-text-sub leading-relaxed break-keep">"안 돼" 대신 아이의 마음을 움직이는 [마법의 한마디]를 기질별 시나리오로 제공합니다.</p>
-                        </div>
-
-                        <div className="group p-10 rounded-2xl bg-background-light dark:bg-surface-dark border border-beige-main/30 hover:shadow-card transition-all duration-500">
-                            <div className="w-16 h-16 rounded-2xl bg-primary-light/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                <Icon name="task_alt" className="text-primary-light w-8 h-8" />
-                            </div>
-                            <h3 className="text-xl font-black text-text-main dark:text-white mb-4">데일리 미션 서비스</h3>
-                            <p className="text-text-sub leading-relaxed break-keep">이론으로 끝나지 않고 매일 실천할 수 있는 1분 미션을 통해 양육 태도의 변화를 이끌어냅니다.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Testimonial Section */}
-            <section className="py-24 md:py-32 px-4 md:px-6 bg-beige-light dark:bg-background-dark/50">
-                <div className="container max-w-6xl mx-auto">
-                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 md:p-20 relative overflow-hidden shadow-card">
-                        <div className="absolute top-0 right-0 p-10 opacity-5 text-7xl md:text-9xl font-black pointer-events-none select-none text-primary">LOVE</div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
-                            <div className="space-y-6 md:space-y-8 relative z-10">
-                                <h2 className="text-2xl md:text-4xl font-black text-text-main dark:text-white leading-tight break-keep">
-                                    "아이의 떼쓰기가<br />
-                                    <span className="text-primary italic text-3xl md:text-5xl">사랑스러운 자기표현</span>으로<br />
-                                    보이기 시작했어요"
-                                </h2>
-                                <div className="space-y-4">
-                                    <p className="text-text-sub dark:text-slate-300 text-base md:text-lg leading-relaxed break-keep">
-                                        기질 분석을 통해 우리 아이가 왜 그렇게 반응했는지 이해하게 된 것만으로도 육아의 난이도가 절반으로 줄었습니다.
-                                    </p>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20 bg-beige-light">
-                                            <img src="https://i.pravatar.cc/150?u=mom" alt="user" className="w-full h-full object-cover" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-text-main dark:text-white">김지영 님</p>
-                                            <p className="text-[11px] text-text-sub font-bold uppercase tracking-wider">5세 남아 수아 엄마</p>
-                                        </div>
+                    {/* Character Grid */}
+                    <div className="mt-16 md:mt-20 w-full max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-600">
+                        <div className="grid grid-cols-4 gap-3 md:gap-4">
+                            {TEMPERAMENT_TYPES.slice(0, 4).map((type) => (
+                                <div key={type.label} className="group relative rounded-2xl overflow-hidden shadow-card hover:shadow-lg transition-shadow">
+                                    <img src={type.src} alt={type.label} className="w-full aspect-square object-cover" />
+                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 md:p-3">
+                                        <p className="text-white text-[10px] md:text-xs font-bold text-center">{type.label}</p>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Process Section */}
+            <section className="py-20 md:py-28 bg-white dark:bg-background-dark">
+                <div className="container max-w-5xl mx-auto px-6">
+                    <div className="text-center mb-16 space-y-4">
+                        <span className="text-primary font-black tracking-widest text-xs uppercase">How it works</span>
+                        <h2 className="text-3xl md:text-4xl font-black text-text-main dark:text-white tracking-tight break-keep">
+                            4단계로 완성하는<br />맞춤 육아 가이드
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-6">
+                        {STEPS.map((s, i) => (
+                            <div key={s.step} className="relative flex flex-col items-center text-center">
+                                {i < STEPS.length - 1 && (
+                                    <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px border-t-2 border-dashed border-beige-main/40" />
+                                )}
+                                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+                                    <Icon name={s.icon} className="text-primary w-7 h-7" />
+                                </div>
+                                <span className="text-[11px] font-black text-primary tracking-widest mb-2">{s.step}</span>
+                                <h3 className="text-lg font-black text-text-main dark:text-white mb-2">{s.title}</h3>
+                                <p className="text-sm text-text-sub leading-relaxed break-keep max-w-[240px]">{s.desc}</p>
                             </div>
-                            <div className="relative order-first md:order-last">
-                                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full"></div>
-                                <img src="/social_proof.png" alt="Happy Families" className="relative w-full rounded-2xl shadow-card" />
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="py-20 md:py-28 bg-beige-light dark:bg-background-dark/50">
+                <div className="container max-w-5xl mx-auto px-6">
+                    <div className="text-center mb-16 space-y-4">
+                        <span className="text-primary font-black tracking-widest text-xs uppercase">Features</span>
+                        <h2 className="text-3xl md:text-4xl font-black text-text-main dark:text-white tracking-tight break-keep">
+                            기질을 이해하면<br />육아가 달라집니다
+                        </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="p-8 rounded-2xl bg-white dark:bg-surface-dark border border-beige-main/30 shadow-soft">
+                            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                                <Icon name="psychology" className="text-primary w-7 h-7" />
+                            </div>
+                            <h3 className="text-lg font-black text-text-main dark:text-white mb-3">과학적 기질 분석</h3>
+                            <p className="text-sm text-text-sub leading-relaxed break-keep">
+                                CBQ(아동용)와 ATQ(성인용) 기반 검사로 아이와 부모의 기질을 측정합니다. 4개 기질 차원에서 8가지 유형으로 분류해요.
+                            </p>
+                        </div>
+
+                        <div className="p-8 rounded-2xl bg-white dark:bg-surface-dark border border-beige-main/30 shadow-soft">
+                            <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center mb-6">
+                                <Icon name="forum" className="text-secondary w-7 h-7" />
+                            </div>
+                            <h3 className="text-lg font-black text-text-main dark:text-white mb-3">마법의 한마디</h3>
+                            <p className="text-sm text-text-sub leading-relaxed break-keep">
+                                "안 돼!" 대신 아이의 기질에 맞는 대화법을 제안합니다. 상황별 구체적인 대화 스크립트로 오늘 저녁부터 바로 써볼 수 있어요.
+                            </p>
+                        </div>
+
+                        <div className="p-8 rounded-2xl bg-white dark:bg-surface-dark border border-beige-main/30 shadow-soft">
+                            <div className="w-14 h-14 rounded-2xl bg-primary-light/10 flex items-center justify-center mb-6">
+                                <Icon name="task_alt" className="text-primary-light w-7 h-7" />
+                            </div>
+                            <h3 className="text-lg font-black text-text-main dark:text-white mb-3">AI 상담 & 실천</h3>
+                            <p className="text-sm text-text-sub leading-relaxed break-keep">
+                                구체적인 육아 고민을 AI에게 상담하고, 맞춤 실천 과제를 받아 매일 체크하며 변화를 만들어가세요.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Temperament Types Gallery */}
+            <section className="py-20 md:py-28 bg-white dark:bg-background-dark">
+                <div className="container max-w-5xl mx-auto px-6">
+                    <div className="text-center mb-16 space-y-4">
+                        <span className="text-primary font-black tracking-widest text-xs uppercase">8 Temperament Types</span>
+                        <h2 className="text-3xl md:text-4xl font-black text-text-main dark:text-white tracking-tight break-keep">
+                            우리 아이는 어떤 유형일까요?
+                        </h2>
+                        <p className="text-text-sub text-sm md:text-base break-keep">
+                            기질 검사 결과에 따라 8가지 유형 중 하나로 분류됩니다.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                        {TEMPERAMENT_TYPES.map((type) => (
+                            <div key={type.label} className="group relative rounded-2xl overflow-hidden shadow-card hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                                <img src={type.src} alt={type.label} className="w-full aspect-square object-cover" />
+                                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 md:p-4">
+                                    <p className="text-white text-xs md:text-sm font-bold text-center">{type.label}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Example: Magic Word */}
+            <section className="py-20 md:py-28 bg-beige-light dark:bg-background-dark/50">
+                <div className="container max-w-4xl mx-auto px-6">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl p-8 md:p-14 shadow-card">
+                        <div className="text-center mb-10 space-y-3">
+                            <span className="text-primary font-black tracking-widest text-xs uppercase">Magic Words</span>
+                            <h2 className="text-2xl md:text-3xl font-black text-text-main dark:text-white break-keep">
+                                이런 대화법을 제안해드려요
+                            </h2>
+                        </div>
+
+                        <div className="space-y-5 max-w-lg mx-auto">
+                            <div className="flex items-start gap-4 p-5 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20">
+                                <span className="text-red-400 text-lg mt-0.5">&#x2717;</span>
+                                <div>
+                                    <p className="text-sm font-bold text-red-500 mb-1">Before</p>
+                                    <p className="text-text-main dark:text-white font-medium break-keep">"장난감 정리해! 몇 번을 말해!"</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4 p-5 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
+                                <span className="text-green-500 text-lg mt-0.5">&#x2713;</span>
+                                <div>
+                                    <p className="text-sm font-bold text-green-600 mb-1">After</p>
+                                    <p className="text-text-main dark:text-white font-medium break-keep">"장난감 친구들이 집에 가고 싶대~ 같이 도와줄까?"</p>
+                                    <p className="text-xs text-text-sub mt-2">열정 탐험가 유형 | 놀이 전환 상황</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -136,47 +216,52 @@ export default function LandingPage() {
             </section>
 
             {/* Final CTA Section */}
-            <section className="py-24 md:py-32 px-6 relative overflow-hidden bg-primary-dark">
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] -mr-64 -mt-64"></div>
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[150px] -ml-64 -mb-64"></div>
+            <section className="py-20 md:py-28 px-6 relative overflow-hidden bg-primary-dark">
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/20 rounded-full blur-[150px] -mr-48 -mt-48" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[150px] -ml-48 -mb-48" />
 
-                <div className="container max-w-4xl mx-auto text-center space-y-12 relative z-10">
-                    <h2 className="text-3xl md:text-6xl font-black text-white leading-tight tracking-tight break-keep">
-                        양육자의 <span className="text-secondary">작은&nbsp;변화</span>가<br />
-                        아이의 인생을 바꿉니다
+                <div className="container max-w-3xl mx-auto text-center space-y-8 relative z-10">
+                    <h2 className="text-3xl md:text-5xl font-black text-white leading-tight tracking-tight break-keep">
+                        아이를 이해하는 것부터<br />
+                        <span className="text-secondary">좋은 양육</span>이 시작됩니다
                     </h2>
-                    <p className="text-white/60 text-base md:text-xl max-w-2xl mx-auto break-keep">
-                        지금 990원으로 우리 아이를 위한<br className="md:hidden" /> 인생 가이드북을 열어보세요.
+                    <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto break-keep">
+                        3분 설문으로 우리 아이의 기질 유형을 알아보세요.<br />
+                        아이 기질 리포트는 무료입니다.
                     </p>
-                    <div className="flex flex-col items-center gap-6">
+                    <div className="flex flex-col items-center gap-4">
                         <Link href="/login" className="w-full max-w-sm">
-                            <Button variant="secondary" size="lg" fullWidth className="h-16 md:h-20 rounded-2xl bg-white text-primary-dark !text-primary-dark text-lg md:text-xl font-black hover:bg-beige-light transition-all shadow-glow">
-                                바로 분석 시작하기
+                            <Button variant="secondary" size="lg" fullWidth className="h-16 rounded-2xl bg-white text-primary-dark !text-primary-dark text-lg font-black hover:bg-beige-light transition-all shadow-glow">
+                                기질 검사 시작하기
                             </Button>
                         </Link>
-                        <p className="text-white/30 text-[11px] font-bold uppercase tracking-[0.3em] italic">limited time offer: 990 KRW only</p>
                     </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="py-20 px-6 bg-white dark:bg-background-dark border-t border-beige-main/20">
-                <div className="container max-w-6xl mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-10">
-                        <div className="flex flex-col items-center md:items-start gap-4">
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl font-logo tracking-[0.3em] text-primary dark:text-white uppercase">기질아이</span>
-                            </div>
+            <footer className="py-16 px-6 bg-white dark:bg-background-dark border-t border-beige-main/20">
+                <div className="container max-w-6xl mx-auto space-y-8">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+                        <div className="flex flex-col items-center md:items-start gap-3">
+                            <span className="text-2xl font-logo tracking-[0.3em] text-primary dark:text-white uppercase">기질아이</span>
                             <p className="text-[11px] text-text-sub text-center md:text-left leading-relaxed max-w-xs uppercase tracking-tighter">
-                                © 2026 GIJILAI. ADVANCED CHILDCARE INSIGHTS.<br />
-                                ALL RIGHTS RESERVED. 본 서비스는 의학적 보건 의료 전문가의 진단을 대체하지 않습니다.
+                                &copy; 2026 GIJILAI. ALL RIGHTS RESERVED.<br />
+                                본 서비스는 의학적 진단을 대체하지 않습니다.
                             </p>
                         </div>
                         <div className="flex flex-wrap justify-center gap-8 text-[11px] font-bold text-text-sub uppercase tracking-widest">
                             <Link href="/settings/terms" className="hover:text-primary transition-colors">Terms</Link>
                             <Link href="/settings/privacy" className="hover:text-primary transition-colors">Privacy</Link>
+                            <Link href="/settings/refund" className="hover:text-primary transition-colors">Refund</Link>
                             <Link href="/settings/support" className="hover:text-primary transition-colors">Support</Link>
                         </div>
+                    </div>
+                    <div className="border-t border-gray-100 dark:border-gray-800 pt-6">
+                        <p className="text-[10px] text-text-sub/60 text-center leading-relaxed">
+                            데브호하우스 | 대표: 박정호 | 사업자등록번호: 898-35-01596<br />
+                            서울특별시 중랑구 신내로 155 | 문의: support@devhohouse.com
+                        </p>
                     </div>
                 </div>
             </footer>
