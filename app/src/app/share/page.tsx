@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
-import { Icon } from '@/components/ui/Icon';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -12,8 +11,6 @@ import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
 import { CHILD_QUESTIONS } from '@/data/questions';
 import { eunNeun } from '@/lib/koreanUtils';
-import { toPng } from 'html-to-image';
-import saveAs from 'file-saver';
 import { Suspense } from 'react';
 
 function SharePageContent() {
@@ -22,8 +19,6 @@ function SharePageContent() {
   const { user } = useAuth();
   const { intake, cbqResponses, atqResponses } = useAppStore();
   const [copied, setCopied] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isSharing, setIsSharing] = useState(false);
 
   // DB-loaded data
   const [report, setReport] = useState<ReportData | null>(null);
@@ -127,20 +122,6 @@ function SharePageContent() {
     });
   };
 
-  const handleDownloadImage = async () => {
-    if (cardRef.current === null) return;
-    setIsSharing(true);
-    try {
-      const dataUrl = await toPng(cardRef.current, { cacheBust: true });
-      saveAs(dataUrl, `기질아이-${childName}.png`);
-    } catch (err) {
-      console.error('Image download failed:', err);
-      alert('이미지 저장에 실패했습니다.');
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
   const handleNativeShare = async () => {
     if (!navigator.share) {
       handleCopyCode();
@@ -170,7 +151,7 @@ function SharePageContent() {
 
         <main className="flex-1 px-6 py-8 space-y-8 pb-24">
           {/* 결과 카드 */}
-          <div ref={cardRef} className="rounded-2xl overflow-hidden bg-white dark:bg-surface-dark shadow-card border border-primary/5 dark:border-white/5">
+          <div className="rounded-2xl overflow-hidden bg-white dark:bg-surface-dark shadow-card border border-primary/5 dark:border-white/5">
             <div
               className="w-full aspect-[4/5] bg-cover bg-center relative"
               style={{
@@ -202,38 +183,20 @@ function SharePageContent() {
               카카오톡으로 공유
             </button>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={handleCopyCode}
-                className="flex flex-col items-center gap-2 active:scale-95 transition-all"
+                className={`flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 text-[15px] font-bold active:scale-[0.98] transition-all border ${copied ? 'bg-primary/10 border-primary text-primary' : 'bg-white dark:bg-surface-dark border-gray-200 dark:border-gray-700 text-text-sub'}`}
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${copied ? 'bg-primary/10' : 'bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800'}`}>
-                  <span className={`material-symbols-outlined text-[22px] ${copied ? 'text-primary' : 'text-text-sub'}`}>{copied ? 'check' : 'link'}</span>
-                </div>
-                <span className={`text-[11px] font-bold ${copied ? 'text-primary' : 'text-text-sub'}`}>{copied ? '복사됨!' : '링크 복사'}</span>
-              </button>
-              <button
-                onClick={handleDownloadImage}
-                disabled={isSharing}
-                className="flex flex-col items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
-              >
-                <div className="w-14 h-14 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-center">
-                  {isSharing ? (
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <span className="material-symbols-outlined text-[22px] text-text-sub">image</span>
-                  )}
-                </div>
-                <span className="text-[11px] font-bold text-text-sub">{isSharing ? '저장 중' : '이미지 저장'}</span>
+                <span className="material-symbols-outlined text-[20px]">{copied ? 'check' : 'link'}</span>
+                {copied ? '복사됨!' : '링크 복사'}
               </button>
               <button
                 onClick={handleNativeShare}
-                className="flex flex-col items-center gap-2 active:scale-95 transition-all"
+                className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 text-[15px] font-bold bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-sub active:scale-[0.98] transition-all"
               >
-                <div className="w-14 h-14 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[22px] text-text-sub">share</span>
-                </div>
-                <span className="text-[11px] font-bold text-text-sub">다른 앱</span>
+                <span className="material-symbols-outlined text-[20px]">share</span>
+                다른 앱
               </button>
             </div>
           </div>

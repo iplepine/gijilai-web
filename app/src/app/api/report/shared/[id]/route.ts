@@ -28,10 +28,10 @@ export async function GET(
       .single();
 
     if (error || !data) {
+      console.error('Shared report query error:', error);
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    // Only expose child reports for sharing (not parent/harmony which are more private)
     if (data.type !== 'CHILD') {
       return NextResponse.json({ error: 'This report type cannot be shared' }, { status: 403 });
     }

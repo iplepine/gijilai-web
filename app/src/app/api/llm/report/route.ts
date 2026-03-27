@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         if (!refresh) {
             let cacheQuery = supabase
                 .from('reports')
-                .select('analysis_json, created_at, is_paid')
+                .select('id, analysis_json, created_at, is_paid')
                 .eq('user_id', userId)
                 .eq('type', type);
 
@@ -62,6 +62,7 @@ export async function POST(request: Request) {
                 console.log(`[Report API] Returning cached ${type} report (childId=${clientChildId})`);
                 return NextResponse.json({
                     report: cachedRows[0].analysis_json,
+                    reportId: cachedRows[0].id,
                     createdAt: cachedRows[0].created_at,
                     cached: true
                 });
@@ -159,7 +160,7 @@ export async function POST(request: Request) {
             if (deleteError) console.error('[Report API] Delete error:', deleteError);
         }
 
-        const { error: reportError } = await supabase
+        const { data: savedReport, error: reportError } = await supabase
             .from('reports')
             .insert({
                 user_id: userId,
@@ -169,16 +170,19 @@ export async function POST(request: Request) {
                 analysis_json: report as any,
                 model_used: 'gpt-4o-mini',
                 is_paid: true,
-            });
+            })
+            .select('id')
+            .single();
 
         if (reportError) {
             console.error('[Report API] Report save error:', reportError);
         } else {
-            console.log(`[Report API] ${type} report saved to DB (childId=${childId}, surveyId=${surveyId})`);
+            console.log(`[Report API] ${type} report saved to DB (id=${savedReport?.id}, childId=${childId}, surveyId=${surveyId})`);
         }
 
         return NextResponse.json({
             report,
+            reportId: savedReport?.id || null,
             createdAt: new Date().toISOString(),
             cached: false
         });

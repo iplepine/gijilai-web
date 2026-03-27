@@ -193,7 +193,10 @@ function ReportContent() {
   };
 
   // 공통 API 호출 함수 (포맷 불일치 시 자동 재생성)
-  const fetchReport = async (payload: any): Promise<{ report: any; createdAt: string } | null> => {
+  // API에서 반환된 리포트 ID 저장 (공유 등에 활용)
+  const [childReportId, setChildReportId] = useState<string | null>(null);
+
+  const fetchReport = async (payload: any): Promise<{ report: any; reportId?: string; createdAt: string } | null> => {
     const res = await fetch('/api/llm/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -214,7 +217,7 @@ function ReportContent() {
       return fetchReport({ ...payload, refresh: true });
     }
 
-    return { report: data.report, createdAt: data.createdAt };
+    return { report: data.report, reportId: data.reportId, createdAt: data.createdAt };
   };
 
   const generateChildAIReport = async (refresh = false) => {
@@ -234,6 +237,7 @@ function ReportContent() {
         console.log('[ChildReport] analysis:', result.report.analysis ? Object.keys(result.report.analysis) : 'NO ANALYSIS');
         console.log('[ChildReport] dimensions:', result.report.analysis?.dimensions ? Object.keys(result.report.analysis.dimensions) : 'NO DIMENSIONS');
         setChildAiReport(result.report);
+        if (result.reportId) setChildReportId(result.reportId);
         setReportDates(prev => ({ ...prev, child: result.createdAt }));
       }
     } catch (error) {
@@ -838,7 +842,7 @@ function ReportContent() {
                   {/* Footer Actions */}
                   {!isChildOnly && childAiReport && (
                     <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
-                      <Button variant="secondary" onClick={() => router.push(reportId ? `/share?id=${reportId}` : '/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+                      <Button variant="secondary" onClick={() => router.push(`/share${(reportId || childReportId) ? `?id=${reportId || childReportId}` : ''}`)} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
                         결과 공유하기
                       </Button>
                       <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
@@ -1017,7 +1021,7 @@ function ReportContent() {
                 {/* Footer Actions */}
                 {parentAiReport && (
                   <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
-                    <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+                    <Button variant="secondary" onClick={() => router.push(`/share${(reportId || childReportId) ? `?id=${reportId || childReportId}` : ''}`)} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
                       나의 결과 공유하기
                     </Button>
                     <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
@@ -1241,7 +1245,7 @@ function ReportContent() {
 
                 {/* Footer Actions */}
                 {harmonyAiReport && <div className="flex flex-col gap-4 pt-10 pb-16 text-center px-4">
-                  <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg text-slate-800 font-bold">
+                  <Button variant="secondary" onClick={() => router.push(`/share${(reportId || childReportId) ? `?id=${reportId || childReportId}` : ''}`)} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg text-slate-800 font-bold">
                     결과 공유하기
                   </Button>
                   <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
@@ -1262,7 +1266,7 @@ function ReportContent() {
               <div className="m-3 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
                 <div className="px-5 py-4 flex gap-3">
                   <button
-                    onClick={() => router.push('/share')}
+                    onClick={() => router.push(`/share${(reportId || childReportId) ? `?id=${reportId || childReportId}` : ''}`)}
                     className="flex-1 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all border-2 border-primary text-primary"
                   >
                     <span className="material-symbols-outlined text-[20px]">share</span>
