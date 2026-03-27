@@ -838,7 +838,7 @@ function ReportContent() {
                   {/* Footer Actions */}
                   {!isChildOnly && childAiReport && (
                     <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
-                      <Button variant="secondary" onClick={() => router.push('/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
+                      <Button variant="secondary" onClick={() => router.push(reportId ? `/share?id=${reportId}` : '/share')} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
                         결과 공유하기
                       </Button>
                       <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
@@ -1258,26 +1258,48 @@ function ReportContent() {
       {isChildOnly && (
         <div className="fixed bottom-0 left-0 right-0 z-50">
           <div className="max-w-md mx-auto">
-            <div className="m-3 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-primary/10 to-slate-50 px-5 py-3 border-b border-slate-100">
-                <p className="text-[11px] font-bold text-primary text-center">
-                  🔬 양육자 기질까지 추가하면 더 정밀해져요
-                </p>
+            {isParentSurveyComplete ? (
+              <div className="m-3 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 flex gap-3">
+                  <button
+                    onClick={() => router.push('/share')}
+                    className="flex-1 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all border-2 border-primary text-primary"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">share</span>
+                    <span>결과 공유</span>
+                  </button>
+                  <button
+                    onClick={() => router.replace('/report')}
+                    className="flex-1 py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    style={{ backgroundColor: 'var(--primary)' }}
+                  >
+                    <span>전체 리포트 보기</span>
+                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                  </button>
+                </div>
               </div>
-              <div className="px-5 py-4">
-                <p className="text-[12px] text-slate-500 text-center mb-3 leading-relaxed">
-                  두 기질의 <strong className="text-slate-700">조화 지수(GHI)</strong>와 <strong className="text-slate-700">맞춤 양육 솔루션</strong>을<br />지금 바로 확인해 보세요.
-                </p>
-                <button
-                  onClick={() => router.push('/survey?type=PARENT')}
-                  className="w-full py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                  style={{ backgroundColor: 'var(--primary)' }}
-                >
-                  <span>양육자 기질 검사 이어하기</span>
-                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-                </button>
+            ) : (
+              <div className="m-3 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-primary/10 to-slate-50 px-5 py-3 border-b border-slate-100">
+                  <p className="text-[11px] font-bold text-primary text-center">
+                    🔬 양육자 기질까지 추가하면 더 정밀해져요
+                  </p>
+                </div>
+                <div className="px-5 py-4">
+                  <p className="text-[12px] text-slate-500 text-center mb-3 leading-relaxed">
+                    두 기질의 <strong className="text-slate-700">조화 지수(GHI)</strong>와 <strong className="text-slate-700">맞춤 양육 솔루션</strong>을<br />지금 바로 확인해 보세요.
+                  </p>
+                  <button
+                    onClick={() => router.push('/survey?type=PARENT')}
+                    className="w-full py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    style={{ backgroundColor: 'var(--primary)' }}
+                  >
+                    <span>양육자 기질 검사 이어하기</span>
+                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

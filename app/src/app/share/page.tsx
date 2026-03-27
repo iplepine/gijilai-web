@@ -87,7 +87,7 @@ function SharePageContent() {
   })();
 
   const getShareUrl = () => {
-    if (reportId) return `${window.location.origin}/report?id=${reportId}`;
+    if (reportId) return `${window.location.origin}/shared/${reportId}`;
     return `${window.location.origin}?ref=${referralCode}`;
   };
 
