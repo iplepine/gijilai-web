@@ -48,11 +48,7 @@ function ReportContent() {
 
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
-  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, setIsPaid, selectedChildId } = useAppStore();
-  const [isLocalhost, setIsLocalhost] = useState(false);
-  useEffect(() => {
-    setIsLocalhost(window.location.hostname === 'localhost');
-  }, []);
+  const { intake, cbqResponses, atqResponses, parentingResponses, selectedChildId } = useAppStore();
 
   const [childAiReport, setChildAiReport] = useState<any>(null);
   const [parentAiReport, setParentAiReport] = useState<any>(null);
@@ -121,21 +117,21 @@ function ReportContent() {
           setSavedChildScores(surveyData?.scores);
           setDbChildId(data.child_id);
           setDbSurveyIds(prev => ({ ...prev, CHILD: data.survey_id }));
-          if (data.is_paid) useAppStore.getState().setIsPaid(true);
+
           setActiveTab('child');
         } else if (data.type === 'PARENT') {
           setParentAiReport(analysis);
           setSavedParentScores(surveyData?.scores);
           setDbChildId(data.child_id);
           setDbSurveyIds(prev => ({ ...prev, PARENT: data.survey_id }));
-          if (data.is_paid) useAppStore.getState().setIsPaid(true);
+
           setActiveTab('parent');
         } else if (data.type === 'HARMONY') {
           setHarmonyAiReport(analysis);
           setDbChildId(data.child_id);
           setDbSurveyIds(prev => ({ ...prev, PARENTING_STYLE: data.survey_id }));
           // 조화 분석 시에는 아이/양육자 점수가 모두 필요할 수 있으므로 저장된 데이터가 있다면 복원
-          if (data.is_paid) useAppStore.getState().setIsPaid(true);
+
           setActiveTab('parenting');
         }
       }
@@ -230,7 +226,7 @@ function ReportContent() {
       const result = await fetchReport({
         userName: intake.childName || '아이',
         scores: childScores, type: 'CHILD', answers,
-        isPreview: !isPaid, refresh,
+        refresh,
         childType: { label: childType.label, keywords: childType.keywords, desc: childType.desc }
       });
       if (result) {
@@ -255,7 +251,7 @@ function ReportContent() {
       const result = await fetchReport({
         userName: '양육자',
         scores: parentScores, type: 'PARENT', answers,
-        isPreview: !isPaid, refresh,
+        refresh,
         parentType: { label: parentType.label, keywords: parentType.keywords }
       });
       if (result) {
@@ -499,14 +495,6 @@ function ReportContent() {
                 >
                   <span className="material-symbols-outlined">arrow_back_ios</span>
                 </button>
-                {isLocalhost && (
-                  <button
-                    onClick={() => setIsPaid(!isPaid)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-black backdrop-blur-sm border transition-colors ${isPaid ? 'bg-green-500/80 text-white border-green-400' : 'bg-red-500/80 text-white border-red-400'}`}
-                  >
-                    {isPaid ? 'PAID' : 'FREE'}
-                  </button>
-                )}
               </div>
 
               <div key={activeTab} className="animate-in fade-in duration-500">

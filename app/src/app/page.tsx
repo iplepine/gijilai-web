@@ -19,7 +19,7 @@ import { TCI_TERMINOLOGY } from '@/constants/terminology';
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { intake, cbqResponses, atqResponses, parentingResponses, isPaid, resetSurveyOnly, resetAll, selectedChildId, setSelectedChildId } = useAppStore();
+  const { intake, cbqResponses, atqResponses, parentingResponses, resetSurveyOnly, resetAll, selectedChildId, setSelectedChildId } = useAppStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [reports, setReports] = useState<ReportData[]>([]);
@@ -60,7 +60,7 @@ export default function HomePage() {
   ]);
   const [loading, setLoading] = useState(true);
 
-  const [cooldownStatus, setCooldownStatus] = useState<{ isAvailable: boolean; remainingDays?: number; remainingHours?: number }>({ isAvailable: true });
+  const [cooldownStatus, setCooldownStatus] = useState<{ isAvailable: boolean; remainingHours?: number }>({ isAvailable: true });
   const [showChildDropdown, setShowChildDropdown] = useState(false);
 
   // Derived Child Profile (DB first, then local intake store)
@@ -240,7 +240,7 @@ export default function HomePage() {
       const childReports = reports.filter(r => r.child_id === mainChild.id && r.type === 'CHILD');
       if (childReports.length > 0) {
         const lastReport = childReports[0]; // DESC 정렬되어 있음
-        const status = checkCooldown(lastReport.created_at, lastReport.is_paid);
+        const status = checkCooldown(lastReport.created_at);
         setCooldownStatus(status);
       } else {
         setCooldownStatus({ isAvailable: true });

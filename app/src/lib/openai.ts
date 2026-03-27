@@ -26,7 +26,6 @@ export const generateReport = async (
     systemPrompt?: string,
     answers?: { questionId: string; score: number }[],
     parentScores?: { NS: number; HA: number; RD: number; P: number },
-    isPreview: boolean = false,
     childType?: { label: string; keywords: string[] },
     parentType?: { label: string; keywords: string[] }
 ) => {

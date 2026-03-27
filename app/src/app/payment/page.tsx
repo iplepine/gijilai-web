@@ -27,7 +27,7 @@ const LOADING_MESSAGES = [
 export default function PaymentPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { intake, setIsPaid, setSubscriptionTier } = useAppStore();
+  const { intake } = useAppStore();
   const [status, setStatus] = useState<LoadingStatus>('idle');
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [isApp, setIsApp] = useState(false);
@@ -174,8 +174,6 @@ export default function PaymentPage() {
   };
 
   const handlePaymentSuccess = () => {
-    setIsPaid(true);
-    setSubscriptionTier('single');
     setStatus('analyzing');
   };
 

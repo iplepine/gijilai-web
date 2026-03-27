@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db, PaymentData } from '@/lib/db';
-import { useAppStore } from '@/store/useAppStore';
+
 
 export default function SubscriptionPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { setSubscriptionTier } = useAppStore();
   const [subscription, setSubscription] = useState<any>(null);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);

@@ -22,14 +22,6 @@ interface AppState {
   analysisResult: AnalysisResult | null;
   setAnalysisResult: (result: AnalysisResult) => void;
 
-  // Payment
-  isPaid: boolean;
-  setIsPaid: (paid: boolean) => void;
-
-  // Subscription
-  subscriptionTier: 'free' | 'single' | 'premium';
-  setSubscriptionTier: (tier: 'free' | 'single' | 'premium') => void;
-
   // Selected Child
   selectedChildId: string | null;
   setSelectedChildId: (id: string | null) => void;
@@ -97,14 +89,6 @@ export const useAppStore = create<AppState>()(
       analysisResult: null,
       setAnalysisResult: (result) => set({ analysisResult: result }),
 
-      // Payment
-      isPaid: false,
-      setIsPaid: (paid) => set({ isPaid: paid }),
-
-      // Subscription
-      subscriptionTier: 'free',
-      setSubscriptionTier: (tier) => set({ subscriptionTier: tier }),
-
       // Restore from DB
       restoreSurveyFromDB: (data) =>
         set((state) => ({
@@ -122,7 +106,6 @@ export const useAppStore = create<AppState>()(
           atqResponses: {},
           parentingResponses: {},
           analysisResult: null,
-          isPaid: false,
         }),
       resetSurveyOnly: () =>
         set({
@@ -141,8 +124,6 @@ export const useAppStore = create<AppState>()(
         atqResponses: state.atqResponses,
         parentingResponses: state.parentingResponses,
         surveyProgress: state.surveyProgress,
-        isPaid: state.isPaid,
-        subscriptionTier: state.subscriptionTier,
         selectedChildId: state.selectedChildId,
       }),
     }

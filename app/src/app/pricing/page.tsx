@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useAppStore } from '@/store/useAppStore';
+
 
 declare global {
   interface Window {
@@ -38,7 +38,6 @@ function getMonthlyEquivalent(plan: Plan, locale: Locale): string {
 export default function PricingPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { setSubscriptionTier } = useAppStore();
   const [selectedPlan, setSelectedPlan] = useState<Plan>('MONTHLY');
   const [locale, setLocale] = useState<Locale>('ko');
   const [loading, setLoading] = useState(false);
@@ -108,7 +107,6 @@ export default function PricingPage() {
         throw new Error(data.error || '구독 생성 실패');
       }
 
-      setSubscriptionTier('premium');
       router.replace('/');
     } catch (error: any) {
       console.error('Subscribe error:', error);

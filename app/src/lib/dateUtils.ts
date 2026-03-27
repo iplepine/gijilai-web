@@ -24,29 +24,17 @@ export function getHoursDifference(date1: Date | string, date2: Date | string): 
 
 /**
  * 재검사 쿨다운 상태를 확인합니다.
- * @returns { isAvailable: boolean, remainingDays?: number, remainingHours?: number }
+ * @returns { isAvailable: boolean, remainingHours?: number }
  */
-export function checkCooldown(lastCheckedAt: string | null, isPaid: boolean) {
+export function checkCooldown(lastCheckedAt: string | null) {
   if (!lastCheckedAt) return { isAvailable: true };
 
   const now = new Date();
   const lastDate = new Date(lastCheckedAt);
-  
-  if (isPaid) {
-    // 유료 사용자는 24시간 제한
-    const hoursDiff = getHoursDifference(lastDate, now);
-    const isAvailable = hoursDiff >= 24;
-    return {
-      isAvailable,
-      remainingHours: isAvailable ? 0 : 24 - hoursDiff
-    };
-  } else {
-    // 무료 사용자는 7일 제한
-    const daysDiff = getDaysDifference(lastDate, now);
-    const isAvailable = daysDiff >= 7;
-    return {
-      isAvailable,
-      remainingDays: isAvailable ? 0 : 7 - daysDiff
-    };
-  }
+  const hoursDiff = getHoursDifference(lastDate, now);
+  const isAvailable = hoursDiff >= 24;
+  return {
+    isAvailable,
+    remainingHours: isAvailable ? 0 : 24 - hoursDiff,
+  };
 }

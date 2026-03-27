@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         const {
             userName, scores, type, answers,
-            parentScores, isPreview = false, childType, parentType,
+            parentScores, childType, parentType,
             refresh = false,
             intake, styleScores,
             childId: clientChildId
@@ -141,7 +141,7 @@ export async function POST(request: Request) {
         console.log(`[Report API] Generating ${type} report via LLM (refresh=${refresh})`);
         const report = await generateReport(
             userName, scores, type as any, undefined,
-            answers, parentScores, isPreview, childType, parentType
+            answers, parentScores, childType, parentType
         );
 
         // 5. DB 저장 (childId/surveyId 없어도 캐시를 위해 저장)
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
                 type,
                 analysis_json: report as any,
                 model_used: 'gpt-4o-mini',
-                is_paid: !isPreview,
+                is_paid: true,
             });
 
         if (reportError) {

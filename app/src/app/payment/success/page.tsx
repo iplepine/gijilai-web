@@ -5,12 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
-import { useAppStore } from '@/store/useAppStore';
-
 function SuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { setIsPaid } = useAppStore();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
     useEffect(() => {
@@ -25,7 +22,6 @@ function SuccessContent() {
             })
                 .then(res => {
                     if (res.ok) {
-                        setIsPaid(true);
                         setStatus('success');
                         setTimeout(() => router.push('/report'), 2000);
                     } else {
@@ -36,7 +32,7 @@ function SuccessContent() {
         } else {
             setStatus('error');
         }
-    }, [searchParams, setIsPaid, router]);
+    }, [searchParams, router]);
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">
