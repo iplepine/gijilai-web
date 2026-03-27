@@ -67,7 +67,7 @@ export const CHILD_REPORT_PROMPT = `
 ### Output Format: JSON
 반드시 아래 구조의 **JSON 객체 하나만** 반환하세요.
 
-⚠️ **필수 필드 경고**: `analysis.dimensions`의 NS, HA, RD, P 4개 필드는 **절대 생략하지 마라**. 각 필드에 반드시 2~3문장의 해석을 포함해야 한다. 빈 문자열이나 null은 금지.
+⚠️ **필수 필드 경고**: analysis > dimensions의 NS, HA, RD, P 4개 필드는 **절대 생략하지 마라**. 각 필드에 반드시 2~3문장의 해석을 포함해야 한다. 빈 문자열이나 null은 금지.
 
 \`\`\`json
 {
