@@ -71,21 +71,24 @@ function ConsultContent() {
     const [sessionContext, setSessionContext] = useState<any>(null);
     const [sessionId, setSessionId] = useState<string | null>(sessionIdParam);
     const [validChildId, setValidChildId] = useState<string | null>(null);
+    const [childLoading, setChildLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user) { setChildLoading(false); return; }
+        setChildLoading(true);
         supabase.from('children').select('id, name, birth_date, gender').eq('parent_id', user.id).then(({ data }) => {
             if (!data || data.length === 0) {
                 setChildName(intake.childName || null);
                 setValidChildId(null);
-                return;
+            } else {
+                const selected = selectedChildId ? data.find(c => c.id === selectedChildId) : data[0];
+                const child = selected || data[0];
+                setChildName(child.name);
+                setChildBirthDate(child.birth_date);
+                setChildGender(child.gender);
+                setValidChildId(child.id);
             }
-            const selected = selectedChildId ? data.find(c => c.id === selectedChildId) : data[0];
-            const child = selected || data[0];
-            setChildName(child.name);
-            setChildBirthDate(child.birth_date);
-            setChildGender(child.gender);
-            setValidChildId(child.id);
+            setChildLoading(false);
         });
     }, [user, selectedChildId, intake.childName]);
 
@@ -349,7 +352,13 @@ function ConsultContent() {
                 <Navbar title={step === 'RESULT' ? '마음 처방전' : '마음 통역소'} />
 
                 <main className="w-full max-w-md flex flex-col flex-1 p-6 pb-36">
-                    {step === 'INPUT' && !validChildId && (
+                    {step === 'INPUT' && childLoading && (
+                        <div className="flex flex-col items-center justify-center flex-1">
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    )}
+
+                    {step === 'INPUT' && !childLoading && !validChildId && (
                         <div className="flex flex-col items-center justify-center flex-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="material-symbols-outlined text-[40px] text-primary">child_care</span>
@@ -370,7 +379,7 @@ function ConsultContent() {
                         </div>
                     )}
 
-                    {step === 'INPUT' && validChildId && (
+                    {step === 'INPUT' && !childLoading && validChildId && (
                         <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* 추가 상담: 이전 상담 요약 + 실천 현황 */}
                             {sessionContext && (
@@ -447,7 +456,7 @@ function ConsultContent() {
                         </div>
                     )}
 
-                    {step === 'INPUT' && validChildId && (
+                    {step === 'INPUT' && !childLoading && validChildId && (
                         <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30">
                             <button
                                 onClick={handleStartDiagnostic}

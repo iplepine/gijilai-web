@@ -623,6 +623,15 @@ export const db = {
         return count || 0;
     },
 
+    getTotalConsultCount: async (userId: string) => {
+        const { count, error } = await supabase
+            .from('consultation_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+        if (error) throw error;
+        return count || 0;
+    },
+
     resetUserData: async (userId: string) => {
         // 회원 탈퇴 시 모든 사용자 데이터 삭제
         // consultation_sessions 삭제 시 CASCADE로 practice_items, practice_logs, practice_reviews 자동 삭제

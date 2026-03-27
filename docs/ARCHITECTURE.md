@@ -37,7 +37,7 @@
 
 ### AI 리포트 생성기
 - **위치**: `app/src/lib/prompts.ts`, `app/src/lib/openai.ts`
-- **역할**: OpenAI API를 통한 개인화 내러티브 리포트 생성. 6가지 프롬프트 변형 관리 (CHILD, PARENT, HARMONY x 전체/프리뷰)
+- **역할**: OpenAI API를 통한 개인화 내러티브 리포트 생성. 3가지 프롬프트 변형 관리 (CHILD, PARENT, HARMONY)
 - **의존**: 설문 점수, 질문/응답 컨텍스트
 - **사용처**: `/api/llm/report` 라우트, 리포트 페이지
 

@@ -7,7 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import BottomNav from '@/components/layout/BottomNav';
 import LandingPage from '@/components/landing/LandingPage';
-import { db, UserProfile, ChildProfile, ReportData, SurveyData, PracticeItemData, PracticeLogData } from '@/lib/db';
+import { db, UserProfile, ChildProfile, ReportData, SurveyData, PracticeItemData, PracticeLogData, SubscriptionData } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { GardenState } from '@/types/gardening';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
@@ -60,6 +60,8 @@ export default function HomePage() {
     { id: 3, title: "🌟 잠들기 전 인사", before: "잘 자~", after: "오늘 민준이가 인사를 잘해서 엄마는 정말 행복했어", checked: false }
   ]);
   const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [totalConsultCount, setTotalConsultCount] = useState(0);
 
   const [cooldownStatus, setCooldownStatus] = useState<{ isAvailable: boolean; remainingHours?: number }>({ isAvailable: true });
   const [showChildDropdown, setShowChildDropdown] = useState(false);
@@ -187,11 +189,15 @@ export default function HomePage() {
       }
 
       try {
-        const [data, activePractices, todayLogs] = await Promise.all([
+        const [data, activePractices, todayLogs, sub, consultCount] = await Promise.all([
           db.getDashboardData(user.id),
           db.getActivePracticeItems(user.id).catch(() => [] as PracticeItemData[]),
           db.getTodayPracticeLogs(user.id).catch(() => [] as PracticeLogData[]),
+          db.getActiveSubscription(user.id).catch(() => null),
+          db.getTotalConsultCount(user.id).catch(() => 0),
         ]);
+        setSubscription(sub);
+        setTotalConsultCount(consultCount);
         setProfile(data.profile);
         setChildren(data.children);
         setReports(data.reports);
@@ -316,9 +322,12 @@ export default function HomePage() {
       <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-center font-body">
         <div className="w-full max-w-md min-h-screen flex flex-col shadow-2xl relative">
           <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl pt-12 pb-4 border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3 min-h-[40px] px-4">
-              <img src="/gijilai_icon.png" alt="기질아이" className="w-7 h-7 rounded-lg object-contain" />
-              <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
+            <div className="flex items-center justify-between min-h-[40px] px-4">
+              <div className="flex items-center gap-3">
+                <img src="/gijilai_icon.png" alt="기질아이" className="w-7 h-7 rounded-lg object-contain" />
+                <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
+              </div>
+              <div className="w-14 h-6 bg-gray-100 dark:bg-surface-dark rounded-full animate-pulse" />
             </div>
           </header>
           <main className="flex-1 flex flex-col items-center pt-12 px-6">
@@ -351,9 +360,46 @@ export default function HomePage() {
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center justify-center font-body pb-0">
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
         <header className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-xl pt-12 pb-4 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-3 min-h-[40px] px-4">
-            <img src="/gijilai_icon.png" alt="기질아이" className="w-7 h-7 rounded-lg object-contain" />
-            <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
+          <div className="flex items-center justify-between min-h-[40px] px-4">
+            <div className="flex items-center gap-3">
+              <img src="/gijilai_icon.png" alt="기질아이" className="w-7 h-7 rounded-lg object-contain" />
+              <span className="text-xl font-logo tracking-wide text-primary dark:text-white pt-0.5">기질아이</span>
+            </div>
+            {(() => {
+              if (subscription) {
+                const isCancelled = !!subscription.cancelled_at;
+                return (
+                  <button
+                    onClick={() => router.push('/settings/subscription')}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-xs font-semibold"
+                  >
+                    <span className="material-symbols-rounded text-sm">star</span>
+                    <span>Premium</span>
+                    {isCancelled && (
+                      <span className="text-[10px] text-text-muted dark:text-gray-400 ml-0.5">
+                        ~{new Date(subscription.current_period_end).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
+                      </span>
+                    )}
+                  </button>
+                );
+              }
+              const FREE_CONSULT_LIMIT = 5;
+              const remaining = Math.max(0, FREE_CONSULT_LIMIT - totalConsultCount);
+              const isExhausted = remaining === 0;
+              return (
+                <button
+                  onClick={() => router.push('/pricing')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                    isExhausted
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-500'
+                      : 'bg-gray-100 dark:bg-surface-dark text-text-muted dark:text-gray-400'
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-sm">chat_bubble</span>
+                  <span>{remaining}/{FREE_CONSULT_LIMIT}</span>
+                </button>
+              );
+            })()}
           </div>
         </header>
 

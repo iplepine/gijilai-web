@@ -67,7 +67,7 @@ export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDon
                             onChange={(e) => setMemo(e.target.value.slice(0, 200))}
                             maxLength={200}
                             placeholder="오늘 실천하면서 느낀 점이 있나요?"
-                            className="w-full h-24 p-4 text-[14px] leading-relaxed rounded-2xl border border-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none bg-white dark:bg-surface-dark dark:text-white"
+                            className="w-full h-24 p-4 text-[14px] leading-relaxed rounded-xl border border-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none bg-white dark:bg-surface-dark dark:text-white"
                         />
                     </div>
                 </div>
