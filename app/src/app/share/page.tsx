@@ -105,7 +105,7 @@ function SharePageContent() {
     window.Kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
-        title: `${eunNeun(childName)} "${temperamentInfo?.label || '열정 탐험가'}"예요!`,
+        title: `${eunNeun(childName)} "${temperamentInfo?.label || '열정 탐험가'}"`,
         description: '과학적인 기질 분석으로 우리 아이의 타고난 빛을 발견해보세요.',
         imageUrl: `https://gijilai.com${temperamentInfo?.image || '/child_type/type_lhl.jpg'}`,
         link: {
@@ -173,7 +173,7 @@ function SharePageContent() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-7">
                 <h3 className="text-2xl font-bold text-white mb-2 break-keep leading-snug">
                   {eunNeun(childName)}<br />
-                  <span className="text-primary-light">"{temperamentInfo?.label || '열정 탐험가'}"</span>예요!
+                  <span style={{ color: '#A8D8B9' }}>"{temperamentInfo?.label || '열정 탐험가'}"</span>
                 </h3>
                 <p className="text-sm text-white/80 leading-relaxed font-medium break-keep">
                   {temperamentInfo?.desc || '호기심이 많고 에너지가 넘치는 탐험가 기질을 가지고 있어요.'}
