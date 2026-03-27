@@ -349,7 +349,28 @@ function ConsultContent() {
                 <Navbar title={step === 'RESULT' ? '마음 처방전' : '마음 통역소'} />
 
                 <main className="w-full max-w-md flex flex-col flex-1 p-6 pb-36">
-                    {step === 'INPUT' && (
+                    {step === 'INPUT' && !validChildId && (
+                        <div className="flex flex-col items-center justify-center flex-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-[40px] text-primary">child_care</span>
+                            </div>
+                            <div className="text-center space-y-2">
+                                <h2 className="text-xl font-bold text-text-main dark:text-white">아이를 먼저 등록해주세요</h2>
+                                <p className="text-sm text-text-sub dark:text-gray-400 leading-relaxed break-keep">
+                                    아이의 기질에 맞는 맞춤 상담을 위해<br />아이 정보가 필요해요.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => router.push('/settings/child/new')}
+                                className="px-8 py-4 rounded-2xl bg-primary text-white font-bold text-base shadow-xl shadow-primary/20 active:scale-[0.98] transition-all flex items-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">person_add</span>
+                                <span>아이 등록하기</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {step === 'INPUT' && validChildId && (
                         <div className="flex flex-col gap-8 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* 추가 상담: 이전 상담 요약 + 실천 현황 */}
                             {sessionContext && (
@@ -426,7 +447,7 @@ function ConsultContent() {
                         </div>
                     )}
 
-                    {step === 'INPUT' && (
+                    {step === 'INPUT' && validChildId && (
                         <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30">
                             <button
                                 onClick={handleStartDiagnostic}
