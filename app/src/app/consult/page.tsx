@@ -196,6 +196,8 @@ function ConsultContent() {
                 body: JSON.stringify({
                     problem: fullProblem,
                     childName: childName || intake.childName,
+                    childBirthDate: childBirthDate || intake.birthDate,
+                    childGender: childGender || intake.gender,
                     childProfile,
                     parentProfile,
                     recentObservations,
@@ -289,6 +291,8 @@ function ConsultContent() {
                     childProfile,
                     parentProfile,
                     childName: childName || intake.childName,
+                    childBirthDate: childBirthDate || intake.birthDate,
+                    childGender: childGender || intake.gender,
                     recentObservations,
                     sessionContext: sessionContext || undefined
                 }),

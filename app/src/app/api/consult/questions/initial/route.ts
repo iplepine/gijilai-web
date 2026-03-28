@@ -21,7 +21,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { problem, childName, childProfile, parentProfile, recentObservations, sessionContext } = await request.json();
+    const { problem, childName, childBirthDate, childGender, childProfile, parentProfile, recentObservations, sessionContext } = await request.json();
+
+    // 나이 계산
+    let childAge = '';
+    if (childBirthDate) {
+      const birth = new Date(childBirthDate);
+      const today = new Date();
+      const totalMonths = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
+      if (totalMonths <= 36) {
+        childAge = `${totalMonths}개월`;
+      } else {
+        const years = Math.floor(totalMonths / 12);
+        const months = totalMonths % 12;
+        childAge = months > 0 ? `${years}세 ${months}개월` : `${years}세`;
+      }
+    }
 
     if (!problem) {
       return NextResponse.json(
@@ -30,7 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const nameContext = childName ? `${childName} 아이의 양육자이고, ` : '';
+    const nameContext = childName ? `${childName}(${childAge || '나이 미상'}${childGender === 'male' ? ', 남아' : childGender === 'female' ? ', 여아' : ''}) 아이의 양육자이고, ` : '';
 
     const systemPrompt = `당신은 아동 심리 및 기질 역동 분석 전문가입니다.
 사용자의 육아 고민 상황을 듣고, 양육자의 마음을 어루만져주는 공감 멘트와 상황 분석을 위해 확인해야 할 '기초 질문' 3~5개를 생성하세요.
@@ -67,6 +82,7 @@ ${(sessionContext.practices || []).map((p: any) => {
    - 객관식(CHOICE) 위주로 구성하되, 질문 톤은 상담사가 묻는 것처럼 부드럽게 작성하세요.
    - 양육자의 구체적인 경험이나 감정을 직접 들어야 정확한 분석이 가능한 질문은 주관식(TEXT)으로 생성하세요.
    - 객관식 선택지로 대부분 커버되지만 양육자의 상황이 다를 수 있는 경우, 마지막 선택지에 "freeText": true를 추가하세요. 이 선택지를 탭하면 자유 텍스트 입력창이 열립니다.
+   - 아이의 이름, 나이, 성별, 기질 유형 등 이미 제공된 정보를 다시 묻지 마세요. 질문은 고민 상황의 맥락을 파악하기 위한 것이어야 합니다.
 
 **[Output Format (JSON Only)]**
 {

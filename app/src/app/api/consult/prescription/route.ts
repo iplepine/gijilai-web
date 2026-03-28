@@ -68,7 +68,22 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { problem, questions, answers, childProfile, parentProfile, childName, recentObservations, sessionContext } = await request.json();
+        const { problem, questions, answers, childProfile, parentProfile, childName, childBirthDate, childGender, recentObservations, sessionContext } = await request.json();
+
+        // 나이 계산
+        let childAge = '';
+        if (childBirthDate) {
+          const birth = new Date(childBirthDate);
+          const today = new Date();
+          const totalMonths = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
+          if (totalMonths <= 36) {
+            childAge = `${totalMonths}개월`;
+          } else {
+            const years = Math.floor(totalMonths / 12);
+            const months = totalMonths % 12;
+            childAge = months > 0 ? `${years}세 ${months}개월` : `${years}세`;
+          }
+        }
 
         if (!problem || !answers) {
             return NextResponse.json(
@@ -77,7 +92,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const nameContext = childName ? `${childName} 아이` : '아이';
+        const nameContext = childName ? `${childName}(${childAge || '나이 미상'}${childGender === 'male' ? ', 남아' : childGender === 'female' ? ', 여아' : ''})` : '아이';
         const isFollowUp = !!sessionContext;
 
         const systemPrompt = `당신은 기질(TCI) 기반의 분석 전문가이자 따뜻한 마음 통역사입니다.
