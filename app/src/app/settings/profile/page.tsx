@@ -54,7 +54,8 @@ export default function ProfilePage() {
                         const data = await res.json();
                         throw new Error(data.error || '회원 탈퇴 실패');
                     }
-                    await signOut();
+                    // auth 유저가 이미 삭제된 상태이므로 signOut 에러 무시
+                    await signOut().catch(() => {});
                     router.replace('/login');
                 }
             } catch (error) {
