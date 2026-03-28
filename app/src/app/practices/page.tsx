@@ -31,8 +31,8 @@ export default function PracticesPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     // 모달 상태
-    const [checkModal, setCheckModal] = useState<{ practice: PracticeItemData; existingLog?: PracticeLogData } | null>(null);
-    const [reviewModal, setReviewModal] = useState<{ practice: PracticeItemData; doneDays: number } | null>(null);
+    const [checkModal, setCheckModal] = useState<{ practice: PracticeItemData; existingLog?: PracticeLogData; recentFailCount?: number; sessionId?: string } | null>(null);
+    const [reviewModal, setReviewModal] = useState<{ practice: PracticeItemData; doneDays: number; sessionId?: string } | null>(null);
 
     useEffect(() => {
         if (!authLoading) {
@@ -99,7 +99,16 @@ export default function PracticesPage() {
 
     const getTodayLog = (practiceId: string) => todayLogs.find(l => l.practice_id === practiceId);
 
-    const getDoneDays = (practiceId: string) => allLogs.filter(l => l.practice_id === practiceId).length;
+    const getDoneDays = (practiceId: string) => allLogs.filter(l => l.practice_id === practiceId && l.done).length;
+    const getRecentFailCount = (practiceId: string) => {
+        const logs = allLogs.filter(l => l.practice_id === practiceId).sort((a, b) => b.date.localeCompare(a.date));
+        let count = 0;
+        for (const log of logs) {
+            if (!log.done) count++;
+            else break;
+        }
+        return count;
+    };
 
     const handleCheckSave = async (done: boolean, memo: string | null) => {
         if (!user || !checkModal) return;
@@ -240,7 +249,7 @@ export default function PracticesPage() {
                                             {/* 오늘 체크 / 회고 버튼 */}
                                             {overdue ? (
                                                 <button
-                                                    onClick={() => setReviewModal({ practice, doneDays })}
+                                                    onClick={() => setReviewModal({ practice, doneDays, sessionId: practice.session_id })}
                                                     className="w-full py-3 rounded-xl bg-secondary/10 text-secondary font-bold text-[13px] flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">rate_review</span>
@@ -248,7 +257,7 @@ export default function PracticesPage() {
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => setCheckModal({ practice, existingLog: todayLog })}
+                                                    onClick={() => setCheckModal({ practice, existingLog: todayLog, recentFailCount: getRecentFailCount(practice.id), sessionId: practice.session_id })}
                                                     className={`w-full py-3 rounded-xl font-bold text-[13px] flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
                                                         todayLog
                                                             ? todayLog.done
@@ -283,6 +292,8 @@ export default function PracticesPage() {
                     practiceTitle={checkModal.practice.title}
                     existingDone={checkModal.existingLog?.done}
                     existingMemo={checkModal.existingLog?.memo}
+                    recentFailCount={checkModal.recentFailCount}
+                    sessionId={checkModal.sessionId}
                     onSave={handleCheckSave}
                     onClose={() => setCheckModal(null)}
                 />
@@ -294,6 +305,7 @@ export default function PracticesPage() {
                     practiceTitle={reviewModal.practice.title}
                     doneDays={reviewModal.doneDays}
                     totalDays={reviewModal.practice.duration}
+                    sessionId={reviewModal.sessionId}
                     onSave={handleReviewSave}
                     onClose={() => setReviewModal(null)}
                 />

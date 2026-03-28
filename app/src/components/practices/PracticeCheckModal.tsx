@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 
 interface PracticeCheckModalProps {
@@ -9,9 +10,12 @@ interface PracticeCheckModalProps {
     onClose: () => void;
     existingDone?: boolean;
     existingMemo?: string | null;
+    recentFailCount?: number;
+    sessionId?: string;
 }
 
-export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDone, existingMemo }: PracticeCheckModalProps) {
+export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDone, existingMemo, recentFailCount = 0, sessionId }: PracticeCheckModalProps) {
+    const router = useRouter();
     const [done, setDone] = useState(existingDone ?? true);
     const [memo, setMemo] = useState(existingMemo || '');
     const [saving, setSaving] = useState(false);
@@ -59,6 +63,23 @@ export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDon
                             못했어요
                         </button>
                     </div>
+
+                    {!done && (
+                        <p className="text-[13px] text-text-sub leading-relaxed bg-orange-50 dark:bg-orange-900/10 rounded-xl p-3">
+                            바쁜 하루였죠? 괜찮아요, 내일 다시 시작하면 돼요.
+                            {recentFailCount >= 2 && sessionId && (
+                                <button
+                                    onClick={() => {
+                                        onClose();
+                                        router.push(`/consult?sessionId=${sessionId}`);
+                                    }}
+                                    className="block mt-2 text-primary font-bold text-[12px] underline underline-offset-2"
+                                >
+                                    실천이 어려우셨다면, 다른 방법을 찾아볼까요?
+                                </button>
+                            )}
+                        </p>
+                    )}
 
                     <div>
                         <label className="block text-[11px] font-bold text-text-sub mb-2 uppercase tracking-wider">한줄 메모 (선택)</label>

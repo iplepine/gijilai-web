@@ -1,19 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 
 interface PracticeReviewModalProps {
     practiceTitle: string;
     doneDays: number;
     totalDays: number;
+    sessionId?: string;
     onSave: (content: string) => Promise<void>;
     onClose: () => void;
 }
 
-export function PracticeReviewModal({ practiceTitle, doneDays, totalDays, onSave, onClose }: PracticeReviewModalProps) {
+export function PracticeReviewModal({ practiceTitle, doneDays, totalDays, sessionId, onSave, onClose }: PracticeReviewModalProps) {
+    const router = useRouter();
     const [content, setContent] = useState('');
     const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
 
     const handleSave = async () => {
         if (!content.trim()) {
@@ -23,11 +27,49 @@ export function PracticeReviewModal({ practiceTitle, doneDays, totalDays, onSave
         setSaving(true);
         try {
             await onSave(content.trim());
-            onClose();
+            setSaved(true);
         } finally {
             setSaving(false);
         }
     };
+
+    if (saved) {
+        return (
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+                <div className="w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl shadow-2xl overflow-hidden animate-slide-up">
+                    <div className="p-8 text-center space-y-4">
+                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                            <span className="material-symbols-outlined text-[32px] text-primary fill-1">celebration</span>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg text-text-main dark:text-white">{doneDays}일간의 실천, 수고하셨어요!</h4>
+                            <p className="text-[13px] text-text-sub mt-2 leading-relaxed">
+                                실천하면서 느낀 점을 바탕으로<br />다음 상담을 받아보시는 건 어떨까요?
+                            </p>
+                        </div>
+                    </div>
+                    <div className="p-4 bg-beige-main/5 dark:bg-white/5 flex flex-col gap-2">
+                        <Button
+                            variant="primary"
+                            fullWidth
+                            onClick={() => {
+                                onClose();
+                                router.push(sessionId ? `/consult?sessionId=${sessionId}` : '/consult');
+                            }}
+                        >
+                            다음 상담 받기
+                        </Button>
+                        <button
+                            onClick={onClose}
+                            className="w-full py-3 text-[13px] font-bold text-text-sub transition-all active:scale-[0.98]"
+                        >
+                            나중에 할게요
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
