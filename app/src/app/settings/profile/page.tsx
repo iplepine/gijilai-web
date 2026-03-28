@@ -49,10 +49,11 @@ export default function ProfilePage() {
         if (confirm('정말로 회원 탈퇴를 진행하시겠습니까?\n프로필, 아이 기질 검사 결과 및 처방전 등 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
             try {
                 if (user) {
-                    await db.resetUserData(user.id);
-                    // supabase auth user deletion function is often restricted.
-                    // If you have a backend/edge-function, call that.
-                    // Here we clear data and sign out.
+                    const res = await fetch('/api/account/delete', { method: 'DELETE' });
+                    if (!res.ok) {
+                        const data = await res.json();
+                        throw new Error(data.error || '회원 탈퇴 실패');
+                    }
                     await signOut();
                     router.replace('/login');
                 }
