@@ -21,7 +21,7 @@ export async function DELETE() {
 
     // service_role로 auth.users 삭제 → CASCADE로 profiles 및 모든 하위 데이터 자동 삭제
     const admin = getSupabaseAdmin();
-    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id, false);
 
     if (deleteError) {
       console.error('Failed to delete auth user:', deleteError.message);
