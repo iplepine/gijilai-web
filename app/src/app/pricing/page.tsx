@@ -18,9 +18,9 @@ type Locale = 'ko' | 'en';
 type Plan = 'MONTHLY' | 'YEARLY';
 
 const PRICES = {
-  MONTHLY: { KRW: 9900, USD: 999 },
-  YEARLY: { KRW: 79000, USD: 7999 },
-  SINGLE: { KRW: 990, USD: 499 },
+  MONTHLY: { KRW: 12000, USD: 1199 },
+  YEARLY: { KRW: 89000, USD: 8999 },
+  SINGLE: { KRW: 1980, USD: 499 },
 };
 
 function formatPrice(amount: number, locale: Locale): string {
@@ -199,7 +199,7 @@ export default function PricingPage() {
               }`}
             >
               <span className="absolute -top-2 right-3 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                33% OFF
+                38% OFF
               </span>
               <p className="text-xs font-bold text-text-sub mb-2">
                 {locale === 'ko' ? '연 구독' : 'Yearly'}
@@ -243,7 +243,7 @@ export default function PricingPage() {
                 onClick={() => router.push('/payment')}
                 className="text-sm font-bold text-primary underline underline-offset-2"
               >
-                990원으로 리포트 열기
+                1,980원으로 리포트 열기
               </button>
             </section>
           )}

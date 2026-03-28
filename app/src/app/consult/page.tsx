@@ -110,6 +110,17 @@ function ConsultContent() {
     const [step, setStep] = useState<Step>('INPUT');
     const [isLoading, setIsLoading] = useState(false);
 
+    // 구독/트라이얼 상태
+    const [hasSubscription, setHasSubscription] = useState(false);
+    const trial = user?.created_at ? db.getTrialStatus(user.created_at) : null;
+    const hasFullAccess = hasSubscription || !!trial?.isActive;
+    useEffect(() => {
+        if (!user) return;
+        db.getActiveSubscription(user.id).catch(() => null).then(sub => {
+            setHasSubscription(!!sub);
+        });
+    }, [user]);
+
     // INPUT STATE
     const [problemDesc, setProblemDesc] = useState('');
     const [currentTextAnswer, setCurrentTextAnswer] = useState('');
@@ -460,14 +471,14 @@ function ConsultContent() {
                             <div>
                                 {!sessionContext && (
                                     <>
-                                        <p className="text-[12px] text-text-sub dark:text-gray-500 mb-2">비슷한 고민을 눌러보세요</p>
+                                        <p className="text-[12px] text-text-sub dark:text-gray-500 mb-2">비슷한 고민이 있다면 눌러보세요</p>
                                         <div className="flex flex-wrap gap-2 mb-4">
                                             {examples.map(ex => (
                                                 <button
                                                     key={ex.label}
-                                                    onClick={() => setProblemDesc(ex.text)}
+                                                    onClick={() => setProblemDesc(prev => prev ? `${prev}\n${ex.text}` : ex.text)}
                                                     className={`px-3 py-2 rounded-xl text-[13px] transition-all border active:scale-95 shadow-sm ${
-                                                        problemDesc === ex.text
+                                                        problemDesc.includes(ex.text)
                                                             ? 'bg-primary/10 text-primary border-primary/30 font-bold'
                                                             : 'bg-white dark:bg-surface-dark text-text-sub border-primary/10 hover:border-primary/30 hover:bg-primary/5'
                                                     }`}
@@ -486,16 +497,40 @@ function ConsultContent() {
                                     placeholder={sessionContext ? "실천하면서 느낀 점이나\n새로운 고민을 적어주세요..." : "아침에 어린이집에 가야 하는데\n옷을 안 입겠다며 30분째 울었어요.\n결국 화를 내고 말았네요..."}
                                     className="w-full h-48 p-5 text-[15px] leading-relaxed rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
                                 />
+                                <div className="flex items-center justify-between mt-2 px-1">
+                                    <p className={`text-[12px] transition-opacity duration-300 ${
+                                        problemDesc.length > 0 && problemDesc.length < 30
+                                            ? 'text-text-sub dark:text-gray-500 opacity-100'
+                                            : 'opacity-0'
+                                    }`}>
+                                        조금만 더 구체적으로 써주시면 정확한 분석이 가능해요
+                                    </p>
+                                    <span className={`text-[11px] tabular-nums ${
+                                        problemDesc.length >= 500 ? 'text-red-400' : 'text-text-muted dark:text-gray-500'
+                                    }`}>
+                                        {problemDesc.length}/500
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {step === 'INPUT' && !childLoading && validChildId && hasChildReport && (
                         <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30">
+                            {!hasFullAccess && (
+                                <p className="text-center text-xs font-medium mb-3 text-text-sub dark:text-gray-400">
+                                    체험 기간이 종료되었어요. <button onClick={() => router.push('/pricing')} className="text-primary font-bold underline underline-offset-2">구독하기</button>
+                                </p>
+                            )}
+                            {trial?.isActive && !hasSubscription && trial.daysRemaining <= 2 && (
+                                <p className="text-center text-xs font-medium mb-3 text-secondary">
+                                    체험 기간이 {trial.daysRemaining}일 남았어요
+                                </p>
+                            )}
                             <button
                                 onClick={handleStartDiagnostic}
-                                disabled={!problemDesc.trim() || isLoading}
-                                className={`w-full py-5 rounded-2xl text-white font-bold text-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${!problemDesc.trim() || isLoading
+                                disabled={problemDesc.trim().length < 30 || isLoading}
+                                className={`w-full py-5 rounded-2xl text-white font-bold text-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${problemDesc.trim().length < 30 || isLoading
                                     ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     : 'bg-primary hover:bg-primary-dark shadow-xl shadow-primary/20'
                                     }`}
@@ -533,12 +568,17 @@ function ConsultContent() {
                                                 <span className="material-symbols-outlined text-[18px] text-primary">arrow_back</span>
                                             </button>
                                         )}
-                                        <span className="text-[11px] font-black text-primary uppercase tracking-widest">Question {currentQuestionIndex + 1} / {questions.length}</span>
+                                        <span className="text-[11px] font-bold text-primary tracking-wide">{currentQuestionIndex + 1} / {questions.length}</span>
                                     </div>
-                                    <div className="flex gap-1">
-                                        {questions.map((_, i) => (
-                                            <div key={i} className={`w-4 h-1 rounded-full transition-all ${i <= currentQuestionIndex ? 'bg-primary' : 'bg-primary/10'}`}></div>
-                                        ))}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex gap-1">
+                                            {questions.map((_, i) => (
+                                                <div key={i} className={`w-4 h-1 rounded-full transition-all ${i <= currentQuestionIndex ? 'bg-primary' : 'bg-primary/10'}`}></div>
+                                            ))}
+                                        </div>
+                                        {currentQuestionIndex >= questions.length - 2 && (
+                                            <span className="text-[10px] text-primary/60 font-medium">거의 다 왔어요</span>
+                                        )}
                                     </div>
                                 </div>
                                 <h2 className="text-xl font-bold text-text-main dark:text-white leading-snug">
@@ -639,18 +679,23 @@ function ConsultContent() {
                                 {childName && <span className="ml-1 opacity-70">· {childName}</span>}
                             </span>
 
-                            {/* 그날의 고민 */}
-                            <div className="bg-[#FFFDF9] dark:bg-surface-dark border border-[#EACCA4]/40 rounded-2xl p-5">
-                                <div className="text-[12px] font-bold text-[#D08B5B] flex items-center gap-1.5 mb-2">
-                                    <span className="material-symbols-outlined text-[16px]">edit_note</span>
-                                    그날의 고민
+                            {/* 1. 도입 — 아이의 마음 지도 (공감 선행 + 속마음) */}
+                            <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-secondary/20 space-y-4">
+                                <div className="text-[12px] font-bold text-secondary flex items-center gap-1.5">
+                                    <span className="material-symbols-outlined text-[16px] fill-1">favorite</span>
+                                    {childName ? `${childName}의 마음 지도` : '아이의 마음 지도'}
                                 </div>
-                                <p className="text-[14px] text-text-main dark:text-white leading-relaxed">
-                                    &ldquo;{problemDesc}&rdquo;
+                                <div className="bg-[#FFFDF9] dark:bg-background-dark rounded-xl p-4">
+                                    <p className="text-[13px] text-text-sub dark:text-gray-400 leading-relaxed italic mb-2">
+                                        &ldquo;{problemDesc.length > 80 ? problemDesc.slice(0, 80) + '...' : problemDesc}&rdquo;
+                                    </p>
+                                </div>
+                                <p className="text-[13px] text-text-main dark:text-gray-200 leading-relaxed">
+                                    {prescription.interpretation}
                                 </p>
                             </div>
 
-                            {/* 문진 해설 */}
+                            {/* 2. 문진 해설 */}
                             {prescription.questionAnalysis && prescription.questionAnalysis.length > 0 && (
                                 <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-[#EACCA4]/30 space-y-3">
                                     <div className="text-[12px] font-bold text-[#D08B5B] flex items-center gap-1.5">
@@ -667,29 +712,18 @@ function ConsultContent() {
                                 </div>
                             )}
 
-                            {/* 마음 처방전 */}
-                            <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-secondary/20 space-y-4">
+                            {/* 3. 피크 — 아이와 나 (기질 궁합 분석) */}
+                            <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-secondary/20 space-y-3">
                                 <div className="text-[12px] font-bold text-secondary flex items-center gap-1.5">
                                     <span className="material-symbols-outlined text-[16px] fill-1">vaccines</span>
-                                    마음 처방전
+                                    우리가 몰랐던 마음의 신호
                                 </div>
-                                <div>
-                                    <div className="text-[11px] font-bold text-slate-400 mb-1">
-                                        {childName ? `${childName}의 속마음` : '아이의 속마음'}
-                                    </div>
-                                    <p className="text-[13px] text-text-main dark:text-gray-200 leading-relaxed">
-                                        {prescription.interpretation}
-                                    </p>
-                                </div>
-                                <div>
-                                    <div className="text-[11px] font-bold text-slate-400 mb-1">아이와 나</div>
-                                    <p className="text-[13px] text-text-main dark:text-gray-200 leading-relaxed">
-                                        {prescription.chemistry}
-                                    </p>
-                                </div>
+                                <p className="text-[13px] text-text-main dark:text-gray-200 leading-relaxed">
+                                    {prescription.chemistry}
+                                </p>
                             </div>
 
-                            {/* 오늘의 한마디 (고정, 선택 아님) */}
+                            {/* 4. 오늘의 한마디 */}
                             {prescription.magicWord && (
                                 <div className="bg-[#519E8A] rounded-2xl p-5 text-white relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
@@ -705,7 +739,7 @@ function ConsultContent() {
                                 </div>
                             )}
 
-                            {/* 실천 항목 선택 */}
+                            {/* 5. 실천 항목 선택 */}
                             {prescription.actionItems && prescription.actionItems.length > 0 && (
                                 <div className="space-y-4 mt-10 pt-8 border-t border-beige-main/30">
                                     <div className="flex items-center gap-2">
@@ -713,8 +747,8 @@ function ConsultContent() {
                                             <span className="material-symbols-outlined text-[18px] text-primary">checklist</span>
                                         </div>
                                         <div>
-                                            <p className="text-[16px] font-black text-text-main dark:text-white">아이나가 제안하는 실천 항목</p>
-                                            <p className="text-[12px] text-text-sub">실천할 항목을 골라보세요</p>
+                                            <p className="text-[16px] font-black text-text-main dark:text-white">오늘 당장 해볼 수 있는 것</p>
+                                            <p className="text-[12px] text-text-sub">하나만 골라서 시작해보세요</p>
                                         </div>
                                     </div>
                                     {prescription.actionItems.map((item, i) => {
@@ -769,6 +803,17 @@ function ConsultContent() {
                                     다음에 할게요
                                 </button>
                             </div>
+
+                            {/* 6. 엔드 — 따뜻한 격려 */}
+                            <div className="text-center py-6 space-y-2">
+                                <p className="text-[14px] text-text-main dark:text-gray-200 font-medium leading-relaxed">
+                                    {childName ? `${childName}의 마음을 이해하려는 것만으로도` : '아이의 마음을 이해하려는 것만으로도'}<br />
+                                    이미 충분히 좋은 부모예요.
+                                </p>
+                                <p className="text-[12px] text-text-sub dark:text-gray-500">
+                                    이 분석은 기질 심리학 이론과 AI 분석을 바탕으로 생성되었습니다.
+                                </p>
+                            </div>
                         </div>
                     )}
                     {isLoading && (
@@ -777,10 +822,10 @@ function ConsultContent() {
 
                             <div className="text-center space-y-2">
                                 <p className="text-lg font-bold text-text-main dark:text-white">
-                                    {step === 'INPUT' ? '질문을 준비하고 있어요' : '마음을 번역하고 있어요'}
+                                    {step === 'INPUT' ? `${childName || '아이'}의 기질을 분석하고 있어요` : '마음을 번역하고 있어요'}
                                 </p>
                                 <p className="text-sm text-text-sub dark:text-gray-400">
-                                    {step === 'INPUT' ? '더 좋은 상담을 위해 잠시만 기다려주세요' : '아이의 마음에 맞는 처방전을 만들고 있어요'}
+                                    {step === 'INPUT' ? '입력하신 내용을 바탕으로 맞춤 질문을 준비 중입니다' : '아이의 마음에 맞는 처방전을 만들고 있어요'}
                                 </p>
                             </div>
 

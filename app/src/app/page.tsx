@@ -61,7 +61,6 @@ export default function HomePage() {
   ]);
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [totalConsultCount, setTotalConsultCount] = useState(0);
 
   const [cooldownStatus, setCooldownStatus] = useState<{ isAvailable: boolean; remainingHours?: number }>({ isAvailable: true });
   const [showChildDropdown, setShowChildDropdown] = useState(false);
@@ -189,15 +188,13 @@ export default function HomePage() {
       }
 
       try {
-        const [data, activePractices, todayLogs, sub, consultCount] = await Promise.all([
+        const [data, activePractices, todayLogs, sub] = await Promise.all([
           db.getDashboardData(user.id),
           db.getActivePracticeItems(user.id).catch(() => [] as PracticeItemData[]),
           db.getTodayPracticeLogs(user.id).catch(() => [] as PracticeLogData[]),
           db.getActiveSubscription(user.id).catch(() => null),
-          db.getTotalConsultCount(user.id).catch(() => 0),
         ]);
         setSubscription(sub);
-        setTotalConsultCount(consultCount);
         setProfile(data.profile);
         setChildren(data.children);
         setReports(data.reports);
@@ -373,30 +370,35 @@ export default function HomePage() {
                     onClick={() => router.push('/settings/subscription')}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-xs font-semibold"
                   >
-                    <span className="material-symbols-rounded text-sm">star</span>
-                    <span>Premium</span>
+                    <span className="material-symbols-outlined text-sm">workspace_premium</span>
+                    <span>구독중</span>
                     {isCancelled && (
-                      <span className="text-[10px] text-text-muted dark:text-gray-400 ml-0.5">
+                      <span className="text-[10px] text-text-muted dark:text-gray-400">
                         ~{new Date(subscription.current_period_end).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                       </span>
                     )}
                   </button>
                 );
               }
-              const FREE_CONSULT_LIMIT = 5;
-              const remaining = Math.max(0, FREE_CONSULT_LIMIT - totalConsultCount);
-              const isExhausted = remaining === 0;
+              const trial = user?.created_at ? db.getTrialStatus(user.created_at) : null;
+              if (trial?.isActive) {
+                return (
+                  <button
+                    onClick={() => router.push('/pricing')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary/10 dark:bg-secondary/20 text-secondary"
+                  >
+                    <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                    <span>체험중 D-{trial.daysRemaining}</span>
+                  </button>
+                );
+              }
               return (
                 <button
                   onClick={() => router.push('/pricing')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                    isExhausted
-                      ? 'bg-red-50 dark:bg-red-900/20 text-red-500'
-                      : 'bg-gray-100 dark:bg-surface-dark text-text-muted dark:text-gray-400'
-                  }`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primary/10 dark:bg-primary/20 text-primary"
                 >
-                  <span className="material-symbols-rounded text-sm">chat_bubble</span>
-                  <span>{remaining}/{FREE_CONSULT_LIMIT}</span>
+                  <span className="material-symbols-outlined text-sm">spa</span>
+                  <span>무료이용중</span>
                 </button>
               );
             })()}

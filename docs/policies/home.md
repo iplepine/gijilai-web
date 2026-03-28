@@ -30,14 +30,11 @@
 
 | 사용자 상태 | 뱃지 표시 | 탭 시 이동 |
 |------------|----------|-----------|
-| 무료 (상담 남음) | 💬 3/5 | `/pricing` |
-| 무료 (상담 소진) | 💬 0/5 (강조 색상) | `/pricing` |
-| 건별 구매 (상담 남음) | 💬 2/3 | `/pricing` |
-| 건별 구매 (상담 소진) | 💬 0/3 (강조 색상) | `/pricing` |
-| 구독자 (ACTIVE) | Premium | `/settings/subscription` |
-| 구독자 (CANCELLED) | Premium · ~MM/DD | `/settings/subscription` |
+| 무료 | 🌿 무료이용중 | `/pricing` |
+| 구독자 (ACTIVE) | 👑 구독중 | `/settings/subscription` |
+| 구독자 (CANCELLED) | 👑 구독중 · ~MM/DD | `/settings/subscription` |
 
-말풍선 아이콘(💬) + 숫자만으로 상담 잔여 횟수를 표현. 텍스트 라벨 없이 컴팩트하게 유지한다.
+홈 헤더에서는 사용자 상태만 간결하게 표시한다. 무료상담 잔여 횟수는 상담 페이지(`/consult`)의 시작 버튼 위에 표시하되, 마지막 1회 남았을 때와 소진 시에만 노출하여 불필요한 압박감을 주지 않는다.
 
 ### 기능 카드 리스트
 

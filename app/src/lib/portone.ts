@@ -9,9 +9,9 @@ function getPortone() {
 }
 
 export const PRICE_TABLE = {
-  report_single: { KRW: 990, USD: 499 },
-  subscription_monthly: { KRW: 9900, USD: 999 },
-  subscription_yearly: { KRW: 79000, USD: 7999 },
+  report_single: { KRW: 1980, USD: 499 },
+  subscription_monthly: { KRW: 12000, USD: 1199 },
+  subscription_yearly: { KRW: 89000, USD: 8999 },
 } as const;
 
 export type ProductCode = keyof typeof PRICE_TABLE;

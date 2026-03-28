@@ -295,7 +295,7 @@ export const db = {
             .update({ referred_id: referredUserId, status: 'COMPLETED' })
             .eq('id', referral.id);
 
-        // Issue coupons to both users (990 won discount, expires in 30 days)
+        // Issue coupons to both users (1980 won discount, expires in 14 days)
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
         const expiresAtStr = expiresAt.toISOString();
@@ -304,13 +304,13 @@ export const db = {
             {
                 user_id: referral.referrer_id,
                 referral_id: referral.id,
-                discount_amount: 990,
+                discount_amount: 1980,
                 expires_at: expiresAtStr,
             },
             {
                 user_id: referredUserId,
                 referral_id: referral.id,
-                discount_amount: 990,
+                discount_amount: 1980,
                 expires_at: expiresAtStr,
             },
         ]);
@@ -621,6 +621,21 @@ export const db = {
             .gte('created_at', startOfMonth);
         if (error) throw error;
         return count || 0;
+    },
+
+    /**
+     * 7일 리버스 트라이얼 상태 확인
+     * 가입일로부터 7일 이내면 트라이얼 활성, 이후는 만료
+     */
+    getTrialStatus: (userCreatedAt: string) => {
+        const created = new Date(userCreatedAt);
+        const now = new Date();
+        const diffMs = now.getTime() - created.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        const trialDays = 7;
+        const isActive = diffDays < trialDays;
+        const daysRemaining = isActive ? Math.ceil(trialDays - diffDays) : 0;
+        return { isActive, daysRemaining, diffDays };
     },
 
     getTotalConsultCount: async (userId: string) => {

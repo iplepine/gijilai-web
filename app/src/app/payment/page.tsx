@@ -86,7 +86,7 @@ export default function PaymentPage() {
     }
   }, [status, router]);
 
-  const finalAmount = useCoupon && availableCoupon ? Math.max(0, 990 - availableCoupon.discount_amount) : 990;
+  const finalAmount = useCoupon && availableCoupon ? Math.max(0, 1980 - availableCoupon.discount_amount) : 1980;
 
   const handlePaymentStart = async () => {
     if (!user) return;
@@ -109,7 +109,7 @@ export default function PaymentPage() {
         (window as any).PaymentBridge.postMessage(JSON.stringify({
           type: 'PAYMENT_REQUEST',
           provider: 'APPLE_GOOGLE',
-          amount: 990,
+          amount: 1980,
           productName: '기질아이 프리미엄 리포트'
         }));
       } else {
@@ -219,7 +219,7 @@ export default function PaymentPage() {
                 <h2 className="text-2xl font-bold text-text-main dark:text-white break-keep">
                   우리 아이를 위한<br />단 한 방울의 이해
                 </h2>
-                <p className="text-text-sub text-sm">990원으로 발견하는 육아의 마법</p>
+                <p className="text-text-sub text-sm">1,980원으로 발견하는 육아의 마법</p>
               </section>
 
               {/* Benefits */}
