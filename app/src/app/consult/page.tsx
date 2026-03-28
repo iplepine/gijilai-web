@@ -34,6 +34,8 @@ interface QuestionAnalysisItem {
 
 interface ActionItem {
     title: string;
+    trigger?: string;
+    action?: string;
     description: string;
     duration: number;
     encouragement: string;
@@ -764,6 +766,12 @@ function ConsultContent() {
                                                             <p className="text-[15px] font-bold text-text-main dark:text-white">{item.title}</p>
                                                             <span className="text-[11px] font-bold text-text-sub bg-beige-main/15 px-2 py-0.5 rounded-full shrink-0">{item.duration}일</span>
                                                         </div>
+                                                        {item.trigger && item.action && (
+                                                            <div className="flex flex-col gap-1 text-[12px]">
+                                                                <span className="text-secondary font-bold">IF <span className="font-normal text-text-main dark:text-gray-200">{item.trigger}</span></span>
+                                                                <span className="text-primary font-bold">THEN <span className="font-normal text-text-main dark:text-gray-200">{item.action}</span></span>
+                                                            </div>
+                                                        )}
                                                         <p className="text-[13px] text-text-sub leading-relaxed">{item.description}</p>
                                                         <p className="text-[12px] text-secondary font-medium">{item.encouragement || `${item.duration}일 동안 해보세요`}</p>
                                                     </div>
@@ -780,11 +788,14 @@ function ConsultContent() {
                                     onClick={async () => {
                                         if (user && sessionId && savedConsultId && prescription?.actionItems && selectedActionIndex !== null) {
                                             const item = prescription.actionItems[selectedActionIndex];
+                                            const fullDescription = item.trigger && item.action
+                                                ? `[IF] ${item.trigger}\n[THEN] ${item.action}\n\n${item.description}`
+                                                : item.description;
                                             await supabase.from('practice_items').insert({
                                                 session_id: sessionId,
                                                 consultation_id: savedConsultId,
                                                 title: item.title,
-                                                description: item.description,
+                                                description: fullDescription,
                                                 duration: item.duration,
                                                 encouragement: item.encouragement || null,
                                             });
