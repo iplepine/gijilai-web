@@ -20,6 +20,7 @@ export default function ProfilePage() {
     const [children, setChildren] = useState<ChildProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [avatarError, setAvatarError] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -53,6 +54,7 @@ export default function ProfilePage() {
         if (confirm('정말로 회원 탈퇴를 진행하시겠습니까?\n프로필, 아이 기질 검사 결과 및 처방전 등 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
             try {
                 if (user) {
+                    setDeleting(true);
                     const res = await fetch('/api/account/delete', { method: 'DELETE' });
                     if (!res.ok) {
                         const data = await res.json();
@@ -66,6 +68,7 @@ export default function ProfilePage() {
                     router.replace('/login');
                 }
             } catch (error) {
+                setDeleting(false);
                 console.error("Failed to delete account:", error);
                 alert("회원 탈퇴 중 문제가 발생했습니다.");
             }
@@ -83,6 +86,12 @@ export default function ProfilePage() {
     return (
         <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center justify-center font-body pb-0">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
+                {deleting && (
+                    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                        <p className="mt-4 text-white font-bold text-sm">회원 탈퇴 처리 중...</p>
+                    </div>
+                )}
                 {/* Sticky Header */}
                 <Navbar title="내 정보" />
 
@@ -188,7 +197,8 @@ export default function ProfilePage() {
                         </button>
                         <button
                             onClick={handleDeleteAccount}
-                            className="w-full py-4 text-xs text-gray-300 dark:text-gray-600 font-medium hover:text-red-400 transition-colors"
+                            disabled={deleting}
+                            className="w-full py-4 text-xs text-gray-300 dark:text-gray-600 font-medium hover:text-red-400 transition-colors disabled:opacity-50"
                         >
                             회원 탈퇴
                         </button>
