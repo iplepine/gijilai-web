@@ -114,6 +114,7 @@ export async function POST(req: Request) {
     }
   } catch (error: any) {
     console.error('Subscribe error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Subscribe error detail:', JSON.stringify(error.data ?? error, null, 2));
+    return NextResponse.json({ error: error.message || '구독 처리 실패' }, { status: 500 });
   }
 }
