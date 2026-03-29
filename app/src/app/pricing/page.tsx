@@ -82,7 +82,7 @@ export default function PricingPage() {
         issueName: selectedPlan === 'MONTHLY' ? '기질아이 월 구독' : '기질아이 연 구독',
         customer: {
           customerId: user.id,
-          email: user.email,
+          ...(user.email ? { email: user.email } : {}),
         },
       });
 
