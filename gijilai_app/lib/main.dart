@@ -30,7 +30,7 @@ class MainWebView extends StatefulWidget {
 }
 
 class _MainWebViewState extends State<MainWebView> {
-  static const _targetUrl = 'https://gijilai-web.vercel.app/';
+  static const _targetUrl = 'https://gijiai.com/';
 
   late final WebViewController _controller;
 

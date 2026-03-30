@@ -3,11 +3,26 @@
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
-    const { user, signInWithGoogle, signInWithKakao, isLoadingGoogle, isLoadingKakao } = useAuth();
+    const { user, signInWithGoogle, signInWithKakao, signInWithEmail, isLoadingGoogle, isLoadingKakao, isLoadingEmail } = useAuth();
     const router = useRouter();
+
+    const [showEmailLogin, setShowEmailLogin] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [emailError, setEmailError] = useState('');
+
+    const handleEmailLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setEmailError('');
+        try {
+            await signInWithEmail(email, password);
+        } catch (error: any) {
+            setEmailError(error?.message || '로그인에 실패했습니다.');
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -58,6 +73,49 @@ export default function LoginPage() {
                         {isLoadingGoogle ? '로그인 중...' : '구글로 계속하기'}
                     </button>
                 </div>
+
+                <div className="mt-6 flex items-center gap-3">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <button
+                        type="button"
+                        onClick={() => setShowEmailLogin(!showEmailLogin)}
+                        className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                        이메일로 로그인
+                    </button>
+                    <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                {showEmailLogin && (
+                    <form onSubmit={handleEmailLogin} className="mt-4 space-y-3">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="이메일"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+                            required
+                        />
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="비밀번호"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+                            required
+                        />
+                        {emailError && (
+                            <p className="text-red-500 text-xs">{emailError}</p>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={isLoadingEmail}
+                            className="w-full bg-gray-800 text-white py-3 rounded-xl font-medium text-sm disabled:opacity-50 transition-all active:scale-[0.98]"
+                        >
+                            {isLoadingEmail ? '로그인 중...' : '로그인'}
+                        </button>
+                    </form>
+                )}
 
                 <p className="mt-8 text-xs text-gray-400">
                     로그인 시 이용약관 및 개인정보처리방침에 동의하게 됩니다.

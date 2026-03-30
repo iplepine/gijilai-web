@@ -10,8 +10,10 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signInWithKakao: () => Promise<void>;
+    signInWithEmail: (email: string, password: string) => Promise<void>;
     isLoadingGoogle: boolean;
     isLoadingKakao: boolean;
+    isLoadingEmail: boolean;
     signOut: () => Promise<void>;
 }
 
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
     const [isLoadingKakao, setIsLoadingKakao] = useState(false);
+    const [isLoadingEmail, setIsLoadingEmail] = useState(false);
 
     const signInWithGoogle = async () => {
         setIsLoadingGoogle(true);
@@ -77,6 +80,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const signInWithEmail = async (email: string, password: string) => {
+        setIsLoadingEmail(true);
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Email sign in error:', error);
+            throw error;
+        } finally {
+            setIsLoadingEmail(false);
+        }
+    };
+
     const signOut = async () => {
         await supabase.auth.signOut();
     };
@@ -88,8 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading,
             signInWithGoogle,
             signInWithKakao,
+            signInWithEmail,
             isLoadingGoogle,
             isLoadingKakao,
+            isLoadingEmail,
             signOut
         }}>
             {children}
