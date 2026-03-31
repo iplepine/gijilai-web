@@ -34,7 +34,7 @@ export default function RefundPolicyPage() {
 
                             <section>
                                 <h3 className="font-bold text-navy dark:text-white text-base mb-2">제4조 (환불 절차)</h3>
-                                <p>1. 환불을 원하시는 경우 고객센터(support@devhohouse.com)로 환불 사유와 함께 요청해 주시기 바랍니다.<br />
+                                <p>1. 환불을 원하시는 경우 고객센터(devhohouse@gmail.com)로 환불 사유와 함께 요청해 주시기 바랍니다.<br />
                                 2. 환불 요청 접수 후 영업일 기준 3일 이내에 처리되며, 결제 수단에 따라 환불 완료까지 추가 소요 시간이 발생할 수 있습니다.<br />
                                 3. 카드 결제의 경우 카드사 정책에 따라 환불 처리에 3~7 영업일이 소요될 수 있습니다.</p>
                             </section>
@@ -63,7 +63,9 @@ export default function RefundPolicyPage() {
                             <section className="pt-4 border-t border-gray-100 dark:border-gray-700">
                                 <p className="text-xs text-gray-400">
                                     사업자: 데브호하우스 | 대표: 박정호<br />
-                                    사업자등록번호: 898-35-01596 | 문의: support@devhohouse.com
+                                    사업자등록번호: 898-35-01596<br />
+                                    통신판매업 신고번호: 제2025-서울중랑-1770호 (1770-7692-0459-9882)<br />
+                                    문의: devhohouse@gmail.com
                                 </p>
                             </section>
                         </div>
