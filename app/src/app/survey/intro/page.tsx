@@ -40,10 +40,10 @@ export default function IntroPage() {
                 <Navbar title="기질 검사 소개" showBack />
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                     <div className="max-w-md w-full space-y-8 animate-fadeIn">
-                        <div className="relative w-48 h-48 mx-auto mb-8">
+                        <div className="relative w-52 h-52 mx-auto mb-4">
                             <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
-                            <div className="absolute inset-4 bg-white dark:bg-surface-dark rounded-full shadow-lg flex items-center justify-center">
-                                <span className="text-4xl">👨‍👩‍👧‍👦</span>
+                            <div className="absolute inset-3 rounded-full bg-white dark:bg-surface-dark shadow-lg overflow-hidden">
+                                <img src="/survey_icon.png" alt="기질 검사" className="w-full h-full object-cover scale-125" />
                             </div>
                         </div>
 
