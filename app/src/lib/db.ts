@@ -295,7 +295,7 @@ export const db = {
             .update({ referred_id: referredUserId, status: 'COMPLETED' })
             .eq('id', referral.id);
 
-        // Issue coupons to both users (1980 won discount, expires in 14 days)
+        // Issue coupons to both users (1980 won discount, expires in 30 days)
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
         const expiresAtStr = expiresAt.toISOString();

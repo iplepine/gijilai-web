@@ -2,10 +2,28 @@
 
 ## 추천 코드
 
-- 추천 코드 형식: "GIJILAI-{사용자ID 앞 8자리}"
-- 추천 매칭 성공 시: 추천인 + 피추천인 양쪽에 쿠폰 발급
+- 형식: `GIJILAI-{사용자ID 앞 8자리 대문자}`
+- `referrals` 테이블에 저장, 최초 조회 시 자동 생성
+- 자기 자신 추천 불가
+
+## 추천 플로우
+
+1. 공유 URL에 `?ref=CODE` 파라미터 포함 (`/share` 페이지에서 생성)
+2. `ReferralHandler` 컴포넌트가 URL의 `ref` 값을 `sessionStorage`에 저장
+3. 로그인 후 `db.applyReferralCode()`로 자동 적용 (세션당 1회)
+4. 매칭 성공 시 referral 상태를 `COMPLETED`로 변경, 양쪽에 쿠폰 발급
 
 ## 쿠폰
 
-- 쿠폰 할인: 구독 첫 달 무료
-- 쿠폰 유효기간: 발급일로부터 30일
+- 할인 금액: 1,980원 (월 구독료와 동일 → 실질적 구독 첫 달 무료)
+- 유효기간: 발급일로부터 30일
+- 결제 페이지에서 쿠폰 적용 시 `finalAmount = max(0, 1980 - discount_amount)`
+- 금액이 0원이면 "쿠폰으로 무료 이용하기" 버튼 표시
+
+## 관련 코드
+
+- `app/src/lib/db.ts` — `getReferralCode`, `applyReferralCode`, `getAvailableCoupons`, `useCoupon`
+- `app/src/components/layout/ReferralHandler.tsx` — URL 파라미터 감지 및 자동 적용
+- `app/src/app/share/page.tsx` — 공유 URL 생성 (카카오, 링크 복사, 네이티브 공유)
+- `app/src/app/payment/page.tsx` — 쿠폰 적용 및 결제 금액 계산
+- 별도 referral API 라우트 없음 (클라이언트에서 Supabase 직접 호출)
