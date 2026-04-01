@@ -4,9 +4,11 @@
 
 5탭 구조: 홈(`/`) | 실천(`/practices`) | 상담(`/consult`, 중앙 FAB) | 기록(`/consultations`) | 내 정보(`/settings/profile`)
 
-- 실천 탭: 라벨 "실천", 아이콘 `check_circle`
+- 홈 탭: 라벨 "홈", 아이콘 `home`
+- 실천 탭: 라벨 "실천", 아이콘 `checklist`
 - 상담 탭: 중앙 원형 FAB 버튼, 아이콘 `add` (활성 시 `chat_bubble`)
-- 기록 탭: 라벨 "기록", 아이콘 `folder_open` — 지난 상담 목록/상세 열람 전용 페이지
+- 기록 탭: 라벨 "기록", 아이콘 `folder_open` — 세션 기반 상담 기록 열람 페이지
+- 내 정보 탭: 라벨 "내 정보", 아이콘 `person`
 
 ## 상담 시스템
 
@@ -47,26 +49,40 @@
 
 ### 결과 화면 (RESULT) 카드 구성
 
-1. **날짜 · 이름 뱃지**: 상담 날짜 + 아이 이름
+세션 상세 페이지(`/consultations/[id]`)의 각 상담 타임라인 항목:
+
+1. **날짜 뱃지**: 상담 날짜 (2회차부터 "추가 상담" 라벨)
 2. **그날의 고민**: 양육자가 입력한 고민 원문
-3. **문진 해설** (questionAnalysis): 각 질문-답변의 기질 관점 해설 (있을 때만 표시)
-4. **마음 처방전**: 속마음 통역 / 아이와 나 / 실천 항목들
-5. **마법의 한마디**: 틸 그린 배경 강조 카드
-6. **홈으로 돌아가기** 버튼
-7. **앱 다운로드 유도**: 결과 하단에 앱 설치 CTA 표시
+3. **마음 처방전**: 속마음 통역(interpretation) / 아이와 나(chemistry)
+4. **실천 항목**: actionItems 배열 표시. `title === '오늘의 한마디'` 또는 `duration === 1`인 항목은 틸 그린 강조 카드, 나머지는 일반 카드 (제목 + 기간 + 설명 + 응원 메시지)
 
 ### 상담 저장
 
-- 완료된 상담은 `consultations` 테이블에 저장 (status: COMPLETED)
-- 저장 항목: user_id, child_id (selectedChildId), category ("자유 입력"), problem_description, ai_options (질문 목록), user_response (답변), selected_reaction_id ("DYNAMIC_FLOW"), ai_prescription (처방전 JSON), status
+- 상담은 `consultation_sessions` (세션) + `consultations` (개별 상담) 2단 구조로 저장
+- 세션(`consultation_sessions`): user_id, child_id, title, status (ACTIVE / RESOLVED / ARCHIVED)
+- 개별 상담(`consultations`): session_id, user_id, child_id, category, problem_description, ai_options (질문 목록), user_response (답변), selected_reaction_id, ai_prescription (처방전 JSON), status (COMPLETED)
+- 하나의 세션에 여러 상담이 시간순으로 연결됨 (추가 상담 기능)
 
-### 지난 상담 보기 (`/consultations`)
+### 상담 기록 목록 (`/consultations`)
 
 - 별도 페이지로 구현 (하단 네비게이션 "기록" 탭)
-- 목록: 날짜 · 아이 이름, 고민 요약 (2줄 말줄임), 마법의 한마디 미리보기
-- 상세: 상담 결과 화면과 동일한 카드 레이아웃 (날짜 뱃지 → 그날의 고민 → 마음 처방전 → 마법의 한마디)
-- 상세에서 상담 기록 삭제 가능 (confirm 후 삭제)
-- URL 쿼리 `?view={id}`로 특정 상담 바로 열기 지원
+- **세션 기반 목록**: `consultation_sessions` 테이블의 세션 단위로 표시 (하나의 세션에 여러 상담 포함 가능)
+- 세션 카드: 세션 제목, 날짜 · 아이 이름, 상담 횟수(2회 이상일 때), 마법의 한마디 미리보기
+- 세션 상태 뱃지: 진행 중(ACTIVE) / 해결됨(RESOLVED) / 지난 상담(ARCHIVED)
+- 목록 그룹: "진행 중인 고민" (ACTIVE) 과 "지난 기록" (그 외)으로 분리 표시
+- 세션이 없는 과거 상담(orphan)도 하위 호환으로 표시
+- 카드 클릭 시 `/consultations/[id]` 세션 상세 페이지로 이동
+
+### 상담 세션 상세 (`/consultations/[id]`)
+
+- 세션 제목, 아이 이름, 상태 뱃지 표시
+- 세션에 속한 상담들을 시간순 타임라인으로 표시 (2회차부터 "추가 상담" 라벨)
+- 각 상담 카드: 날짜 뱃지 → 그날의 고민 → 마음 처방전(속마음 통역 + 아이와 나) → 실천 항목
+- 실천 항목 중 `title === '오늘의 한마디'` 또는 `duration === 1`인 항목은 틸 그린 강조 카드로 표시
+- ACTIVE 세션: "추가 상담하기" 버튼 (`/consult?sessionId={id}`로 이동), "이 고민은 해결됨" 버튼
+- 해결 처리 시 연결된 ACTIVE 실천 항목이 있으면 함께 종료(DROPPED) 여부 확인
+- 세션 삭제: confirm 후 세션 및 관련 상담·실천 기록 전체 삭제 (CASCADE)
+- 개별 상담 삭제: 세션에 상담이 2개 이상일 때만 개별 삭제 버튼 표시; 마지막 상담 삭제 시 세션도 함께 삭제
 
 ## 실천 시스템
 
@@ -91,11 +107,13 @@
 
 ### 실천 탭 (`/practices`)
 
-- 진행 중인 액션 아이템을 상담별로 그룹핑 (날짜 + 아이 이름)
-- 아이템마다 상태 표시: 진행 중 / 기간 완료 / 회고 완료
-- 날짜별 실천 체크: 했다/못했다 + 한줄 메모 (선택)
-- 기간 완료 시 종합 회고: "해보니 어떠셨어요?" (자유 텍스트)
-- 진행 중인 실천이 없으면 빈 상태 + 상담 유도 CTA
+- ACTIVE 상태 실천 항목을 세션별로 그룹핑 (세션 제목 헤더, 클릭 시 세션 상세로 이동)
+- 각 카드: 제목, 설명, 진행률 바 (실천 일수/목표 기간), 응원 메시지
+- 세션 그룹 정렬: 오늘 미기록 항목이 있는 세션이 위로
+- 카드 내 정렬: 미기록 > 못했어요 > 완료 순
+- 오늘 실천 기록: PracticeCheckModal (했다/못했다 + 한줄 메모)
+- 기간 완료(doneDays >= duration) 시: PracticeReviewModal (종합 회고 작성 → status COMPLETED로 변경)
+- 진행 중인 실천이 없으면 빈 상태 + "상담 시작하기" CTA
 
 ### 아이별 필터
 
