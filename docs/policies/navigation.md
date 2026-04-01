@@ -1,6 +1,61 @@
 # 네비게이션 및 UI 정책
 
-## 네비게이션
+## 하단 네비게이션 (BottomNav)
+
+5개 탭 구성:
+
+| 순서 | 라벨 | 경로 | 아이콘 | 비고 |
+|------|------|------|--------|------|
+| 1 | 홈 | `/` | home | |
+| 2 | 실천 | `/practices` | checklist | |
+| 3 | 상담 | `/consult` | add / chat_bubble | 중앙 플로팅 버튼, active 시 아이콘 변경 |
+| 4 | 기록 | `/consultations` | folder_open | |
+| 5 | 내 정보 | `/settings/profile` | person | |
+
+- 중앙 상담 버튼은 다른 탭보다 위로 올라온 플로팅 원형 버튼
+- BottomNav는 `fixed bottom-0`, backdrop-blur 적용, 최대 폭 `max-w-md`
+
+## 라우트 구조
+
+```
+/                           # 홈
+/login                      # 로그인
+/intake                     # 접수 폼
+/survey/                    # 설문 메인
+  intro/                    # 설문 안내
+  child/                    # 아이 기질 설문
+  parent/                   # 양육자 기질 설문
+  parenting-style/          # 양육 스타일 설문
+/report                     # 리포트
+/consult                    # 마음 통역소 (AI 상담)
+/consultations/             # 상담 기록 목록
+  [id]/                     # 상담 기록 상세
+/practices                  # 실천 목록
+/observations               # 관찰 기록
+/share                      # 공유
+/shared/[id]                # 공유된 리포트 보기
+/pricing                    # 요금제
+/payment/                   # 결제
+  success/                  # 결제 완료
+/settings/
+  profile/                  # 내 정보
+    edit/                   # 프로필 수정
+  child/
+    new/                    # 아이 등록
+    [id]/                   # 아이 정보 수정
+  notifications/            # 알림 설정
+  subscription/             # 구독 관리
+/legal/
+  about/                    # 서비스 소개
+  privacy/                  # 개인정보처리방침
+  terms/                    # 이용약관
+  refund/                   # 환불 정책
+  support/                  # 고객지원
+/auth/auth-code-error       # 인증 오류
+/test/llm-connection        # LLM 연결 테스트 (개발용)
+```
+
+## 네비게이션 규칙
 
 - 내부 페이지 전환 시 `router.replace()` 사용 (`router.push()` 대신, WebView 뒤로가기 스택 이슈 방지)
 - 모든 헤더는 absolute positioning으로 타이틀 중앙 정렬
