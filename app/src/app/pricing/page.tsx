@@ -80,7 +80,7 @@ export default function PricingPage() {
           channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY;
           billingKeyMethod = 'EASY_PAY';
         } else if (payMethod === 'TOSSPAY') {
-          channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSSPAY;
+          channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS;
           billingKeyMethod = 'EASY_PAY';
         } else {
           channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP;

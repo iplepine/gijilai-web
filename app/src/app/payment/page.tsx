@@ -134,7 +134,7 @@ export default function PaymentPage() {
       if (payMethod === 'NAVERPAY') {
         channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY;
       } else if (payMethod === 'TOSSPAY') {
-        channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSSPAY;
+        channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS;
       } else {
         channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP;
       }

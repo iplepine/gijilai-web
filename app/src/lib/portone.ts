@@ -37,7 +37,7 @@ export function getKoChannelKey(payMethod: PayMethod): string {
     return process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY as string;
   }
   if (payMethod === 'TOSSPAY') {
-    return process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSSPAY as string;
+    return process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS as string;
   }
   return process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP as string;
 }
