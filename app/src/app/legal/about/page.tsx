@@ -33,7 +33,15 @@ export default function AboutPage() {
                                     </div>
                                     <div className="flex">
                                         <span className="text-gray-400 w-28 shrink-0">통신판매업</span>
-                                        <span className="text-navy dark:text-white font-medium">제2025-서울중랑-1770호</span>
+                                        <span className="text-navy dark:text-white font-medium">2026-서울중랑-0133</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-400 w-28 shrink-0">주소</span>
+                                        <span className="text-navy dark:text-white font-medium">서울특별시 중랑구 신내로 155, 804동 1501호(신내동, 두산위브, 화성아파트)</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-400 w-28 shrink-0">전화</span>
+                                        <span className="text-navy dark:text-white font-medium">010-3830-8960</span>
                                     </div>
                                     <div className="flex">
                                         <span className="text-gray-400 w-28 shrink-0">이메일</span>
