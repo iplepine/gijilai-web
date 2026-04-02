@@ -132,7 +132,7 @@ export default function PaymentPage() {
       const paymentId = `pay_${user.id.substring(0, 8)}_${Date.now()}`;
       const channelKey = payMethod === 'NAVERPAY'
         ? process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY
-        : process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP;
+        : process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS;
 
       const paymentParams: Record<string, any> = {
         storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID,
@@ -314,7 +314,7 @@ export default function PaymentPage() {
                     >
                       <Icon name="credit_card" size="sm" className={`text-2xl mb-1 ${payMethod === 'CARD' ? 'text-primary' : 'text-text-sub'}`} />
                       <p className={`text-sm font-bold ${payMethod === 'CARD' ? 'text-primary' : 'text-text-main dark:text-white'}`}>카드 결제</p>
-                      <p className="text-[11px] text-text-sub mt-0.5">NHN KCP</p>
+                      <p className="text-[11px] text-text-sub mt-0.5">KG 이니시스</p>
                     </button>
                     <button
                       onClick={() => setPayMethod('NAVERPAY')}

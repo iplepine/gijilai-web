@@ -80,7 +80,7 @@ export default function PricingPage() {
           channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY;
           billingKeyMethod = 'EASY_PAY';
         } else {
-          channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP;
+          channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS;
           billingKeyMethod = 'CARD';
         }
       } else {
@@ -271,7 +271,7 @@ export default function PricingPage() {
                 >
                   <Icon name="credit_card" size="sm" className={`text-2xl mb-1 ${payMethod === 'CARD' ? 'text-primary' : 'text-text-sub'}`} />
                   <p className={`text-sm font-bold ${payMethod === 'CARD' ? 'text-primary' : 'text-text-main dark:text-white'}`}>카드 결제</p>
-                  <p className="text-[11px] text-text-sub mt-0.5">NHN KCP</p>
+                  <p className="text-[11px] text-text-sub mt-0.5">KG 이니시스</p>
                 </button>
                 <button
                   onClick={() => setPayMethod('NAVERPAY')}

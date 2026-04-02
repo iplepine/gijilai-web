@@ -91,7 +91,7 @@ const calculateAverage = (scores: number[]): number => {
 
 ### 결제
 - 구독제: **월 12,000원 / 연 89,000원**
-- 연동: 포트원 V2 (NHN KCP + 네이버페이)
+- 연동: 포트원 V2 (KG 이니시스 + 네이버페이)
 
 ### 로딩 애니메이션 (UX)
 ```
