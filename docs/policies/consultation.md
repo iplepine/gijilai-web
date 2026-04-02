@@ -22,9 +22,11 @@
 
 | 엔드포인트 | 역할 | 모델 |
 | --- | --- | --- |
-| `/api/consult/questions/initial` | 공감 멘트 + 기초 질문 3\~5개 생성 | gpt-4o |
-| `/api/consult/questions/followup` | 1차 답변 분석 후 심층 질문 필요 여부 판단 | gpt-4o |
-| `/api/consult/prescription` | 마음 처방전 생성 | gpt-4o |
+| `/api/consult/questions/initial` | 공감 멘트 + 기초 질문 3\~5개 생성 | gpt-4o (월 30건 초과 시 gpt-4o-mini) |
+| `/api/consult/questions/followup` | 1차 답변 분석 후 심층 질문 필요 여부 판단 | gpt-4o (월 30건 초과 시 gpt-4o-mini) |
+| `/api/consult/prescription` | 마음 처방전 생성 | gpt-4o (월 30건 초과 시 gpt-4o-mini) |
+
+> **모델 폴백 정책**: 구독자 월 상담 30건까지 gpt-4o, 초과 시 gpt-4o-mini로 자동 전환. 로직은 `src/lib/consult-model.ts`에서 관리.
 
 ### 처방전 구조
 

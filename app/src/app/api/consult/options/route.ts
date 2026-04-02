@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { openai } from '@/lib/openai';
 import { createClient } from '@/lib/supabaseServer';
+import { getConsultModel } from '@/lib/consult-model';
 
 export async function POST(request: Request) {
     try {
@@ -37,8 +38,10 @@ export async function POST(request: Request) {
 
         const userMessage = `고민 상황: ${problem}`;
 
+        const model = await getConsultModel(session.user.id);
+
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model,
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userMessage },

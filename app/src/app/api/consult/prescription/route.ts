@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { openai } from '@/lib/openai';
 import { createClient } from '@/lib/supabaseServer';
+import { getConsultModel } from '@/lib/consult-model';
 
 function formatObservationsForPrompt(observations: any[]): string {
     return observations.map((obs: any) => {
@@ -159,8 +160,10 @@ ${!isFollowUp ? `7. **세션 제목 (sessionTitle)**: 이 고민을 한 줄(15�
 
 주의: JSON 형식만 출력하세요. markdown 기호 없이 순수 JSON 문자열만 반환해야 합니다.`;
 
+        const model = await getConsultModel(session.user.id);
+
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model,
             messages: [
                 { role: 'system', content: systemPrompt }
             ],
