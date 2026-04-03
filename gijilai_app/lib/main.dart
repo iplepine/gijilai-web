@@ -126,13 +126,13 @@ class _MainWebViewState extends State<MainWebView> {
   Future<void> _startPurchase() async {
     final available = await _iap.isAvailable();
     if (!available) {
-      _sendPaymentResult('error', '인앱결제를 사용할 수 없습니다');
+      _sendPaymentResult('error', 'IAP_NOT_AVAILABLE');
       return;
     }
 
     final response = await _iap.queryProductDetails({_subscriptionProductId});
     if (response.productDetails.isEmpty) {
-      _sendPaymentResult('error', '상품 정보를 찾을 수 없습니다');
+      _sendPaymentResult('error', 'PRODUCT_NOT_FOUND');
       return;
     }
 
@@ -149,13 +149,13 @@ class _MainWebViewState extends State<MainWebView> {
           _verifyAndDeliver(purchase);
           break;
         case PurchaseStatus.error:
-          _sendPaymentResult('error', purchase.error?.message ?? '결제 실패');
+          _sendPaymentResult('error', 'PURCHASE_FAILED');
           if (purchase.pendingCompletePurchase) {
             _iap.completePurchase(purchase);
           }
           break;
         case PurchaseStatus.canceled:
-          _sendPaymentResult('cancelled', '결제가 취소되었습니다');
+          _sendPaymentResult('cancelled');
           break;
         case PurchaseStatus.pending:
           debugPrint('IAP purchase pending...');
@@ -201,7 +201,7 @@ class _MainWebViewState extends State<MainWebView> {
       await _controller.runJavaScript(jsCode);
     } catch (e) {
       debugPrint('IAP verify error: $e');
-      _sendPaymentResult('error', '영수증 검증 실패');
+      _sendPaymentResult('error', 'VERIFY_FAILED');
     } finally {
       if (purchase.pendingCompletePurchase) {
         await _iap.completePurchase(purchase);
