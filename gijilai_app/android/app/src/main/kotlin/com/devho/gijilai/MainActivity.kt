@@ -1,4 +1,4 @@
-package com.devho.gijilai_app
+package com.devho.gijilai
 
 import io.flutter.embedding.android.FlutterActivity
 
