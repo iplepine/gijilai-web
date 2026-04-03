@@ -27,6 +27,7 @@ import { TCI_TERMINOLOGY } from '@/constants/terminology';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 ChartJS.register(
   RadialLinearScale,
@@ -47,6 +48,7 @@ function ReportContent() {
   const isChildOnly = searchParams.get('child_only') === 'true';
 
   const { user } = useAuth();
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, selectedChildId } = useAppStore();
 
@@ -57,7 +59,7 @@ function ReportContent() {
   const generatingRef = useRef<Set<string>>(new Set());
   const [reportDates, setReportDates] = useState<Record<string, string>>({});
 
-  // DB에서 로드된 점수 데이터 (상세 보기용)
+  // DB에서 로드된 {t('common.points')}수 데이터 (상세 보기용)
   const [savedChildScores, setSavedChildScores] = useState<any>(null);
   const [savedParentScores, setSavedParentScores] = useState<any>(null);
   const [savedStyleScores, setSavedStyleScores] = useState<any>(null);
@@ -130,14 +132,14 @@ function ReportContent() {
           setHarmonyAiReport(analysis);
           setDbChildId(data.child_id);
           setDbSurveyIds(prev => ({ ...prev, PARENTING_STYLE: data.survey_id }));
-          // 조화 분석 시에는 아이/양육자 점수가 모두 필요할 수 있으므로 저장된 데이터가 있다면 복원
+          // 조화 분석 시에는 아이/양육자 {t('common.points')}수가 모두 필요할 수 있으므로 저장된 데이터가 있다면 복원
 
           setActiveTab('parenting');
         }
       }
     } catch (e) {
       console.error('Failed to load report:', e);
-      alert('리포트를 불러오는 중 오류가 발생했습니다.');
+      alert(t('report.loadingError'));
     } finally {
       setIsGenerating(false);
     }
@@ -242,7 +244,7 @@ function ReportContent() {
       }
     } catch (error) {
       console.error(error);
-      alert('리포트 생성 중 오류가 발생했습니다.');
+      alert(t('report.generationError'));
     } finally {
       generatingRef.current.delete('CHILD');
       setIsGenerating(generatingRef.current.size > 0);
@@ -267,7 +269,7 @@ function ReportContent() {
       }
     } catch (error) {
       console.error(error);
-      alert('리포트 생성 중 오류가 발생했습니다.');
+      alert(t('report.generationError'));
     } finally {
       generatingRef.current.delete('PARENT');
       setIsGenerating(generatingRef.current.size > 0);
@@ -297,7 +299,7 @@ function ReportContent() {
       }
     } catch (error) {
       console.error(error);
-      alert('조화 분석 리포트 생성 중 오류가 발생했습니다.');
+      alert(t('report.harmonyError'));
     } finally {
       generatingRef.current.delete('HARMONY');
       setIsGenerating(generatingRef.current.size > 0);
@@ -420,7 +422,7 @@ function ReportContent() {
   };
 
   const barData = {
-    labels: ['양육 효능감', '자율성 지지', '정서적 반응성'],
+    labels: [t('report.parentingEfficacy'), t('report.autonomySupport'), t('report.emotionalResponsiveness')],
     datasets: [
       {
         data: [styleScores.Efficacy, styleScores.Autonomy, styleScores.Responsiveness],
@@ -540,29 +542,29 @@ function ReportContent() {
                     onClick={() => handleTabChange('child')}
                     className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'child' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main dark:hover:text-white hover:bg-beige-light/50 dark:hover:bg-white/5'}`}
                   >
-                    아이 진단
+                    {t('report.childTab')}
                   </button>
                   <button
                     onClick={() => {
                       if (isParentSurveyComplete) handleTabChange('parent');
-                      else if (confirm('양육자 기질 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                      else if (confirm(t('report.parentSurveyNeeded'))) {
                         router.push('/survey?type=PARENT');
                       }
                     }}
                     className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parent' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main dark:hover:text-white hover:bg-beige-light/50 dark:hover:bg-white/5'}`}
                   >
-                    양육자 분석
+                    {t('report.parentTab')}
                   </button>
                   <button
                     onClick={() => {
                       if (isStyleSurveyComplete) handleTabChange('parenting');
-                      else if (confirm('양육 태도 검사를 먼저 완료해야 확인할 수 있어요. 지금 시작할까요?')) {
+                      else if (confirm(t('report.styleSurveyNeeded'))) {
                         router.push('/survey?type=STYLE');
                       }
                     }}
                     className={`flex-1 py-3 rounded-xl text-[11px] font-bold transition-all ${activeTab === 'parenting' ? 'bg-primary text-white shadow-md' : 'text-text-sub hover:text-text-main dark:hover:text-white hover:bg-beige-light/50 dark:hover:bg-white/5'}`}
                   >
-                    기질 맞춤 양육
+                    {t('report.harmonyTab')}
                   </button>
                 </div>
               </div>
@@ -573,7 +575,7 @@ function ReportContent() {
               {activeTab === 'child' ? (
                 isChildSurveyComplete ? (
                   <>
-                    <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}의 기질 유형</p>
+                    <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}{t('report.childTemperamentType')}</p>
                     <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
                       {childType.label}
                     </h1>
@@ -586,7 +588,7 @@ function ReportContent() {
                   </>
                 ) : (
                   <>
-                    <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}의 기질 유형</p>
+                    <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}{t('report.childTemperamentType')}</p>
                     <div className="h-9 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse mx-auto" />
                     <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mx-auto" />
                   </>
@@ -594,7 +596,7 @@ function ReportContent() {
               ) : activeTab === 'parent' ? (
                 isParentSurveyComplete ? (
                   <>
-                    <p className="text-text-sub text-sm font-medium">양육자의 기질 유형</p>
+                    <p className="text-text-sub text-sm font-medium">{t('report.parentTemperamentType')}</p>
                     <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
                       {parentType.label}
                     </h1>
@@ -607,14 +609,14 @@ function ReportContent() {
                   </>
                 ) : (
                   <>
-                    <p className="text-text-sub text-sm font-medium">양육자의 기질 유형</p>
+                    <p className="text-text-sub text-sm font-medium">{t('report.parentTemperamentType')}</p>
                     <div className="h-9 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse mx-auto" />
                     <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mx-auto" />
                   </>
                 )
               ) : (
                 <>
-                  <p className="text-text-sub text-sm font-medium">기질 맞춤 양육 리포트</p>
+                  <p className="text-text-sub text-sm font-medium">{t('report.harmonyReport')}</p>
                   {harmonyAiReport ? (
                     <>
                       <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
@@ -647,12 +649,11 @@ function ReportContent() {
 
                   <div className="space-y-4">
                     <h2 className="text-2xl font-black text-text-main dark:text-white leading-tight">
-                      {intake.childName || '아이'}의 기질을<br />알아볼 시간이에요!
+                      {intake.childName || t('report.child')}{t('report.testTime')}
                     </h2>
                     <p className="text-text-sub dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4">
-                      아이의 타고난 빛을 발견하기 위한<br />
-                      첫 번째 단계, 기질 검사를 먼저 시작해볼까요?<br />
-                      <span className="text-[12px] opacity-70 mt-2 block">(약 3-5분 정도 소요됩니다)</span>
+                      {t('report.testTimeDesc')}<br />
+                      <span className="text-[12px] opacity-70 mt-2 block">{t('report.testTimeDuration')}</span>
                     </p>
                   </div>
 
@@ -662,7 +663,7 @@ function ReportContent() {
                     className="h-16 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
                     onClick={() => router.push('/survey')}
                   >
-                    기질 검사 시작하기
+                    {t('report.startTemperamentTest')}
                   </Button>
                 </div>
               ) : (
@@ -672,24 +673,24 @@ function ReportContent() {
                       {/* 1. 아이나의 한마디 */}
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
                         <p className="text-[12px] font-black text-primary mb-2.5 flex items-center gap-1.5">
-                          <Icon name="chat_bubble" size="sm" /> 아이나의 한마디
+                          <Icon name="chat_bubble" size="sm" /> {t('report.ainaComment')}
                         </p>
                         <p className="text-[15px] text-text-main dark:text-slate-300 leading-[1.85] break-keep">
                           {childAiReport.intro}
                         </p>
                       </section>
 
-                      {/* 2. 기질 점수 카드 */}
+                      {/* 2. 기질 {t('common.points')}수 카드 */}
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-6 shadow-card border border-beige-main/10 space-y-5">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                          <Icon name="bar_chart" size="sm" /> {intake.childName || '아이'}의 기질 점수
+                          <Icon name="bar_chart" size="sm" /> {intake.childName || t('report.child')}{t('report.temperamentScores')}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           {([
-                            { key: 'NS', label: '자극 추구', color: '#E5A150', desc: '새로운 것에 끌리는 정도' },
-                            { key: 'HA', label: '위험 회피', color: '#6B9E8A', desc: '조심하고 경계하는 정도' },
-                            { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', desc: '타인 반응에 민감한 정도' },
-                            { key: 'P', label: '인내력', color: '#D4805E', desc: '꾸준히 해내는 정도' },
+                            { key: 'NS', label: t('report.noveltySeekingName'), color: '#E5A150', desc: t('report.noveltySeekingDesc') },
+                            { key: 'HA', label: t('report.harmAvoidanceName'), color: '#6B9E8A', desc: t('report.harmAvoidanceDesc') },
+                            { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', desc: t('report.rewardDependenceDesc') },
+                            { key: 'P', label: t('report.persistenceName'), color: '#D4805E', desc: t('report.persistenceDesc') },
                           ] as const).map(dim => {
                             const score = childScores[dim.key as keyof typeof childScores];
                             return (
@@ -712,13 +713,13 @@ function ReportContent() {
                       {childAiReport.analysis?.dimensions && Object.values(childAiReport.analysis.dimensions).some(Boolean) && (
                         <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
                           <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                            <Icon name="psychology" size="sm" /> 기질 요소별 해석
+                            <Icon name="psychology" size="sm" /> {t('report.dimensionAnalysis')}
                           </p>
                           {([
-                            { key: 'NS', label: '자극 추구', color: '#E5A150', icon: '🔥' },
-                            { key: 'HA', label: '위험 회피', color: '#6B9E8A', icon: '🛡️' },
-                            { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', icon: '💙' },
-                            { key: 'P', label: '인내력', color: '#D4805E', icon: '⏳' },
+                            { key: 'NS', label: t('report.noveltySeekingName'), color: '#E5A150', icon: '\uD83D\uDD25' },
+                            { key: 'HA', label: t('report.harmAvoidanceName'), color: '#6B9E8A', icon: '\uD83D\uDEE1\uFE0F' },
+                            { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', icon: '\uD83D\uDC99' },
+                            { key: 'P', label: t('report.persistenceName'), color: '#D4805E', icon: '\u231B' },
                           ] as const).map(dim => {
                             const text = (childAiReport.analysis?.dimensions as any)?.[dim.key];
                             if (!text) return null;
@@ -727,7 +728,7 @@ function ReportContent() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm">{dim.icon}</span>
                                   <span className="text-[12px] font-bold" style={{ color: dim.color }}>{dim.label}</span>
-                                  <span className="text-[12px] font-black" style={{ color: dim.color }}>{childScores[dim.key as keyof typeof childScores]}점</span>
+                                  <span className="text-[12px] font-black" style={{ color: dim.color }}>{childScores[dim.key as keyof typeof childScores]}{t('common.points')}</span>
                                 </div>
                                 <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.8] break-keep pl-6">
                                   {text}
@@ -742,7 +743,7 @@ function ReportContent() {
                       {childAiReport.analysis?.insight && (
                         <section className="space-y-3">
                           <p className="text-[12px] font-black text-primary flex items-center gap-1.5 px-1">
-                            <Icon name="favorite" size="sm" /> 아이의 숨겨진 속마음
+                            <Icon name="favorite" size="sm" /> {t('report.hiddenFeelings')}
                           </p>
                           {Array.isArray(childAiReport.analysis.insight) ? (
                             childAiReport.analysis.insight.map((item: any, idx: number) => (
@@ -763,11 +764,11 @@ function ReportContent() {
                         </section>
                       )}
 
-                      {/* 6. 강점 + 성장 가능성 */}
+                      {/* 6. 강{t('common.points')} + 성장 가능성 */}
                       {childAiReport.analysis?.strengths && (
                         <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
                           <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                            <Icon name="emoji_events" size="sm" /> 강점과 성장 가능성
+                            <Icon name="emoji_events" size="sm" /> {t('report.strengthsGrowth')}
                           </p>
                           <p className="text-[14px] text-text-main dark:text-slate-300 leading-[1.85] break-keep whitespace-pre-wrap">
                             {childAiReport.analysis.strengths}
@@ -779,7 +780,7 @@ function ReportContent() {
                       {childAiReport.parentingTips && childAiReport.parentingTips.length > 0 && (
                         <section className="space-y-3">
                           <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
-                            <Icon name="lightbulb" size="sm" /> 양육 가이드
+                            <Icon name="lightbulb" size="sm" /> {t('report.parentingGuide')}
                           </p>
                           {childAiReport.parentingTips.map((tip: any, idx: number) => (
                             <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
@@ -803,7 +804,7 @@ function ReportContent() {
                       {childAiReport.scripts && childAiReport.scripts.length > 0 && (
                         <section className="space-y-3">
                           <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
-                            <Icon name="record_voice_over" size="sm" /> 마법의 한마디
+                            <Icon name="record_voice_over" size="sm" /> {t('report.magicWord')}
                           </p>
                           {childAiReport.scripts.map((s: any, idx: number) => (
                             <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
@@ -819,14 +820,14 @@ function ReportContent() {
                       {reportDates.child && (
                         <div className="flex items-center justify-between pt-4">
                           <p className="text-[11px] text-text-sub/50">
-                            {new Date(reportDates.child).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 분석
+                            {new Date(reportDates.child).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} {t('common.analysis')}
                           </p>
                           <button
                             onClick={() => { setChildAiReport(null); generateChildAIReport(true); }}
                             disabled={isGenerating}
                             className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
                           >
-                            다시 분석하기
+                            {t('common.reanalyze')}
                           </button>
                         </div>
                       )}
@@ -834,8 +835,8 @@ function ReportContent() {
                   ) : (
                     <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
                       <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                      <p className="text-text-sub text-sm font-bold">아이의 기질을 분석하고 있어요...</p>
-                      <p className="text-text-sub/60 text-[12px]">잠시만 기다려주세요</p>
+                      <p className="text-text-sub text-sm font-bold">{t('report.analyzingChild')}</p>
+                      <p className="text-text-sub/60 text-[12px]">{t('common.pleaseWait')}</p>
                     </div>
                   )}
 
@@ -843,10 +844,10 @@ function ReportContent() {
                   {!isChildOnly && childAiReport && (
                     <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
                       <Button variant="secondary" onClick={() => router.push(`/share${(reportId || childReportId) ? `?id=${reportId || childReportId}` : ''}`)} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
-                        결과 공유하기
+                        {t('report.shareResult')}
                       </Button>
                       <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
-                        홈으로 돌아가기
+                        {t('common.goBack')}
                       </Link>
                     </div>
                   )}
@@ -859,24 +860,24 @@ function ReportContent() {
                     {/* 1. 아이나의 한마디 */}
                     <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
                       <p className="text-[12px] font-black text-primary mb-2.5 flex items-center gap-1.5">
-                        <Icon name="chat_bubble" size="sm" /> 아이나의 한마디
+                        <Icon name="chat_bubble" size="sm" /> {t('report.ainaComment')}
                       </p>
                       <p className="text-[15px] text-text-main dark:text-slate-300 leading-[1.85] break-keep">
                         {parentAiReport.intro}
                       </p>
                     </section>
 
-                    {/* 2. 기질 점수 카드 */}
+                    {/* 2. 기질 {t('common.points')}수 카드 */}
                     <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-6 shadow-card border border-beige-main/10 space-y-5">
                       <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                        <Icon name="bar_chart" size="sm" /> 양육자의 기질 점수
+                        <Icon name="bar_chart" size="sm" /> {t('report.parentTemperamentScores')}
                       </p>
                       <div className="grid grid-cols-2 gap-3">
                         {([
-                          { key: 'NS', label: '자극 추구', color: '#E5A150', desc: '새로운 것에 끌리는 정도' },
-                          { key: 'HA', label: '위험 회피', color: '#6B9E8A', desc: '조심하고 경계하는 정도' },
-                          { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', desc: '타인 반응에 민감한 정도' },
-                          { key: 'P', label: '인내력', color: '#D4805E', desc: '꾸준히 해내는 정도' },
+                          { key: 'NS', label: t('report.noveltySeekingName'), color: '#E5A150', desc: t('report.noveltySeekingDesc') },
+                          { key: 'HA', label: t('report.harmAvoidanceName'), color: '#6B9E8A', desc: t('report.harmAvoidanceDesc') },
+                          { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', desc: t('report.rewardDependenceDesc') },
+                          { key: 'P', label: t('report.persistenceName'), color: '#D4805E', desc: t('report.persistenceDesc') },
                         ] as const).map(dim => {
                           const score = parentScores[dim.key as keyof typeof parentScores];
                           return (
@@ -899,13 +900,13 @@ function ReportContent() {
                     {parentAiReport.dimensions && (
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                          <Icon name="psychology" size="sm" /> 기질 요소별 해석
+                          <Icon name="psychology" size="sm" /> {t('report.dimensionAnalysis')}
                         </p>
                         {([
-                          { key: 'NS', label: '자극 추구', color: '#E5A150', icon: '🔥' },
-                          { key: 'HA', label: '위험 회피', color: '#6B9E8A', icon: '🛡️' },
-                          { key: 'RD', label: '사회적 민감성', color: '#7B8EC4', icon: '💙' },
-                          { key: 'P', label: '인내력', color: '#D4805E', icon: '⏳' },
+                          { key: 'NS', label: t('report.noveltySeekingName'), color: '#E5A150', icon: '\uD83D\uDD25' },
+                          { key: 'HA', label: t('report.harmAvoidanceName'), color: '#6B9E8A', icon: '\uD83D\uDEE1\uFE0F' },
+                          { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', icon: '\uD83D\uDC99' },
+                          { key: 'P', label: t('report.persistenceName'), color: '#D4805E', icon: '\u231B' },
                         ] as const).map(dim => {
                           const text = (parentAiReport.dimensions as any)?.[dim.key];
                           if (!text) return null;
@@ -914,7 +915,7 @@ function ReportContent() {
                               <div className="flex items-center gap-2">
                                 <span className="text-sm">{dim.icon}</span>
                                 <span className="text-[12px] font-bold" style={{ color: dim.color }}>{dim.label}</span>
-                                <span className="text-[12px] font-black" style={{ color: dim.color }}>{parentScores[dim.key as keyof typeof parentScores]}점</span>
+                                <span className="text-[12px] font-black" style={{ color: dim.color }}>{parentScores[dim.key as keyof typeof parentScores]}{t('common.points')}</span>
                               </div>
                               <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.8] break-keep pl-6">
                                 {text}
@@ -929,7 +930,7 @@ function ReportContent() {
                     {(parentAiReport.shining || parentAiReport.sections?.find((s: any) => s.id === 'shining')) && (
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                          <Icon name="auto_awesome" size="sm" /> 내가 가장 빛나는 순간
+                          <Icon name="auto_awesome" size="sm" /> {t('report.shiningMoment')}
                         </p>
                         <p className="text-[14px] text-text-main dark:text-slate-300 leading-[1.85] break-keep whitespace-pre-wrap">
                           {parentAiReport.shining || parentAiReport.sections?.find((s: any) => s.id === 'shining')?.content}
@@ -941,7 +942,7 @@ function ReportContent() {
                     {parentAiReport.parentingStyle && parentAiReport.parentingStyle.length > 0 && (
                       <section className="space-y-3">
                         <p className="text-[12px] font-black text-primary flex items-center gap-1.5 px-1">
-                          <Icon name="child_care" size="sm" /> 나의 양육 기질
+                          <Icon name="child_care" size="sm" /> {t('report.parentingTemperament')}
                         </p>
                         {parentAiReport.parentingStyle.map((item: any, idx: number) => (
                           <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
@@ -958,7 +959,7 @@ function ReportContent() {
                     {(parentAiReport.vulnerability || parentAiReport.sections?.find((s: any) => s.id === 'vulnerability')) && (
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                          <Icon name="battery_alert" size="sm" /> 에너지 고갈 신호
+                          <Icon name="battery_alert" size="sm" /> {t('report.energyWarning')}
                         </p>
                         <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep whitespace-pre-wrap">
                           {parentAiReport.vulnerability || parentAiReport.sections?.find((s: any) => s.id === 'vulnerability')?.content}
@@ -970,7 +971,7 @@ function ReportContent() {
                     {parentAiReport.solutions && parentAiReport.solutions.length > 0 && (
                       <section className="space-y-3">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
-                          <Icon name="lightbulb" size="sm" /> 나를 위한 마음 영양제
+                          <Icon name="lightbulb" size="sm" /> {t('report.mindNutrient')}
                         </p>
                         {parentAiReport.solutions.map((sol: any, idx: number) => (
                           <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
@@ -986,7 +987,7 @@ function ReportContent() {
                     {parentAiReport.letter && (
                       <section className="bg-rose-50 dark:bg-rose-900/20 rounded-2xl px-6 py-8 shadow-card border border-beige-main/10 text-center relative">
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 shadow-md px-4 py-1 rounded-full text-xs font-bold text-rose-500">
-                          From. 아이나
+                          From. {t('report.ainaLetter')}
                         </div>
                         <p className="text-rose-700 dark:text-rose-300 italic leading-loose break-keep font-serif text-[15px] pt-2">
                           &ldquo;{parentAiReport.letter}&rdquo;
@@ -1013,8 +1014,8 @@ function ReportContent() {
                 ) : (
                   <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
                     <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-text-sub text-sm font-bold">양육자의 기질을 분석하고 있어요...</p>
-                    <p className="text-text-sub/60 text-[12px]">잠시만 기다려주세요</p>
+                    <p className="text-text-sub text-sm font-bold">{t('report.analyzingParent')}</p>
+                    <p className="text-text-sub/60 text-[12px]">{t('common.pleaseWait')}</p>
                   </div>
                 )}
 
@@ -1022,7 +1023,7 @@ function ReportContent() {
                 {parentAiReport && (
                   <div className="flex flex-col gap-4 pt-10 pb-10 text-center">
                     <Button variant="secondary" onClick={() => router.push(`/share${(reportId || childReportId) ? `?id=${reportId || childReportId}` : ''}`)} fullWidth className="h-14 rounded-2xl border-none bg-white shadow-lg">
-                      나의 결과 공유하기
+                      {t('report.shareMyResult')}
                     </Button>
                     <Link href="/" className="text-slate-400 text-sm font-bold hover:text-primary transition-colors">
                       홈으로 돌아가기
@@ -1036,16 +1037,16 @@ function ReportContent() {
                 <section className="bg-white dark:bg-surface-dark rounded-2xl px-4 pt-4 pb-2 shadow-card border border-beige-main/10">
                   <div className="flex items-start justify-between mb-1">
                     <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                      <Icon name="analytics" size="sm" /> 기질 비교
+                      <Icon name="analytics" size="sm" /> {t('report.temperamentComparison')}
                     </p>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-center gap-1.5">
                         <span className="w-4 h-[2px] bg-[#3B82F6]" />
-                        <span className="text-[10px] font-bold text-text-sub w-[52px] text-right">아이기질</span>
+                        <span className="text-[10px] font-bold text-text-sub w-[52px] text-right">{t('report.childTemperament')}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="w-4 h-[2px] bg-[#F97316]" />
-                        <span className="text-[10px] font-bold text-text-sub w-[52px] text-right">양육자기질</span>
+                        <span className="text-[10px] font-bold text-text-sub w-[52px] text-right">{t('report.parentTemperamentShort')}</span>
                       </div>
                     </div>
                   </div>
@@ -1068,7 +1069,7 @@ function ReportContent() {
                           fullWidth
                           className="h-12 rounded-2xl mt-4"
                         >
-                          새로운 양육 가이드로 업그레이드
+                          {t('report.upgradeGuide')}
                         </Button>
                       </section>
                     ) : (
@@ -1085,18 +1086,18 @@ function ReportContent() {
                         {harmonyAiReport.coreGap && (
                           <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                              <Icon name="compare_arrows" size="sm" /> 핵심 기질 차이
+                              <Icon name="compare_arrows" size="sm" /> {t('report.coreGap')}
                             </p>
                             <div className="flex items-center justify-between bg-background-light dark:bg-background-dark rounded-xl p-4">
                               <div className="text-center flex-1">
-                                <p className="text-[10px] font-bold text-teal-500 mb-1">아이</p>
+                                <p className="text-[10px] font-bold text-teal-500 mb-1">{t('report.child')}</p>
                                 <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.childScore}</span>
                               </div>
                               <div className="text-center px-4">
                                 <span className="text-[11px] font-black text-text-sub px-3 py-1 rounded-full bg-white dark:bg-slate-700 shadow-sm">{harmonyAiReport.coreGap.label}</span>
                               </div>
                               <div className="text-center flex-1">
-                                <p className="text-[10px] font-bold text-orange-400 mb-1">양육자</p>
+                                <p className="text-[10px] font-bold text-orange-400 mb-1">{t('report.parent')}</p>
                                 <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreGap.parentScore}</span>
                               </div>
                             </div>
@@ -1111,18 +1112,18 @@ function ReportContent() {
                         {harmonyAiReport.coreMatch && (
                           <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-4">
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                              <Icon name="favorite" size="sm" /> 마음이 잘 맞는 부분
+                              <Icon name="favorite" size="sm" /> {t('report.coreMatch')}
                             </p>
                             <div className="flex items-center justify-between bg-background-light dark:bg-background-dark rounded-xl p-4">
                               <div className="text-center flex-1">
-                                <p className="text-[10px] font-bold text-teal-500 mb-1">아이</p>
+                                <p className="text-[10px] font-bold text-teal-500 mb-1">{t('report.child')}</p>
                                 <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreMatch.childScore}</span>
                               </div>
                               <div className="text-center px-4">
                                 <span className="text-[11px] font-black text-text-sub px-3 py-1 rounded-full bg-white dark:bg-slate-700 shadow-sm">{harmonyAiReport.coreMatch.label}</span>
                               </div>
                               <div className="text-center flex-1">
-                                <p className="text-[10px] font-bold text-orange-400 mb-1">양육자</p>
+                                <p className="text-[10px] font-bold text-orange-400 mb-1">{t('report.parent')}</p>
                                 <span className="text-2xl font-black text-text-main dark:text-white">{harmonyAiReport.coreMatch.parentScore}</span>
                               </div>
                             </div>
@@ -1137,7 +1138,7 @@ function ReportContent() {
                         {harmonyAiReport.parentingPrinciples && (
                           <section className="space-y-3">
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
-                              <Icon name="school" size="sm" /> 양육 원칙
+                              <Icon name="school" size="sm" /> {t('report.parentingPrinciples')}
                             </p>
                             {harmonyAiReport.parentingPrinciples.map((p: any, idx: number) => (
                               <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
@@ -1162,21 +1163,21 @@ function ReportContent() {
                         {harmonyAiReport.situationalTips && (
                           <section className="space-y-3">
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
-                              <Icon name="lightbulb" size="sm" /> 이럴 때 이렇게
+                              <Icon name="lightbulb" size="sm" /> {t('report.situationalTips')}
                             </p>
                             {harmonyAiReport.situationalTips.map((tip: any, idx: number) => (
                               <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
                                 <h4 className="font-bold text-text-main dark:text-white text-[14px]">{tip.situation}</h4>
                                 <div className="bg-teal-50 dark:bg-teal-900/10 rounded-lg p-3 border border-teal-100">
-                                  <p className="text-[10px] font-black text-teal-600 mb-1">아이의 속마음</p>
+                                  <p className="text-[10px] font-black text-teal-600 mb-1">{t('report.childFeeling')}</p>
                                   <p className="text-[12px] text-teal-800 dark:text-teal-300 break-keep">{tip.childFeeling}</p>
                                 </div>
                                 <div className="bg-amber-50 dark:bg-amber-900/10 rounded-lg p-3 border border-amber-100">
-                                  <p className="text-[10px] font-black text-amber-600 mb-1">빠지기 쉬운 반응</p>
+                                  <p className="text-[10px] font-black text-amber-600 mb-1">{t('report.parentTrap')}</p>
                                   <p className="text-[12px] text-amber-800 dark:text-amber-300 break-keep">{tip.parentTrap}</p>
                                 </div>
                                 <div className="bg-green-50 dark:bg-green-900/10 rounded-lg p-3 border border-green-100">
-                                  <p className="text-[10px] font-black text-green-600 mb-1">이렇게 해보세요</p>
+                                  <p className="text-[10px] font-black text-green-600 mb-1">{t('report.betterResponse')}</p>
                                   <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{tip.betterResponse}</p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
@@ -1191,14 +1192,14 @@ function ReportContent() {
                         {harmonyAiReport.parentingAudit && (
                           <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                              <Icon name="tune" size="sm" /> 양육 스타일 진단
+                              <Icon name="tune" size="sm" /> {t('report.parentingStyleDiag')}
                             </p>
                             <div className="flex items-center gap-2 mb-1">
                               <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[12px] font-black">{harmonyAiReport.parentingAudit.currentStyle}</span>
                             </div>
                             <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">{harmonyAiReport.parentingAudit.evaluation}</p>
                             <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-                              <p className="text-[11px] font-black text-primary mb-1">조절 포인트</p>
+                              <p className="text-[11px] font-black text-primary mb-1">{t('report.adjustmentPoint')}</p>
                               <p className="text-[13px] text-text-main dark:text-slate-300 leading-relaxed break-keep">{harmonyAiReport.parentingAudit.adjustment}</p>
                             </div>
                           </section>
@@ -1208,12 +1209,12 @@ function ReportContent() {
                         {harmonyAiReport.dailyReminder && (
                           <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-8 shadow-card border border-beige-main/10 text-center space-y-3">
                             <p className="text-[12px] font-black text-primary flex items-center justify-center gap-1.5">
-                              <Icon name="bookmark" size="sm" /> 오늘의 한 마디
+                              <Icon name="bookmark" size="sm" /> {t('report.dailyReminder')}
                             </p>
                             <p className="text-text-main dark:text-white text-[16px] font-black leading-snug break-keep">
                               &ldquo;{harmonyAiReport.dailyReminder}&rdquo;
                             </p>
-                            <p className="text-text-sub text-[11px]">냉장고에 붙여두세요</p>
+                            <p className="text-text-sub text-[11px]">{t('report.putOnFridge')}</p>
                           </section>
                         )}
                       </>
@@ -1238,8 +1239,8 @@ function ReportContent() {
                 ) : (
                   <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
                     <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-text-sub text-sm font-bold">맞춤 양육 가이드를 생성하고 있어요...</p>
-                    <p className="text-text-sub/60 text-[12px]">잠시만 기다려주세요</p>
+                    <p className="text-text-sub text-sm font-bold">{t('report.analyzingHarmony')}</p>
+                    <p className="text-text-sub/60 text-[12px]">{t('common.pleaseWait')}</p>
                   </div>
                 )}
 
@@ -1270,14 +1271,14 @@ function ReportContent() {
                     className="flex-1 py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all border-2 border-primary text-primary"
                   >
                     <span className="material-symbols-outlined text-[20px]">share</span>
-                    <span>결과 공유</span>
+                    <span>{t('report.shareResults')}</span>
                   </button>
                   <button
                     onClick={() => router.replace('/report')}
                     className="flex-1 py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                     style={{ backgroundColor: 'var(--primary)' }}
                   >
-                    <span>전체 리포트 보기</span>
+                    <span>{t('report.viewFullReport')}</span>
                     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                   </button>
                 </div>
@@ -1286,19 +1287,19 @@ function ReportContent() {
               <div className="m-3 bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden">
                 <div className="bg-gradient-to-r from-primary/10 to-slate-50 px-5 py-3 border-b border-slate-100">
                   <p className="text-[11px] font-bold text-primary text-center">
-                    🔬 나와 아이, 얼마나 잘 맞을까요?
+                    {t('report.parentChildMatch')}
                   </p>
                 </div>
                 <div className="px-5 py-4">
                   <p className="text-[12px] text-slate-500 text-center mb-3 leading-relaxed">
-                    양육자 기질 검사를 추가하면<br /><strong className="text-slate-700">부모-아이 궁합 분석</strong>과 <strong className="text-slate-700">맞춤 양육법</strong>을 알려드려요.
+                    {t('report.parentChildMatchDesc')}
                   </p>
                   <button
                     onClick={() => router.push('/survey?type=PARENT')}
                     className="w-full py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                     style={{ backgroundColor: 'var(--primary)' }}
                   >
-                    <span>양육자 기질 검사 이어하기</span>
+                    <span>{t('report.continueParentSurvey')}</span>
                     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                   </button>
                 </div>

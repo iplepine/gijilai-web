@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Navbar } from '@/components/layout/Navbar';
 import { PracticeCheckModal } from '@/components/practices/PracticeCheckModal';
 import { PracticeReviewModal } from '@/components/practices/PracticeReviewModal';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 interface PracticeWithSession extends PracticeItemData {
     consultation_sessions: SessionData;
@@ -23,6 +24,7 @@ interface GroupedPractices {
 export default function PracticesPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
+    const { t } = useLocale();
     const [practices, setPractices] = useState<PracticeWithSession[]>([]);
     const [allLogs, setAllLogs] = useState<PracticeLogData[]>([]);
     const [todayLogs, setTodayLogs] = useState<PracticeLogData[]>([]);
@@ -136,7 +138,7 @@ export default function PracticesPage() {
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center font-body">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
-                <Navbar title="실천" />
+                <Navbar title={t('nav.practices')} />
 
                 <main className="flex-1 overflow-y-auto px-6 py-6 pb-36 space-y-6">
                     {/* 아이별 필터 */}
@@ -150,7 +152,7 @@ export default function PracticesPage() {
                                         : 'bg-white dark:bg-surface-dark text-text-sub border border-primary/10'
                                 }`}
                             >
-                                전체
+                                {t('common.all')}
                             </button>
                             {children.map(child => (
                                 <button
@@ -171,7 +173,7 @@ export default function PracticesPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
                             <span className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
-                            <p className="text-sm font-medium text-text-sub">실천 기록을 불러오고 있어요</p>
+                            <p className="text-sm font-medium text-text-sub">{t('practices.loadingRecords')}</p>
                         </div>
                     ) : grouped.length === 0 ? (
                         <div className="py-24 flex flex-col items-center text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -179,9 +181,9 @@ export default function PracticesPage() {
                                 <span className="material-symbols-outlined text-5xl text-primary/40">self_improvement</span>
                             </div>
                             <div className="space-y-2">
-                                <p className="font-bold text-text-main dark:text-white text-lg">아직 실천 항목이 없어요</p>
+                                <p className="font-bold text-text-main dark:text-white text-lg">{t('practices.noPractices')}</p>
                                 <p className="text-text-sub text-sm leading-relaxed break-keep px-6">
-                                    마음 통역소에서 상담을 받으면<br />맞춤 실천 항목이 생겨요
+                                    {t('practices.noPracticesDesc')}
                                 </p>
                             </div>
                             <button
@@ -189,7 +191,7 @@ export default function PracticesPage() {
                                 className="px-8 py-4 rounded-2xl bg-primary text-white font-bold text-[15px] shadow-xl shadow-primary/20 flex items-center gap-2 active:scale-[0.98] transition-all"
                             >
                                 <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
-                                상담 시작하기
+                                {t('practices.startConsult')}
                             </button>
                         </div>
                     ) : (
@@ -205,11 +207,10 @@ export default function PracticesPage() {
                                     <span className="material-symbols-outlined text-[14px] text-text-sub/50">chevron_right</span>
                                 </button>
 
-                                {/* 실천 카드들 — 오늘 미기록 우선, 그 다음 못했어요, 마지막 완료 */}
+                                {/* 실천 카드들 */}
                                 {[...sessionPractices].sort((a, b) => {
                                     const aLog = getTodayLog(a.id);
                                     const bLog = getTodayLog(b.id);
-                                    // 로그 없음(0) < done:false(1) < done:true(2)
                                     const aOrder = !aLog ? 0 : aLog.done ? 2 : 1;
                                     const bOrder = !bLog ? 0 : bLog.done ? 2 : 1;
                                     return aOrder - bOrder;
@@ -237,7 +238,7 @@ export default function PracticesPage() {
                                                     />
                                                 </div>
                                                 <span className="text-[11px] font-bold text-primary">
-                                                    {doneDays}/{practice.duration}일
+                                                    {doneDays}/{practice.duration}{t('common.days')}
                                                 </span>
                                             </div>
 
@@ -253,7 +254,7 @@ export default function PracticesPage() {
                                                     className="w-full py-3 rounded-xl bg-secondary/10 text-secondary font-bold text-[13px] flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">rate_review</span>
-                                                    기간 완료 — 회고 작성하기
+                                                    {t('practices.periodComplete')}
                                                 </button>
                                             ) : (
                                                 <button
@@ -270,8 +271,8 @@ export default function PracticesPage() {
                                                         {todayLog ? (todayLog.done ? 'check_circle' : 'schedule') : 'edit_note'}
                                                     </span>
                                                     {todayLog
-                                                        ? todayLog.done ? '오늘 실천 완료' : '오늘 못했어요'
-                                                        : '오늘 실천 기록하기'
+                                                        ? todayLog.done ? t('practices.doneToday') : t('practices.failedToday')
+                                                        : t('practices.recordToday')
                                                     }
                                                 </button>
                                             )}

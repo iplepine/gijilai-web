@@ -8,6 +8,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import { db, ObservationData } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 import { Navbar } from '@/components/layout/Navbar';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 interface Consultation {
     id: string;
@@ -21,6 +22,7 @@ interface Consultation {
 export default function RecordPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
+    const { t } = useLocale();
     const [observations, setObservations] = useState<ObservationData[]>([]);
     const [children, setChildren] = useState<any[]>([]);
     const [selectedChildId, setSelectedChildId] = useState<string | 'ALL'>('ALL');
@@ -100,7 +102,6 @@ export default function RecordPage() {
             setModalChildId('');
         }
 
-        // 최근 상담 3건 로드
         if (user) {
             try {
                 const { data } = await supabase
@@ -143,14 +144,14 @@ export default function RecordPage() {
             setShowModal(false);
         } catch (error) {
             console.error('Error saving observation:', error);
-            alert('저장에 실패했어요. 다시 시도해주세요.');
+            alert(t('observations.saveFailed'));
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('이 관찰 기록을 삭제할까요?')) return;
+        if (!confirm(t('observations.deleteConfirm'))) return;
         const prev = observations;
         setObservations(obs => obs.filter(o => o.id !== id));
         try {
@@ -158,7 +159,7 @@ export default function RecordPage() {
         } catch (error) {
             console.error('Error deleting observation:', error);
             setObservations(prev);
-            alert('삭제에 실패했어요.');
+            alert(t('observations.deleteFailed'));
         }
     };
 
@@ -175,7 +176,7 @@ export default function RecordPage() {
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center font-body">
             <div className="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
                 <Navbar
-                    title="관찰일지"
+                    title={t('observations.title')}
                     rightElement={filteredObservations.length > 0 ? (
                         <button onClick={openModal} className="text-primary">
                             <span className="material-symbols-outlined text-[24px]">edit_square</span>
@@ -194,7 +195,7 @@ export default function RecordPage() {
                                     : 'bg-white dark:bg-surface-dark text-slate-400 border border-slate-100 dark:border-slate-800'
                             }`}
                         >
-                            전체
+                            {t('common.all')}
                         </button>
                         {children.map((child: any) => (
                             <button
@@ -221,9 +222,9 @@ export default function RecordPage() {
                         >
                             <div className="flex items-center gap-1.5 mb-2">
                                 <span className="material-symbols-outlined text-[16px] text-primary">target</span>
-                                <span className="text-[11px] font-bold text-primary tracking-wide">오늘의 실천 과제</span>
+                                <span className="text-[11px] font-bold text-primary tracking-wide">{t('observations.todayTask')}</span>
                                 <span className="text-[11px] text-slate-400 ml-auto flex items-center gap-0.5">
-                                    {formatDate(latestActionItem.date)} 상담
+                                    {formatDate(latestActionItem.date)} {t('observations.consultation')}
                                     <span className="material-symbols-outlined text-[14px]">chevron_right</span>
                                 </span>
                             </div>
@@ -239,7 +240,7 @@ export default function RecordPage() {
                                 className="mt-3 text-[12px] font-bold text-primary flex items-center gap-1 ml-auto"
                             >
                                 <span className="material-symbols-outlined text-[14px]">edit_note</span>
-                                실천 기록 남기기
+                                {t('observations.writeRecord')}
                             </button>
                         </div>
                     )}
@@ -247,7 +248,7 @@ export default function RecordPage() {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
                             <span className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></span>
-                            <p className="text-sm font-medium text-text-sub">기록을 불러오고 있어요</p>
+                            <p className="text-sm font-medium text-text-sub">{t('observations.loadingRecords')}</p>
                         </div>
                     ) : children.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -257,12 +258,12 @@ export default function RecordPage() {
                             </div>
                             <div className="space-y-3 mb-8">
                                 <h2 className="text-2xl font-black text-slate-800 dark:text-white leading-tight">
-                                    나만의 육아 관찰일지를<br />시작해보세요
+                                    {t('observations.startJournal')}
                                 </h2>
                                 <p className="text-slate-500 dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4 font-medium">
-                                    아이와의 순간을 기록하고,<br />
-                                    어떤 대응이 효과적이었는지 돌아보며<br />
-                                    <span className="text-primary font-bold">나만의 양육 패턴</span>을 발견해보세요.
+                                    {t('observations.startJournalDesc1')}<br />
+                                    {t('observations.startJournalDesc2')}<br />
+                                    <span className="text-primary font-bold">{t('observations.startJournalHighlight')}</span>{t('observations.startJournalDesc3')}
                                 </p>
                             </div>
                             <Button
@@ -270,7 +271,7 @@ export default function RecordPage() {
                                 variant="primary"
                                 className="w-full h-16 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
                             >
-                                첫 아이 등록하고 시작하기
+                                {t('observations.registerAndStart')}
                             </Button>
                         </div>
                     ) : filteredObservations.length === 0 ? (
@@ -278,13 +279,12 @@ export default function RecordPage() {
                             <div className="w-16 h-16 bg-primary/5 dark:bg-primary/10 rounded-full flex items-center justify-center">
                                 <span className="material-symbols-outlined text-3xl text-primary/30">edit_note</span>
                             </div>
-                            <p className="font-bold text-text-main dark:text-white">아직 관찰 기록이 없어요</p>
+                            <p className="font-bold text-text-main dark:text-white">{t('observations.noObservations')}</p>
                             <p className="text-text-sub text-sm leading-relaxed break-keep px-6">
-                                아이와의 순간을 기록해보세요.<br />
-                                상황, 나의 대응, 아이의 반응을<br />짧게 적는 것만으로도 변화가 시작돼요.
+                                {t('observations.noObservationsDesc')}
                             </p>
                             <Button onClick={openModal} variant="primary" className="rounded-full px-10 h-12 font-black mt-2">
-                                첫 관찰 기록 남기기
+                                {t('observations.firstObservation')}
                             </Button>
                         </div>
                     ) : (
@@ -307,7 +307,7 @@ export default function RecordPage() {
                                         </span>
                                         <div className="flex items-center gap-2">
                                             {obs.consultation_id && (
-                                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">실천</span>
+                                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">{t('observations.practice')}</span>
                                             )}
                                             <button
                                                 onClick={() => handleDelete(obs.id)}
@@ -322,21 +322,21 @@ export default function RecordPage() {
                                         <div>
                                             <div className="text-[11px] font-bold text-slate-400 mb-1 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-[13px]">location_on</span>
-                                                상황
+                                                {t('observations.situationLabel')}
                                             </div>
                                             <p className="text-[14px] text-text-main dark:text-white leading-relaxed">{obs.situation}</p>
                                         </div>
                                         <div>
                                             <div className="text-[11px] font-bold text-slate-400 mb-1 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-[13px]">chat</span>
-                                                내 행동
+                                                {t('observations.myAction')}
                                             </div>
                                             <p className="text-[14px] text-text-main dark:text-white leading-relaxed">{obs.my_action}</p>
                                         </div>
                                         <div>
                                             <div className="text-[11px] font-bold text-slate-400 mb-1 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-[13px]">child_care</span>
-                                                아이 반응
+                                                {t('observations.childReaction')}
                                             </div>
                                             <p className="text-[14px] text-text-main dark:text-white leading-relaxed">{obs.child_reaction}</p>
                                         </div>
@@ -365,12 +365,12 @@ export default function RecordPage() {
                             <div className="sticky top-0 bg-white dark:bg-background-dark pt-3 pb-4 px-7 z-10">
                                 <div className="w-10 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4"></div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[15px] font-bold text-text-main dark:text-white">{modalConsultId ? '실천 기록' : '관찰 기록'}</span>
+                                    <span className="text-[15px] font-bold text-text-main dark:text-white">{modalConsultId ? t('observations.practiceRecord') : t('observations.observationRecord')}</span>
                                     <button
                                         onClick={() => setShowModal(false)}
                                         className="text-[13px] font-bold text-slate-400"
                                     >
-                                        취소
+                                        {t('common.cancel')}
                                     </button>
                                 </div>
                             </div>
@@ -392,7 +392,7 @@ export default function RecordPage() {
                                                 {child.name}
                                             </button>
                                         ))}
-                                        {fieldErrors.childId && <p className="text-red-400 text-[11px] self-center">선택해주세요</p>}
+                                        {fieldErrors.childId && <p className="text-red-400 text-[11px] self-center">{t('common.select')}</p>}
                                     </div>
                                 )}
 
@@ -401,7 +401,7 @@ export default function RecordPage() {
                                     <div className="mb-5 bg-primary/5 rounded-xl p-4 border border-primary/10">
                                         <div className="text-[11px] font-bold text-primary mb-1.5 flex items-center gap-1">
                                             <span className="material-symbols-outlined text-[14px]">target</span>
-                                            실천 과제
+                                            {t('observations.practiceTask')}
                                         </div>
                                         <p className="text-[14px] text-text-main dark:text-white leading-relaxed">{latestActionItem.actionItem}</p>
                                     </div>
@@ -410,15 +410,15 @@ export default function RecordPage() {
                                 {/* 상황 */}
                                 <div className="mb-5">
                                     <label className="text-[13px] font-bold text-slate-600 dark:text-slate-300 tracking-wide mb-2 block">
-                                        {modalConsultId ? '어떤 상황에서 실천했나요?' : '상황'}
+                                        {modalConsultId ? t('observations.situationPractice') : t('observations.situationLabel')}
                                     </label>
                                     <textarea
                                         value={situation}
                                         onChange={e => setSituation(e.target.value)}
                                         maxLength={200}
                                         rows={1}
-                                        placeholder={modalConsultId ? '예: 저녁 식사 시간에...' : '어떤 일이 있었나요?'}
-                                        onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
+                                        placeholder={modalConsultId ? t('observations.situationPracticePlaceholder') : t('observations.situationPlaceholder')}
+                                        onInput={e => { const tgt = e.target as HTMLTextAreaElement; tgt.style.height = 'auto'; tgt.style.height = tgt.scrollHeight + 'px'; }}
                                         className={`w-full pb-2 text-[15px] text-text-main dark:text-white bg-transparent border-b-2 focus:outline-none transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none overflow-hidden ${
                                             fieldErrors.situation ? 'border-red-300' : 'border-slate-100 dark:border-slate-800 focus:border-primary'
                                         }`}
@@ -428,15 +428,15 @@ export default function RecordPage() {
                                 {/* 내 대응 / 실천 내용 */}
                                 <div className="mb-5">
                                     <label className="text-[13px] font-bold text-slate-600 dark:text-slate-300 tracking-wide mb-2 block">
-                                        {modalConsultId ? '실제로 어떻게 했나요?' : '내 대응'}
+                                        {modalConsultId ? t('observations.myActionPractice') : t('observations.myActionLabel')}
                                     </label>
                                     <textarea
                                         value={myAction}
                                         onChange={e => setMyAction(e.target.value)}
                                         maxLength={200}
                                         rows={1}
-                                        placeholder="어떻게 반응하셨나요?"
-                                        onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
+                                        placeholder={t('observations.myActionPlaceholder')}
+                                        onInput={e => { const tgt = e.target as HTMLTextAreaElement; tgt.style.height = 'auto'; tgt.style.height = tgt.scrollHeight + 'px'; }}
                                         className={`w-full pb-2 text-[15px] text-text-main dark:text-white bg-transparent border-b-2 focus:outline-none transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none overflow-hidden ${
                                             fieldErrors.myAction ? 'border-red-300' : 'border-slate-100 dark:border-slate-800 focus:border-primary'
                                         }`}
@@ -446,15 +446,15 @@ export default function RecordPage() {
                                 {/* 아이 반응 */}
                                 <div className="mb-5">
                                     <label className="text-[13px] font-bold text-slate-600 dark:text-slate-300 tracking-wide mb-2 block">
-                                        {modalConsultId ? '아이 반응은 어땠나요?' : '아이 반응'}
+                                        {modalConsultId ? t('observations.childReactionPractice') : t('observations.childReaction')}
                                     </label>
                                     <textarea
                                         value={childReaction}
                                         onChange={e => setChildReaction(e.target.value)}
                                         maxLength={200}
                                         rows={1}
-                                        placeholder="아이가 어떻게 했나요?"
-                                        onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }}
+                                        placeholder={t('observations.childReactionPlaceholder')}
+                                        onInput={e => { const tgt = e.target as HTMLTextAreaElement; tgt.style.height = 'auto'; tgt.style.height = tgt.scrollHeight + 'px'; }}
                                         className={`w-full pb-2 text-[15px] text-text-main dark:text-white bg-transparent border-b-2 focus:outline-none transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600 resize-none overflow-hidden ${
                                             fieldErrors.childReaction ? 'border-red-300' : 'border-slate-100 dark:border-slate-800 focus:border-primary'
                                         }`}
@@ -468,7 +468,7 @@ export default function RecordPage() {
                                         value={note}
                                         onChange={e => setNote(e.target.value)}
                                         maxLength={300}
-                                        placeholder="메모 (선택)"
+                                        placeholder={t('observations.memoOptional')}
                                         className="w-full pb-2 text-[14px] text-text-sub dark:text-gray-300 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:outline-none focus:border-slate-300 transition-colors placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                     />
                                     {recentConsults.length > 0 && (
@@ -477,7 +477,7 @@ export default function RecordPage() {
                                             onChange={e => setModalConsultId(e.target.value)}
                                             className="w-full pb-2 text-[14px] bg-transparent border-b border-slate-100 dark:border-slate-800 focus:outline-none focus:border-slate-300 transition-colors text-slate-400 dark:text-slate-500"
                                         >
-                                            <option value="">처방전 연결 (선택)</option>
+                                            <option value="">{t('observations.linkPrescription')}</option>
                                             {recentConsults.map(c => (
                                                 <option key={c.id} value={c.id}>
                                                     {formatDate(c.created_at)} · {(c.problem_description || '').slice(0, 20)}...
@@ -500,7 +500,7 @@ export default function RecordPage() {
                                             : 'bg-text-main dark:bg-white text-white dark:text-black'
                                     }`}
                                 >
-                                    {isSubmitting ? '저장 중...' : '저장'}
+                                    {isSubmitting ? t('common.saving') : t('common.save')}
                                 </button>
                             </div>
                         </div>
@@ -517,6 +517,7 @@ export default function RecordPage() {
 /** 연결된 상담 처방전의 actionItem을 표시하는 하위 컴포넌트 */
 function ConsultationLink({ consultationId }: { consultationId: string }) {
     const [actionItem, setActionItem] = useState<string | null>(null);
+    const { t } = useLocale();
 
     useEffect(() => {
         (async () => {
@@ -542,7 +543,7 @@ function ConsultationLink({ consultationId }: { consultationId: string }) {
         <div className="mt-4 pt-3 border-t border-secondary/10">
             <div className="text-[11px] font-bold text-secondary/70 flex items-center gap-1 mb-1">
                 <span className="material-symbols-outlined text-[13px]">link</span>
-                연결된 처방전
+                {t('observations.linkedPrescription')}
             </div>
             <p className="text-[12px] text-slate-500 dark:text-slate-400 line-clamp-1">{actionItem}</p>
         </div>

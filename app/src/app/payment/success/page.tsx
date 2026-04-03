@@ -5,16 +5,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { useLocale } from '@/i18n/LocaleProvider';
+
 function SuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { t } = useLocale();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
     useEffect(() => {
         const paymentId = searchParams.get('paymentId');
 
         if (paymentId) {
-            // 포트원 리다이렉트 결제 완료 — 서버에서 검증
             fetch('/api/payment/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -41,8 +43,8 @@ function SuccessContent() {
                     <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
                         <Icon name="sync" className="text-primary animate-spin" size="lg" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">결제 확인 중...</h2>
-                    <p className="text-slate-500 text-sm">잠시만 기다려주세요.</p>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('payment.verifyingPayment')}</h2>
+                    <p className="text-slate-500 text-sm">{t('payment.pleaseWait')}</p>
                 </div>
             )}
 
@@ -55,13 +57,13 @@ function SuccessContent() {
                         </div>
                     </div>
                     <div className="space-y-3">
-                        <h2 className="text-3xl font-black text-slate-900 dark:text-white">결제 완료!</h2>
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-white">{t('payment.paymentComplete')}</h2>
                         <p className="text-slate-500 text-base leading-relaxed break-keep">
-                            분석 결과 페이지로 이동합니다.
+                            {t('payment.movingToResult')}
                         </p>
                     </div>
                     <Button variant="primary" size="lg" onClick={() => router.push('/report')} className="h-14 px-10 rounded-2xl font-bold">
-                        분석 결과 보러가기
+                        {t('payment.viewResult')}
                     </Button>
                 </div>
             )}
@@ -71,10 +73,10 @@ function SuccessContent() {
                     <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto">
                         <Icon name="error" className="text-red-500" size="lg" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">결제 오류</h2>
-                    <p className="text-slate-500 text-sm">결제 처리 중 문제가 발생했습니다.</p>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{t('payment.paymentError')}</h2>
+                    <p className="text-slate-500 text-sm">{t('payment.paymentErrorDesc')}</p>
                     <Button variant="secondary" onClick={() => router.replace('/payment')}>
-                        결제 페이지로 돌아가기
+                        {t('payment.backToPayment')}
                     </Button>
                 </div>
             )}
@@ -83,9 +85,10 @@ function SuccessContent() {
 }
 
 export default function PaymentSuccessPage() {
+    const { t } = useLocale();
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-slate-50 dark:bg-slate-900">
-            <Navbar title="결제 완료" />
+            <Navbar title={t('payment.paymentCompleteTitle')} />
             <Suspense fallback={
                 <div className="flex-1 flex items-center justify-center">
                     <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>

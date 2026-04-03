@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 interface PracticeCheckModalProps {
     practiceTitle: string;
@@ -16,6 +17,7 @@ interface PracticeCheckModalProps {
 
 export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDone, existingMemo, recentFailCount = 0, sessionId }: PracticeCheckModalProps) {
     const router = useRouter();
+    const { t } = useLocale();
     const [done, setDone] = useState(existingDone ?? true);
     const [memo, setMemo] = useState(existingMemo || '');
     const [saving, setSaving] = useState(false);
@@ -34,7 +36,7 @@ export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDon
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
             <div className="w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl shadow-2xl overflow-hidden animate-slide-up">
                 <div className="p-6 border-b border-beige-main/10 dark:border-white/5 bg-beige-main/5 dark:bg-white/5">
-                    <h4 className="font-bold text-lg text-text-main dark:text-white">오늘의 실천 기록</h4>
+                    <h4 className="font-bold text-lg text-text-main dark:text-white">{t('practices.todayRecord')}</h4>
                     <p className="text-[13px] text-text-sub mt-1">{practiceTitle}</p>
                 </div>
 
@@ -49,7 +51,7 @@ export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDon
                             }`}
                         >
                             <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                            실천했어요
+                            {t('practices.didIt')}
                         </button>
                         <button
                             onClick={() => setDone(false)}
@@ -60,13 +62,13 @@ export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDon
                             }`}
                         >
                             <span className="material-symbols-outlined text-[20px]">schedule</span>
-                            못했어요
+                            {t('practices.didNot')}
                         </button>
                     </div>
 
                     {!done && (
                         <p className="text-[13px] text-text-sub leading-relaxed bg-orange-50 dark:bg-orange-900/10 rounded-xl p-3">
-                            바쁜 하루였죠? 괜찮아요, 내일 다시 시작하면 돼요.
+                            {t('practices.encourageMessage')}
                             {recentFailCount >= 2 && sessionId && (
                                 <button
                                     onClick={() => {
@@ -75,28 +77,28 @@ export function PracticeCheckModal({ practiceTitle, onSave, onClose, existingDon
                                     }}
                                     className="block mt-2 text-primary font-bold text-[12px] underline underline-offset-2"
                                 >
-                                    실천이 어려우셨다면, 다른 방법을 찾아볼까요?
+                                    {t('practices.findAlternative')}
                                 </button>
                             )}
                         </p>
                     )}
 
                     <div>
-                        <label className="block text-[11px] font-bold text-text-sub mb-2 uppercase tracking-wider">한줄 메모 (선택)</label>
+                        <label className="block text-[11px] font-bold text-text-sub mb-2 uppercase tracking-wider">{t('practices.memoLabel')}</label>
                         <textarea
                             value={memo}
                             onChange={(e) => setMemo(e.target.value.slice(0, 200))}
                             maxLength={200}
-                            placeholder="오늘 실천하면서 느낀 점이 있나요?"
+                            placeholder={t('practices.memoPlaceholder')}
                             className="w-full h-24 p-4 text-[14px] leading-relaxed rounded-xl border border-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none bg-white dark:bg-surface-dark dark:text-white"
                         />
                     </div>
                 </div>
 
                 <div className="p-4 bg-beige-main/5 dark:bg-white/5 flex gap-3">
-                    <Button variant="secondary" fullWidth onClick={onClose}>취소</Button>
+                    <Button variant="secondary" fullWidth onClick={onClose}>{t('common.cancel')}</Button>
                     <Button variant="primary" fullWidth onClick={handleSave} disabled={saving}>
-                        {saving ? '저장 중...' : '저장'}
+                        {saving ? t('common.saving') : t('common.save')}
                     </Button>
                 </div>
             </div>

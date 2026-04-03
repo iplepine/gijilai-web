@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 declare global {
   interface Window {
@@ -18,23 +19,24 @@ declare global {
 type LoadingStatus = 'idle' | 'paying' | 'analyzing' | 'complete';
 type PayMethodOption = 'CARD' | 'TOSSPAY' | 'NAVERPAY';
 
-const LOADING_MESSAGES = [
-  { icon: 'analytics', text: '기질 데이터 분석 중' },
-  { icon: 'auto_awesome', text: '기질아이 유형 세부 대응 중' },
-  { icon: 'favorite', text: '양육자-자녀 궁합 계산 중' },
-  { icon: 'lightbulb', text: '맞춤 양육 솔루션 생성 중' },
-];
-
 export default function PaymentPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { intake } = useAppStore();
+  const { t } = useLocale();
   const [status, setStatus] = useState<LoadingStatus>('idle');
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [isApp, setIsApp] = useState(false);
   const [availableCoupon, setAvailableCoupon] = useState<any>(null);
   const [useCoupon, setUseCoupon] = useState(false);
   const [payMethod, setPayMethod] = useState<PayMethodOption>('CARD');
+
+  const LOADING_MESSAGES = [
+    { icon: 'analytics', text: t('payment.analyzingTempData') },
+    { icon: 'auto_awesome', text: t('payment.analyzingSubtype') },
+    { icon: 'favorite', text: t('payment.calculatingMatch') },
+    { icon: 'lightbulb', text: t('payment.generatingSolution') },
+  ];
 
   useEffect(() => {
     // 글로벌 사용자는 구독 페이지로 리다이렉트
@@ -112,17 +114,17 @@ export default function PaymentPage() {
           type: 'PAYMENT_REQUEST',
           provider: 'APPLE_GOOGLE',
           amount: 1980,
-          productName: '기질아이 프리미엄 리포트'
+          productName: t('payment.productName')
         }));
       } else {
-        alert('앱 결제 브릿지를 찾을 수 없습니다.');
+        alert(t('payment.appBridgeNotFound'));
       }
       return;
     }
 
     // 포트원 V2 결제
     if (!window.PortOne) {
-      alert('결제 모듈을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.');
+      alert(t('payment.payModuleLoading'));
       return;
     }
 
@@ -143,7 +145,7 @@ export default function PaymentPage() {
         storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID,
         channelKey,
         paymentId,
-        orderName: '기질아이 프리미엄 리포트',
+        orderName: t('payment.productName'),
         totalAmount: finalAmount,
         currency: 'KRW',
         payMethod: payMethod === 'CARD' ? 'CARD' : 'EASY_PAY',
@@ -158,7 +160,7 @@ export default function PaymentPage() {
       const result = await window.PortOne.requestPayment(paymentParams);
 
       if (result.code) {
-        throw new Error(result.message || '결제 실패');
+        throw new Error(result.message || t('payment.paymentFailed', { message: '' }));
       }
 
       // 서버에서 결제 검증
@@ -170,7 +172,7 @@ export default function PaymentPage() {
 
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok) {
-        throw new Error(verifyData.error || '결제 검증 실패');
+        throw new Error(verifyData.error || t('payment.paymentFailed', { message: '' }));
       }
 
       // 쿠폰 사용 처리
@@ -187,7 +189,7 @@ export default function PaymentPage() {
       console.error('Payment error:', error);
       setStatus('idle');
       if (error.message !== 'User cancelled') {
-        alert(`결제에 실패하였습니다: ${error.message}`);
+        alert(t('payment.paymentFailed', { message: error.message }));
       }
     }
   };
@@ -201,7 +203,7 @@ export default function PaymentPage() {
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
         {status === 'analyzing' ? (
           <div className="flex-1 flex flex-col">
-            <Navbar title="분석 중" />
+            <Navbar title={t('payment.analyzing')} />
             <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">
               <div className="relative w-48 h-48 mb-12">
                 <div className="absolute inset-0 bg-primary/5 rounded-full animate-ping duration-[3000ms]"></div>
@@ -227,18 +229,18 @@ export default function PaymentPage() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col pb-32">
-            <Navbar title="분석 및 결제" showBack />
+            <Navbar title={t('payment.analysisPayment')} showBack />
 
             <div className="flex-1 overflow-y-auto px-6 pt-10 pb-10 space-y-10 w-full">
               {/* Header */}
               <section className="text-center space-y-3">
                 <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-widest">
-                  Limited Offer
+                  {t('payment.limitedOffer')}
                 </div>
                 <h2 className="text-2xl font-bold text-text-main dark:text-white break-keep">
-                  우리 아이를 위한<br />단 한 방울의 이해
+                  {t('payment.headline')}
                 </h2>
-                <p className="text-text-sub text-sm">1,980원으로 발견하는 육아의 마법</p>
+                <p className="text-text-sub text-sm">{t('payment.subheadline')}</p>
               </section>
 
               {/* Benefits */}
@@ -246,9 +248,9 @@ export default function PaymentPage() {
                 <div className="p-8 space-y-6">
                   <div className="space-y-5">
                     {[
-                      { emoji: '💡', title: '아이 신호 통역하기', desc: '아이 행동의 진짜 원인을 기질 관점에서 명쾌하게 풀어드려요.' },
-                      { emoji: '✨', title: '마법의 한마디', desc: '당장 오늘 저녁부터 써먹을 수 있는 맞춤형 대화 가이드.' },
-                      { emoji: '🖼️', title: '맞춤형 기질 일러스트', desc: '내 기질과 아이 기질이 어우러진 배경화면용 카드 증정.' },
+                      { emoji: '\uD83D\uDCA1', title: t('payment.benefitSignal'), desc: t('payment.benefitSignalDesc') },
+                      { emoji: '\u2728', title: t('payment.benefitMagic'), desc: t('payment.benefitMagicDesc') },
+                      { emoji: '\uD83D\uDDBC\uFE0F', title: t('payment.benefitIllust'), desc: t('payment.benefitIllustDesc') },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-4">
                         <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -270,15 +272,15 @@ export default function PaymentPage() {
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-10 -mt-10 blur-2xl"></div>
                   <div className="relative z-10 flex justify-between items-end">
                     <div className="space-y-1">
-                      <p className="text-[11px] font-bold text-white/40 line-through">정가 4,900원</p>
+                      <p className="text-[11px] font-bold text-white/40 line-through">{t('payment.originalPrice')}</p>
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-black">{finalAmount.toLocaleString()}</span>
-                        <span className="text-lg font-bold">원</span>
+                        <span className="text-lg font-bold">{t('payment.currency')}</span>
                       </div>
                     </div>
                     <div className="text-right">
                       <span className="inline-block bg-primary px-3 py-1 rounded-full text-[10px] font-black uppercase mb-1">
-                        80% Discount
+                        {t('payment.discount')}
                       </span>
                     </div>
                   </div>
@@ -299,17 +301,17 @@ export default function PaymentPage() {
                         {useCoupon && <Icon name="check" size="sm" className="text-[14px]" />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-text-main dark:text-white">할인 쿠폰 적용</p>
-                        <p className="text-[11px] text-text-sub">추천 보상 {availableCoupon.discount_amount}원 할인</p>
+                        <p className="text-sm font-bold text-text-main dark:text-white">{t('payment.applyCoupon')}</p>
+                        <p className="text-[11px] text-text-sub">{t('payment.referralReward', { amount: String(availableCoupon.discount_amount) })}</p>
                       </div>
                     </div>
-                    <span className="text-primary font-black text-lg">-{availableCoupon.discount_amount}원</span>
+                    <span className="text-primary font-black text-lg">-{availableCoupon.discount_amount}{t('payment.currency')}</span>
                   </div>
                 )}
 
                 {/* 결제수단 선택 */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-text-sub">결제수단 선택</p>
+                  <p className="text-xs font-bold text-text-sub">{t('payment.selectPayMethod')}</p>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setPayMethod('CARD')}
@@ -320,7 +322,7 @@ export default function PaymentPage() {
                       }`}
                     >
                       <Icon name="credit_card" size="sm" className={`text-2xl mb-1 ${payMethod === 'CARD' ? 'text-primary' : 'text-text-sub'}`} />
-                      <p className={`text-sm font-bold ${payMethod === 'CARD' ? 'text-primary' : 'text-text-main dark:text-white'}`}>카드</p>
+                      <p className={`text-sm font-bold ${payMethod === 'CARD' ? 'text-primary' : 'text-text-main dark:text-white'}`}>{t('payment.cardLabel')}</p>
                       <p className="text-[11px] text-text-sub mt-0.5">NHN KCP</p>
                     </button>
                     <button
@@ -332,8 +334,8 @@ export default function PaymentPage() {
                       }`}
                     >
                       <span className={`text-2xl mb-1 inline-block font-black ${payMethod === 'TOSSPAY' ? 'text-[#0064FF]' : 'text-text-sub'}`}>T</span>
-                      <p className={`text-sm font-bold ${payMethod === 'TOSSPAY' ? 'text-[#0064FF]' : 'text-text-main dark:text-white'}`}>토스페이</p>
-                      <p className="text-[11px] text-text-sub mt-0.5">간편결제</p>
+                      <p className={`text-sm font-bold ${payMethod === 'TOSSPAY' ? 'text-[#0064FF]' : 'text-text-main dark:text-white'}`}>{t('payment.tossPay')}</p>
+                      <p className="text-[11px] text-text-sub mt-0.5">{t('pricing.easyPay')}</p>
                     </button>
                     <button
                       onClick={() => setPayMethod('NAVERPAY')}
@@ -344,27 +346,27 @@ export default function PaymentPage() {
                       }`}
                     >
                       <span className={`text-2xl mb-1 inline-block font-black ${payMethod === 'NAVERPAY' ? 'text-[#03C75A]' : 'text-text-sub'}`}>N</span>
-                      <p className={`text-sm font-bold ${payMethod === 'NAVERPAY' ? 'text-[#03C75A]' : 'text-text-main dark:text-white'}`}>네이버페이</p>
-                      <p className="text-[11px] text-text-sub mt-0.5">간편결제</p>
+                      <p className={`text-sm font-bold ${payMethod === 'NAVERPAY' ? 'text-[#03C75A]' : 'text-text-main dark:text-white'}`}>{t('payment.naverPay')}</p>
+                      <p className="text-[11px] text-text-sub mt-0.5">{t('pricing.easyPay')}</p>
                     </button>
                   </div>
                 </div>
 
                 {/* Subscription upsell */}
                 <div className="bg-primary/5 rounded-2xl p-4 border border-primary/20">
-                  <p className="text-xs font-bold text-primary mb-1">더 많은 혜택이 필요하신가요?</p>
-                  <p className="text-[11px] text-text-sub mb-3">구독하면 리포트 무제한 + AI 상담 무제한</p>
+                  <p className="text-xs font-bold text-primary mb-1">{t('payment.moreBenefits')}</p>
+                  <p className="text-[11px] text-text-sub mb-3">{t('payment.subscribeDesc')}</p>
                   <button
                     onClick={() => router.push('/pricing')}
                     className="text-xs font-bold text-primary underline underline-offset-2"
                   >
-                    구독 플랜 보기 →
+                    {t('payment.viewPlans')}
                   </button>
                 </div>
 
                 <p className="text-[11px] text-text-sub text-center flex items-center justify-center gap-1.5 px-4 break-keep pt-4">
                   <Icon name="verified" size="sm" className="text-primary/40" />
-                  결제 즉시 분석 리포트와 마음 처방전이 생성됩니다.
+                  {t('payment.paymentNotice')}
                 </p>
               </section>
             </div>
@@ -374,10 +376,10 @@ export default function PaymentPage() {
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30">
                 <Button variant="primary" size="lg" fullWidth onClick={handlePaymentStart} className="h-16 rounded-2xl text-lg font-bold shadow-glow">
                   {finalAmount === 0
-                    ? '쿠폰으로 무료 이용하기'
+                    ? t('payment.freeWithCoupon')
                     : isApp
-                      ? '결제하고 처방전 받기'
-                      : `${finalAmount.toLocaleString()}원 결제하고 처방전 받기`
+                      ? t('payment.payAndGetReport')
+                      : t('payment.payWithAmount', { amount: finalAmount.toLocaleString() })
                   }
                 </Button>
               </div>

@@ -12,12 +12,14 @@ import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
 import { CHILD_QUESTIONS } from '@/data/questions';
 import { eunNeun } from '@/lib/koreanUtils';
 import { Suspense } from 'react';
+import { useLocale } from '@/i18n/LocaleProvider';
 
 function SharePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { intake, cbqResponses, atqResponses } = useAppStore();
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
 
   // DB-loaded data
@@ -48,7 +50,7 @@ function SharePageContent() {
     loadReport();
   }, [reportId, user]);
 
-  const childName = child?.name || intake.childName || '우리 아이';
+  const childName = child?.name || intake.childName || t('share.defaultChildName');
 
   const referralCode = 'GIJILAI-' + (user?.id?.substring(0, 8) || 'FRIEND');
 
@@ -103,7 +105,7 @@ function SharePageContent() {
         title: `${eunNeun(childName)} "${temperamentInfo?.label || '열정 탐험가'}"`,
         description: temperamentInfo?.intro
           ? `${temperamentInfo.desc}\n\n${temperamentInfo.intro}`.slice(0, 200)
-          : temperamentInfo?.desc || '과학적인 기질 분석으로 우리 아이의 타고난 빛을 발견해보세요.',
+          : temperamentInfo?.desc || t('share.kakaoDesc'),
         imageUrl: `https://gijilai.com${temperamentInfo?.image || '/child_type/type_lhl.jpg'}`,
         link: {
           mobileWebUrl: shareUrl,
@@ -112,7 +114,7 @@ function SharePageContent() {
       },
       buttons: [
         {
-          title: '나도 검사해보기',
+          title: t('share.tryTest'),
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl,
@@ -130,7 +132,7 @@ function SharePageContent() {
 
     try {
       await navigator.share({
-        title: `${childName}의 기질 분석 결과`,
+        title: `${childName}${t('share.resultTitle')}`,
         text: [
           `${eunNeun(childName)} "${temperamentInfo?.label || '열정 탐험가'}"`,
           temperamentInfo?.desc,
@@ -147,7 +149,7 @@ function SharePageContent() {
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center font-body">
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen flex flex-col shadow-2xl relative">
-        <Navbar title="결과 공유하기" showBack onBackClick={() => router.back()} />
+        <Navbar title={t('share.title')} showBack onBackClick={() => router.back()} />
 
         <main className="flex-1 px-6 py-8 space-y-8 pb-24">
           {/* 결과 카드 */}
@@ -164,10 +166,10 @@ function SharePageContent() {
                   <span style={{ color: '#A8D8B9' }}>"{temperamentInfo?.label || '열정 탐험가'}"</span>
                 </h3>
                 <p className="text-sm text-white/80 leading-relaxed font-medium break-keep">
-                  {temperamentInfo?.desc || '호기심이 많고 에너지가 넘치는 탐험가 기질을 가지고 있어요.'}
+                  {temperamentInfo?.desc || t('share.defaultDesc')}
                 </p>
                 <div className="mt-5 pt-4 border-t border-white/20">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">기질아이</span>
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-white/40">{t('common.appName')}</span>
                 </div>
               </div>
             </div>
@@ -180,7 +182,7 @@ function SharePageContent() {
               className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 text-[15px] font-bold bg-[#FEE500] hover:bg-[#FADA0A] text-[#191919] active:scale-[0.98] transition-all"
             >
               <svg width="20" height="20" viewBox="0 0 256 256"><path d="M128 36C70.6 36 24 72.4 24 116.8c0 28.9 19.2 54.2 48.1 68.6l-9.8 36.2c-.8 2.9 2.6 5.2 5.1 3.5l42.5-28.4c5.9.8 12 1.3 18.1 1.3 57.4 0 104-36.4 104-80.8S185.4 36 128 36z" fill="#191919"/></svg>
-              카카오톡으로 공유
+              {t('share.shareKakao')}
             </button>
 
             <div className="flex gap-3">
@@ -189,14 +191,14 @@ function SharePageContent() {
                 className={`flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 text-[15px] font-bold active:scale-[0.98] transition-all border ${copied ? 'bg-primary/10 border-primary text-primary' : 'bg-white dark:bg-surface-dark border-gray-200 dark:border-gray-700 text-text-sub'}`}
               >
                 <span className="material-symbols-outlined text-[20px]">{copied ? 'check' : 'link'}</span>
-                {copied ? '복사됨!' : '링크 복사'}
+                {copied ? t('share.copied') : t('share.copyLink')}
               </button>
               <button
                 onClick={handleNativeShare}
                 className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 text-[15px] font-bold bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-sub active:scale-[0.98] transition-all"
               >
                 <span className="material-symbols-outlined text-[20px]">share</span>
-                다른 앱
+                {t('share.otherApps')}
               </button>
             </div>
           </div>
@@ -204,8 +206,8 @@ function SharePageContent() {
           {/* 안내 문구 */}
           <div className="bg-primary/5 dark:bg-primary/10 rounded-2xl p-5 border border-primary/10">
             <p className="text-[13px] text-text-sub dark:text-gray-400 leading-relaxed break-keep text-center">
-              아이의 기질 분석 결과를 친구에게 공유하고,<br />
-              <strong className="text-text-main dark:text-white">함께 아이의 기질에 대해 이야기</strong>해보세요.
+              {t('share.shareNotice')}<br />
+              <strong className="text-text-main dark:text-white">{t('share.shareNoticeBold')}</strong>{t('share.shareNoticeEnd')}
             </p>
           </div>
         </main>
