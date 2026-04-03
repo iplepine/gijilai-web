@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "247682708380",
+    "project_id": "gijilai",
+    "storage_bucket": "gijilai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:247682708380:android:b4cc3279b36521cf718e59",
+        "android_client_info": {
+          "package_name": "com.devho.gijilai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxPx6POWfc-9if4jAyN_7jUFBBogI3eWQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
