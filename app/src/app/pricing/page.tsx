@@ -12,7 +12,7 @@ declare global {
   interface Window {
     PortOne?: any;
     PaymentBridge?: { postMessage: (msg: string) => void };
-    onPaymentComplete?: (data: { status: string; message?: string; data?: any }) => void;
+    __iapLoadingDone?: () => void;
   }
 }
 
@@ -73,33 +73,12 @@ export default function PricingPage() {
       .catch(() => {});
   }, [user]);
 
-  // 앱 내 IAP 결제 결과 콜백 등록
+  // 앱 IAP: Flutter가 결과를 네이티브 SnackBar로 처리, 웹은 loading 해제만 담당
   useEffect(() => {
     if (!isApp) return;
-    const iapErrorMessages: Record<string, { ko: string; en: string }> = {
-      IAP_NOT_AVAILABLE: { ko: '인앱결제를 사용할 수 없습니다', en: 'In-app purchase is not available' },
-      PRODUCT_NOT_FOUND: { ko: '상품 정보를 찾을 수 없습니다', en: 'Product not found' },
-      PURCHASE_FAILED: { ko: '결제에 실패했습니다', en: 'Purchase failed' },
-      VERIFY_FAILED: { ko: '영수증 검증에 실패했습니다', en: 'Receipt verification failed' },
-      ALREADY_SUBSCRIBED: { ko: '이미 구독 중입니다', en: 'Already subscribed' },
-      INVALID_RECEIPT: { ko: '유효하지 않은 영수증입니다', en: 'Invalid receipt' },
-    };
-    window.onPaymentComplete = (data) => {
-      setLoading(false);
-      if (data.status === 'success') {
-        router.replace('/');
-      } else if (data.status === 'cancelled') {
-        // 사용자 취소 — 무시
-      } else {
-        const code = data.message || '';
-        const msg = iapErrorMessages[code]?.[locale] || code;
-        alert(locale === 'ko'
-          ? `결제 처리 중 오류가 발생했습니다: ${msg}`
-          : `Payment error: ${msg}`);
-      }
-    };
-    return () => { window.onPaymentComplete = undefined; };
-  }, [isApp, locale, router]);
+    window.__iapLoadingDone = () => setLoading(false);
+    return () => { window.__iapLoadingDone = undefined; };
+  }, [isApp]);
 
   const handleSubscribe = async () => {
     if (!user) return;

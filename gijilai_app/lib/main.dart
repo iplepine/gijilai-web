@@ -126,13 +126,15 @@ class _MainWebViewState extends State<MainWebView> {
   Future<void> _startPurchase() async {
     final available = await _iap.isAvailable();
     if (!available) {
-      _sendPaymentResult('error', 'IAP_NOT_AVAILABLE');
+      _showSnackBar('인앱결제를 사용할 수 없습니다', isError: true);
+      _notifyWebLoadingDone();
       return;
     }
 
     final response = await _iap.queryProductDetails({_subscriptionProductId});
     if (response.productDetails.isEmpty) {
-      _sendPaymentResult('error', 'PRODUCT_NOT_FOUND');
+      _showSnackBar('상품 정보를 찾을 수 없습니다', isError: true);
+      _notifyWebLoadingDone();
       return;
     }
 
@@ -149,13 +151,14 @@ class _MainWebViewState extends State<MainWebView> {
           _verifyAndDeliver(purchase);
           break;
         case PurchaseStatus.error:
-          _sendPaymentResult('error', 'PURCHASE_FAILED');
+          _showSnackBar('결제에 실패했습니다', isError: true);
+          _notifyWebLoadingDone();
           if (purchase.pendingCompletePurchase) {
             _iap.completePurchase(purchase);
           }
           break;
         case PurchaseStatus.canceled:
-          _sendPaymentResult('cancelled');
+          _notifyWebLoadingDone();
           break;
         case PurchaseStatus.pending:
           debugPrint('IAP purchase pending...');
@@ -168,40 +171,78 @@ class _MainWebViewState extends State<MainWebView> {
     try {
       final platform = Platform.isIOS ? 'APPLE_IAP' : 'GOOGLE_PLAY';
 
-      // 서버에 영수증 전송하여 검증
-      // WebView의 쿠키/세션을 활용하기 위해 JavaScript로 fetch 호출
       final receiptToken = Platform.isIOS
           ? purchase.purchaseID ?? ''
           : purchase.verificationData.serverVerificationData;
 
+      // WebView 쿠키/세션을 활용하기 위해 JavaScript fetch로 서버 검증
+      // 결과를 window.__iapResult에 저장하여 Flutter에서 읽음
       final jsCode = '''
-        fetch('/api/payment/iap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            platform: '$platform',
-            receiptToken: '${_escapeForJs(receiptToken)}',
-            productId: '${purchase.productID}',
-            originalTransactionId: '${_escapeForJs(purchase.purchaseID ?? '')}'
-          })
-        })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            window.onPaymentComplete && window.onPaymentComplete({ status: 'success', data: data });
-          } else {
-            window.onPaymentComplete && window.onPaymentComplete({ status: 'error', message: data.error });
+        (async () => {
+          try {
+            const r = await fetch('/api/payment/iap', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                platform: '$platform',
+                receiptToken: '${_escapeForJs(receiptToken)}',
+                productId: '${purchase.productID}',
+                originalTransactionId: '${_escapeForJs(purchase.purchaseID ?? '')}'
+              })
+            });
+            const data = await r.json();
+            window.__iapResult = JSON.stringify(data);
+          } catch (e) {
+            window.__iapResult = JSON.stringify({ error: e.message });
           }
-        })
-        .catch(e => {
-          window.onPaymentComplete && window.onPaymentComplete({ status: 'error', message: e.message });
-        });
+        })();
       ''';
 
       await _controller.runJavaScript(jsCode);
+
+      // 결과 폴링 (fetch 완료 대기)
+      String? resultJson;
+      for (int i = 0; i < 30; i++) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        final raw = await _controller.runJavaScriptReturningResult(
+          'window.__iapResult || ""',
+        );
+        final cleaned = raw.toString().replaceAll('"', '').replaceAll("'", '');
+        if (cleaned.isNotEmpty && cleaned != 'null') {
+          // runJavaScriptReturningResult는 JSON 문자열을 이스케이프해서 반환하므로 복원
+          resultJson = await _controller.runJavaScriptReturningResult(
+            'window.__iapResult',
+          ) as String?;
+          await _controller.runJavaScript('delete window.__iapResult;');
+          break;
+        }
+      }
+
+      if (resultJson == null || resultJson.isEmpty) {
+        _showSnackBar('서버 응답 시간이 초과되었습니다', isError: true);
+        _notifyWebLoadingDone();
+        return;
+      }
+
+      // JSON 파싱 — runJavaScriptReturningResult가 문자열을 따옴표로 감싸서 반환
+      String jsonStr = resultJson;
+      if (jsonStr.startsWith('"') && jsonStr.endsWith('"')) {
+        jsonStr = jsonDecode(jsonStr) as String;
+      }
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+
+      if (data['success'] == true) {
+        _showSnackBar('구독이 시작되었습니다!');
+        // WebView 새로고침으로 구독 상태 반영
+        await _controller.loadRequest(Uri.parse(_targetUrl));
+      } else {
+        _showSnackBar(data['error']?.toString() ?? '검증 실패', isError: true);
+        _notifyWebLoadingDone();
+      }
     } catch (e) {
       debugPrint('IAP verify error: $e');
-      _sendPaymentResult('error', 'VERIFY_FAILED');
+      _showSnackBar('영수증 검증에 실패했습니다', isError: true);
+      _notifyWebLoadingDone();
     } finally {
       if (purchase.pendingCompletePurchase) {
         await _iap.completePurchase(purchase);
@@ -209,13 +250,25 @@ class _MainWebViewState extends State<MainWebView> {
     }
   }
 
-  void _sendPaymentResult(String status, [String? message]) {
-    final payload = jsonEncode({
-      'status': status,
-      if (message != null) 'message': message,
-    });
+  void _showSnackBar(String message, {bool isError = false}) {
+    final ctx = context;
+    if (!mounted) return;
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : const Color(0xFF2F4F3E),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: Duration(seconds: isError ? 4 : 3),
+      ),
+    );
+  }
+
+  /// 웹의 loading 상태를 해제
+  void _notifyWebLoadingDone() {
     _controller.runJavaScript(
-      'window.onPaymentComplete && window.onPaymentComplete($payload);',
+      'window.__iapLoadingDone && window.__iapLoadingDone();',
     );
   }
 
