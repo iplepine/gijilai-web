@@ -71,10 +71,19 @@ export async function POST(request: Request) {
 
         // 2. Child 프로필 조회/생성
         let childId: string | null = clientChildId || null;
-        if (!childId) {
+        let childInfo: { name: string, gender: string, birthDate: string } | null = null;
+
+        if (childId) {
+            const { data, error } = await supabase
+                .from('children')
+                .select('name, gender, birth_date')
+                .eq('id', childId)
+                .single();
+            if (data) childInfo = { name: data.name, gender: data.gender, birthDate: data.birth_date };
+        } else {
             const { data: existingChildren, error: childQueryError } = await supabase
                 .from('children')
-                .select('id')
+                .select('id, name, gender, birth_date')
                 .eq('parent_id', userId)
                 .limit(1);
 
@@ -84,8 +93,10 @@ export async function POST(request: Request) {
 
             if (existingChildren && existingChildren.length > 0) {
                 childId = existingChildren[0].id;
+                childInfo = { name: existingChildren[0].name, gender: existingChildren[0].gender, birthDate: existingChildren[0].birth_date };
             }
         }
+        
         if (!childId && intake) {
             const { data: newChild, error: childInsertError } = await supabase
                 .from('children')
@@ -97,13 +108,14 @@ export async function POST(request: Request) {
                     birth_time: null,
                     image_url: null,
                 })
-                .select('id')
+                .select('id, name, gender, birth_date')
                 .single();
 
             if (childInsertError) {
                 console.error('[Report API] Child insert error:', childInsertError);
-            } else {
-                childId = newChild?.id || null;
+            } else if (newChild) {
+                childId = newChild.id;
+                childInfo = { name: newChild.name, gender: newChild.gender, birthDate: newChild.birth_date };
             }
         }
 
@@ -142,7 +154,7 @@ export async function POST(request: Request) {
         console.log(`[Report API] Generating ${type} report via LLM (refresh=${refresh})`);
         const report = await generateReport(
             userName, scores, type as any, undefined,
-            answers, parentScores, childType, parentType
+            answers, parentScores, childType, parentType, childInfo
         );
 
         // 5. DB 저장 (childId/surveyId 없어도 캐시를 위해 저장)

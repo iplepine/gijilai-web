@@ -44,8 +44,8 @@ interface IntakeForm {
 
   // 아이 정보
   childName: string;             // 이름 또는 닉네임
-  gender: 'male' | 'female';
-  birthDate: string;             // 생년월일 (설문 문항 세그먼트 필수)
+  gender: 'male' | 'female';     // (AI 리포트 생성 시 성별 특성 반영)
+  birthDate: string;             // 생년월일 (설문 문항 세그먼트 및 AI 리포트 연령 반영 필수)
 
   // 양육 고민 (최대 3개)
   concerns: ('sleep' | 'eating' | 'tantrum' | 'social' | 'learning')[];

@@ -27,7 +27,8 @@ export const generateReport = async (
     answers?: { questionId: string; score: number }[],
     parentScores?: { NS: number; HA: number; RD: number; P: number },
     childType?: { label: string; keywords: string[] },
-    parentType?: { label: string; keywords: string[] }
+    parentType?: { label: string; keywords: string[] },
+    childInfo?: { name: string, gender: string, birthDate: string } | null
 ) => {
     let defaultPrompt = CHILD_REPORT_PROMPT;
     if (type === 'PARENT') defaultPrompt = PARENT_REPORT_PROMPT;
@@ -56,6 +57,28 @@ export const generateReport = async (
     }
 
     const payload: any = { userName, type, surveyDetails: formattedQnA };
+
+    if (childInfo) {
+        const calculateAgeMonths = (birthDate: string) => {
+            const birth = new Date(birthDate);
+            const today = new Date();
+            const yearDiff = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            const dayDiff = today.getDate() - birth.getDate();
+            let months = yearDiff * 12 + monthDiff;
+            if (dayDiff < 0) months--;
+            return Math.max(0, months);
+        };
+        const months = calculateAgeMonths(childInfo.birthDate);
+        const age = Math.floor(months / 12);
+        
+        payload.childInfo = {
+            name: childInfo.name,
+            gender: childInfo.gender === 'male' ? '남아' : (childInfo.gender === 'female' ? '여아' : childInfo.gender),
+            age: `${age}세 (${months}개월)`
+        };
+    }
+
     if (type === 'HARMONY') {
         payload.childScores = scores;
         payload.parentScores = parentScores;
