@@ -19,6 +19,75 @@ Fastlane으로 대부분 자동화되어 있다.
 
 ---
 
+## Google Play 등록정보 (복붙용)
+
+### 앱 이름 (30자)
+```
+기질아이 - 과학적 기질 분석 맞춤 육아
+```
+
+### 간단한 설명 (80자)
+```
+우리 아이 타고난 기질을 과학적으로 분석하고, AI 맞춤 육아 가이드를 받아보세요.
+```
+
+### 자세한 설명 (4000자)
+```
+🧒 우리 아이, 정말 잘 알고 계신가요?
+
+기질아이는 과학적 기질 분석을 기반으로 아이의 타고난 성향을 이해하고,
+맞춤형 육아 가이드를 제공하는 서비스입니다.
+
+✨ 주요 기능
+
+📊 과학적 기질 분석
+검증된 기질 검사를 통해 아이의 활동성, 규칙성, 접근성, 적응성,
+반응강도, 기분, 주의집중, 지속성, 민감성을 분석합니다.
+
+📋 프리미엄 리포트
+아이의 기질 유형에 맞는 상세 분석 리포트를 제공합니다.
+강점, 주의점, 양육 팁을 한눈에 확인하세요.
+
+💬 AI 마음통역기
+아이의 기질을 이해한 AI가 일상 육아 고민에 맞춤 상담을 제공합니다.
+"왜 우리 아이는 이럴까?" 궁금할 때 언제든 물어보세요.
+
+📝 실천 기록
+상담에서 받은 조언을 실천하고 기록할 수 있습니다.
+작은 변화가 큰 성장으로 이어집니다.
+
+🔒 프리미엄 구독
+• 프리미엄 리포트 무제한
+• AI 상담 무제한
+• 실천 기록 전체 이력
+• 재검사 쿨다운 없음
+• 첫 달 30% 할인
+
+👨‍👩‍👧‍👦 이런 부모님께 추천합니다
+• 아이의 행동이 이해되지 않을 때
+• 형제자매 사이 양육법이 달라야 할 때
+• 과학적 근거 있는 육아 정보가 필요할 때
+• 전문 상담은 부담스럽지만 도움이 필요할 때
+
+문의: devhohouse@gmail.com
+```
+
+### 개인정보 처리방침 URL
+```
+https://gijilai.com/legal/privacy
+```
+
+### 앱 카테고리
+- **유형**: 앱
+- **카테고리**: 육아 (또는 교육)
+
+### 연락처 정보
+- **이메일**: devhohouse@gmail.com
+- **전화번호**: 010-3830-8960
+- **웹사이트**: https://gijilai.com
+
+---
+
 ## Fastlane 사용법
 
 ### 초기 설정
@@ -51,6 +120,7 @@ bundle install
 | `GOOGLE_PLAY_JSON_KEY_PATH` | Google Play 서비스 계정 JSON 키 파일 경로 |
 | `GOOGLE_PLAY_CREDENTIALS` | IAP 영수증 검증용 (서버) |
 | `APPLE_IAP_JWT` | Apple IAP 영수증 검증용 (서버) |
+| `GOOGLE_RTDN_TOKEN` | Google RTDN 웹훅 보호용 공유 토큰 |
 
 ---
 
@@ -165,13 +235,14 @@ gijilai_app/fastlane/
 - [x] IAP 구독 상품 (monthly_premium)
 - [x] 릴리스 서명 설정
 - [x] 스토어 메타데이터 (fastlane/metadata)
-- [ ] 앱 아이콘 512x512
-- [ ] 그래픽 이미지 1024x500
+- [x] 앱 아이콘 512x512 (store-assets/icon_512.png)
+- [x] 그래픽 이미지 1024x500 (store-assets/feature_graphic_1024x500.png)
 - [ ] 스크린샷 (fastlane android screenshots)
 - [ ] 콘텐츠 등급 (IARC 설문)
 - [ ] 데이터 안전 신고
 - [ ] 타겟 연령층 선언
 - [ ] `GOOGLE_PLAY_JSON_KEY_PATH` 환경변수
+- [ ] Google RTDN Pub/Sub → `/api/payment/iap/google-rtdn?token=...` 연결
 - [ ] 테스트 계정 준비
 - [ ] 내부 테스트 업로드 (fastlane android deploy_internal)
 
@@ -181,12 +252,13 @@ gijilai_app/fastlane/
 - [x] 이용약관 URL
 - [x] 스토어 메타데이터 (fastlane/metadata/ios)
 - [ ] App Store Connect 앱 등록
-- [ ] 앱 아이콘 1024x1024
+- [x] 앱 아이콘 1024x1024 (store-assets/icon_1024.png)
 - [ ] 스크린샷 (fastlane ios screenshots)
 - [ ] 연령 등급 설문
 - [ ] 앱 개인정보 보호 선언
 - [ ] iOS 구독 상품 생성
 - [ ] `APPLE_IAP_JWT` 환경변수
+- [ ] App Store Server Notifications V2 → `/api/payment/iap/apple-notifications` 연결
 - [ ] Appfile에 apple_id, team_id 설정
 - [ ] IDFA / ATT 설정
 - [ ] TestFlight 업로드 (fastlane ios deploy_testflight)

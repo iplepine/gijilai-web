@@ -108,6 +108,10 @@ const calculateAverage = (scores: number[]): number => {
 4. 맞춤형 마법의 한마디 생성
 ```
 
+### 모바일 운영 요구사항
+- Flutter 모바일 쉘(`gijilai_app/`)은 Firebase Crashlytics를 연결하여 앱 시작 실패, WebView 로드 실패, 인앱결제 예외를 수집한다.
+- Android 릴리스 빌드는 Crashlytics 심볼 업로드가 가능해야 하며, iOS는 dSYM 업로드 스크립트가 포함되어야 한다.
+
 ---
 
 ## 5. 리포트 메인: 통합 분석 (Integrated Report)
@@ -356,6 +360,7 @@ interface Prescription {
 - 상담 질문과 처방전은 아이의 연령대별 인지·정서 발달 수준을 반영한 표현과 행동 제안으로 개인화
 - 성별은 고정관념을 강화하는 근거로 사용하지 않고, 생활 맥락을 구체화하는 보조 정보로만 활용
 - 이미 알고 있는 아이 정보(이름, 연령, 성별, 기질 유형)는 다시 묻지 않고 현재 고민의 맥락 파악에 질문을 집중
+- 앱 인앱결제는 최초 구매 검증뿐 아니라 Apple 서버 알림과 Google RTDN으로 갱신/해지/환불 상태를 서버에서 동기화
 
 ---
 

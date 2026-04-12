@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-04-12 | Flutter 모바일 쉘에 Firebase Crashlytics를 기본 연결
+
+- **결정**: `gijilai_app/` Flutter 쉘은 Firebase Crashlytics를 기본 활성화하고, 앱 시작 예외·Flutter 프레임워크 예외·플랫폼 비동기 예외·주요 WebView/IAP 비정상 흐름을 Crashlytics에 기록한다. Android는 Gradle Crashlytics 플러그인을 적용해 릴리스 심볼을 업로드한다
+- **이유**: 현재 앱은 WebView + 인앱결제 + 푸시 권한 요청을 동시에 다루므로, 스토어 배포 후 장애 재현이 어렵다. 단순 콘솔 로그만으로는 실제 기기 오류 원인 파악이 불가능해 운영 관측성이 필요
+- **대안**: (1) `debugPrint` 로그만 유지 — 실기기 릴리스 장애 추적이 어려움 (2) 별도 자체 에러 수집 API 구축 — Firebase를 이미 사용 중이어서 중복 투자라 기각
+
+---
+
+## 2026-04-12 | 앱 IAP는 스토어 서버 알림으로 후속 상태를 동기화
+
+- **결정**: 앱 인앱결제는 최초 구매 시 클라이언트 검증 API(`/api/payment/iap`)로 구독을 생성하고, 이후 갱신/해지/환불/만료는 Apple App Store Server Notifications V2와 Google RTDN으로 서버에서 `subscriptions` 상태를 동기화
+- **이유**: 최초 구매 검증만으로는 갱신 실패, 환불, 해지 예약, 만료를 서버가 정확히 알 수 없음. 실제 과금 운영과 앱 심사 대응을 위해 스토어 서버 이벤트 기준의 상태 동기화가 필요
+- **대안**: (1) 최초 구매 검증만 유지 — 시간이 지나면 구독 상태가 틀어짐 (2) 주기적 폴링만 사용 — 지연과 호출 비용이 커서 기각
+
+---
+
 ## 2026-04-03 | 인앱결제(IAP) Apple/Google 연동 구현
 
 - **결정**: Flutter 앱에서 `in_app_purchase` 패키지로 Apple IAP + Google Play Billing 연동. 서버에서 각 플랫폼 영수증 검증 후 기존 `subscriptions` 테이블에 `source` 구분하여 저장

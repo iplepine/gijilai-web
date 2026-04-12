@@ -399,12 +399,15 @@ export interface Database {
                     user_id: string
                     plan: 'MONTHLY' | 'YEARLY'
                     status: 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
+                    source: 'PORTONE' | 'APPLE_IAP' | 'GOOGLE_PLAY'
                     billing_key: string | null
                     portone_customer_id: string | null
                     currency: string
                     amount: number
                     current_period_start: string
                     current_period_end: string
+                    app_transaction_id: string | null
+                    app_original_transaction_id: string | null
                     cancelled_at: string | null
                     created_at: string
                     updated_at: string
@@ -414,12 +417,15 @@ export interface Database {
                     user_id: string
                     plan: 'MONTHLY' | 'YEARLY'
                     status?: 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
+                    source?: 'PORTONE' | 'APPLE_IAP' | 'GOOGLE_PLAY'
                     billing_key?: string | null
                     portone_customer_id?: string | null
                     currency?: string
                     amount: number
                     current_period_start: string
                     current_period_end: string
+                    app_transaction_id?: string | null
+                    app_original_transaction_id?: string | null
                     cancelled_at?: string | null
                     created_at?: string
                     updated_at?: string
@@ -429,12 +435,15 @@ export interface Database {
                     user_id?: string
                     plan?: 'MONTHLY' | 'YEARLY'
                     status?: 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
+                    source?: 'PORTONE' | 'APPLE_IAP' | 'GOOGLE_PLAY'
                     billing_key?: string | null
                     portone_customer_id?: string | null
                     currency?: string
                     amount?: number
                     current_period_start?: string
                     current_period_end?: string
+                    app_transaction_id?: string | null
+                    app_original_transaction_id?: string | null
                     cancelled_at?: string | null
                     created_at?: string
                     updated_at?: string

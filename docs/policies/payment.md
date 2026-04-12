@@ -46,6 +46,28 @@
 - **환불**: 결제 7일 이내 미이용 시 전액 환불 가능 (쿨링오프). 이후 환불 불가. 환불 요청은 devhohouse@gmail.com (`/legal/refund`)
 - **구독 생성 실패 시 자동 환불**: DB 저장 실패 → `cancelPayment`로 즉시 결제 취소
 
+## 앱 인앱결제(IAP)
+
+- Flutter 앱은 `in_app_purchase`로 Apple App Store / Google Play 구독을 시작한다.
+- 최초 구매는 `/api/payment/iap`에서 영수증 검증 후 `subscriptions`/`payments`에 반영한다.
+- 이후 상태 변경은 스토어 서버 알림으로 동기화한다.
+  - Apple App Store Server Notifications V2: `/api/payment/iap/apple-notifications`
+  - Google Real-time Developer Notifications: `/api/payment/iap/google-rtdn`
+- 앱 IAP도 웹 구독과 동일한 `subscriptions` 테이블을 사용하되 `source`로 출처를 구분한다.
+- 운영 중 필수 환경변수:
+  - `APPLE_IAP_JWT`
+  - `GOOGLE_PLAY_CREDENTIALS`
+  - `GOOGLE_PLAY_PACKAGE_NAME`
+  - `GOOGLE_RTDN_TOKEN` (RTDN 엔드포인트 보호용 공유 토큰)
+
+### IAP 상태 동기화 원칙
+
+- 최초 구매 성공만으로 구독 운영을 끝내지 않는다. 갱신, 해지 예약, 결제 실패, 환불/회수는 서버 알림으로 반영한다.
+- Apple/Google 알림이 오면 해당 거래를 다시 스토어 API로 조회해 검증한 뒤 `subscriptions` 상태를 갱신한다.
+- 해지 예약은 `cancelled_at`만 설정하고, 사용 기간이 끝날 때까지 `ACTIVE`를 유지할 수 있다.
+- 환불/회수는 즉시 접근을 막기 위해 `CANCELLED` 또는 `EXPIRED`로 내린다.
+- 결제 금액은 앱 상품 코드 기준 서버 상수로 기록하며, 앱스토어 콘솔 가격과 항상 일치시켜야 한다.
+
 ## 건별 결제 (폐지)
 
 건별 구매(구 990원/1,980원)는 폐지됨. `/api/payment/verify`는 기존 결제 건 호환용으로만 유지 (`legacyPrices: KRW 1980, USD 499`).
