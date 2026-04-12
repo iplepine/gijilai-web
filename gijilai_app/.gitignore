@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local release credentials / fastlane outputs
+/fastlane/json_key.json
+/fastlane/report.xml

@@ -1,4 +1,5 @@
-json_key_file(ENV["GOOGLE_PLAY_JSON_KEY_PATH"] || "")
+play_json_key_path = File.expand_path("json_key.json", __dir__)
+json_key_file(File.exist?(play_json_key_path) ? play_json_key_path : (ENV["GOOGLE_PLAY_JSON_KEY_PATH"] || ""))
 package_name("com.devho.gijilai")
 
 # iOS

@@ -6,6 +6,7 @@ default_platform(:android)
 APP_NAME = "기질아이"
 PACKAGE_NAME = "com.devho.gijilai"
 FLUTTER_DIR = File.expand_path("..", __dir__)
+IOS_IPA_PATH = File.join(FLUTTER_DIR, "build", "ios", "ipa", "gijilai.ipa")
 
 # ─────────────────────────────────────────────
 # Android
@@ -53,7 +54,7 @@ platform :android do
   desc "스토어 메타데이터 생성"
   lane :metadata do
     # 한국어
-    ko_dir = File.join(__dir__, "metadata", "android", "ko")
+    ko_dir = File.join(__dir__, "metadata", "android", "ko-KR")
     FileUtils.mkdir_p(ko_dir)
 
     File.write("#{ko_dir}/title.txt", "기질아이 - 과학적 기질 분석 맞춤 육아")
@@ -102,8 +103,8 @@ platform :android do
     en_dir = File.join(__dir__, "metadata", "android", "en-US")
     FileUtils.mkdir_p(en_dir)
 
-    File.write("#{en_dir}/title.txt", "Gijilai - Child Temperament Guide")
-    File.write("#{en_dir}/short_description.txt", "Scientifically analyze your child's temperament and get AI-powered parenting guidance.")
+    File.write("#{en_dir}/title.txt", "Gijilai - Parenting Guide")
+    File.write("#{en_dir}/short_description.txt", "Understand your child's temperament and get AI parenting guidance.")
     File.write("#{en_dir}/full_description.txt", <<~DESC)
       🧒 Do you truly understand your child?
 
@@ -181,7 +182,9 @@ platform :ios do
   desc "Flutter 빌드 → IPA"
   lane :build do
     Dir.chdir(FLUTTER_DIR) do
-      sh("flutter build ipa --release --export-options-plist=ios/ExportOptions.plist")
+      # Run through a login shell so Flutter picks up the same Ruby/CocoaPods
+      # environment that works in the developer terminal.
+      sh("zsh -lc 'flutter build ipa --release --export-options-plist=ios/ExportOptions.plist'")
     end
   end
 
@@ -226,7 +229,7 @@ platform :ios do
   lane :deploy_testflight do
     build
     upload_to_testflight(
-      ipa: "#{FLUTTER_DIR}/build/ios/ipa/gijilai_app.ipa",
+      ipa: IOS_IPA_PATH,
       skip_waiting_for_build_processing: true,
     )
   end
@@ -235,7 +238,7 @@ platform :ios do
   lane :deploy_appstore do
     build
     deliver(
-      ipa: "#{FLUTTER_DIR}/build/ios/ipa/gijilai_app.ipa",
+      ipa: IOS_IPA_PATH,
       submit_for_review: true,
       automatic_release: false,
       force: true,
