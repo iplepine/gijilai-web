@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import { FirebaseAnalytics } from "@/components/analytics/FirebaseAnalytics";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ReferralHandler } from "@/components/layout/ReferralHandler";
 import { SurveyRestoreProvider } from "@/components/layout/SurveyRestoreProvider";
@@ -24,6 +26,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const measurementId = process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID;
+
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
@@ -45,6 +49,29 @@ export default function RootLayout({
         <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" async></script>
         {/* PortOne V2 SDK */}
         <script src="https://cdn.portone.io/v2/browser-sdk.js" async></script>
+        {measurementId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+              strategy="afterInteractive"
+            />
+            <Script
+              id="firebase-analytics"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  window.gtag = gtag;
+                  gtag('js', new Date());
+                  gtag('config', '${measurementId}', {
+                    send_page_view: false
+                  });
+                `,
+              }}
+            />
+          </>
+        ) : null}
       </head>
       <body className="antialiased min-h-screen relative font-sans text-slate-800 dark:text-[#E8E2D6]" suppressHydrationWarning>
         {/* Background handled by globals.css body style */}
@@ -65,6 +92,7 @@ export default function RootLayout({
         <AuthProvider>
           <LocaleProvider>
             <div className="min-h-screen bg-background-light dark:bg-background-dark">
+              <FirebaseAnalytics />
               <ReferralHandler />
               <SurveyRestoreProvider />
               {children}
@@ -75,4 +103,3 @@ export default function RootLayout({
     </html>
   );
 }
-

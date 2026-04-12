@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { trackEvent } from '@/lib/analytics';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { useLocale } from '@/i18n/LocaleProvider';
@@ -88,7 +89,10 @@ export default function LandingPage() {
                     </p>
 
                     <div className="w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-400">
-                        <Link href="/login">
+                        <Link
+                            href="/login"
+                            onClick={() => trackEvent('landing_cta_clicked', { placement: 'hero' })}
+                        >
                             <Button size="lg" fullWidth className="h-16 rounded-2xl text-lg font-black shadow-glow hover:scale-[1.02] transition-transform bg-primary text-white">
                                 {t('landing.startFree')}
                             </Button>
@@ -239,7 +243,11 @@ export default function LandingPage() {
                         {t('landing.ctaDesc')}
                     </p>
                     <div className="flex flex-col items-center gap-4">
-                        <Link href="/login" className="w-full max-w-sm">
+                        <Link
+                            href="/login"
+                            className="w-full max-w-sm"
+                            onClick={() => trackEvent('landing_cta_clicked', { placement: 'final_cta' })}
+                        >
                             <Button variant="secondary" size="lg" fullWidth className="h-16 rounded-2xl !bg-white !text-[#1F3629] text-lg font-black hover:bg-gray-100 transition-all shadow-glow">
                                 {t('landing.startTest')}
                             </Button>

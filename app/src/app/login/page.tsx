@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
+import { trackEvent } from '@/lib/analytics';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLocale } from '@/i18n/LocaleProvider';
@@ -20,6 +21,7 @@ export default function LoginPage() {
         e.preventDefault();
         setEmailError('');
         try {
+            trackEvent('login_attempt', { provider: 'email' });
             await signInWithEmail(email, password);
         } catch (error: any) {
             setEmailError(error?.message || t('auth.loginFailed'));
@@ -48,7 +50,10 @@ export default function LoginPage() {
 
                 <div className="space-y-3">
                     <button
-                        onClick={signInWithKakao}
+                        onClick={() => {
+                            trackEvent('login_attempt', { provider: 'kakao' });
+                            signInWithKakao();
+                        }}
                         disabled={isLoadingKakao}
                         className="w-full bg-[#FEE500] text-[#191919] py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#FADA0A] transition-all active:scale-[0.98] disabled:opacity-50"
                     >
@@ -63,7 +68,10 @@ export default function LoginPage() {
                     </button>
 
                     <button
-                        onClick={signInWithGoogle}
+                        onClick={() => {
+                            trackEvent('login_attempt', { provider: 'google' });
+                            signInWithGoogle();
+                        }}
                         disabled={isLoadingGoogle}
                         className="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-4 rounded-xl font-medium flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98]"
                     >

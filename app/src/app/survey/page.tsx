@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon';
 import { useAppStore } from '@/store/useAppStore';
 import { useSurveySync } from '@/hooks/useSurveySync';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { trackEvent } from '@/lib/analytics';
 import { db } from '@/lib/db';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
 import { useLocale } from '@/i18n/LocaleProvider';
@@ -46,6 +47,8 @@ function SurveyContent() {
   const [showExitModal, setShowExitModal] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
+  const startedModulesRef = useRef<Set<SurveyModule>>(new Set());
+  const responseCountRef = useRef(0);
 
   // 양육자 기질 검사가 이미 DB에 완료되어 있으면 복원 후 스킵
   const parentSkipCheckedRef = useRef(false);
@@ -155,6 +158,7 @@ function SurveyContent() {
   const { questions, responses, setResponse, title, accent, accentBg, accentLight, accentText } = getModuleData();
   const currentQuestion = questions[currentIndex];
   const currentAnswer = responses[String(currentQuestion?.id)];
+  const responseCount = Object.keys(responses).length;
 
   // 진행률 계산
   const totalQuestions = CHILD_QUESTIONS.length + PARENT_QUESTIONS.length + PARENTING_STYLE_QUESTIONS.length;
@@ -164,10 +168,28 @@ function SurveyContent() {
     Object.keys(parentingResponses).length;
   const progress = Math.min(100, Math.round((answeredCount / totalQuestions) * 100));
 
+  useEffect(() => {
+    responseCountRef.current = responseCount;
+  }, [responseCount]);
+
+  useEffect(() => {
+    if (startedModulesRef.current.has(currentModule)) return;
+
+    startedModulesRef.current.add(currentModule);
+    trackEvent('survey_module_started', {
+      module: currentModule,
+    });
+  }, [currentModule]);
+
   const goToNext = useCallback(() => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     } else {
+      trackEvent('survey_module_completed', {
+        module: currentModule,
+        answered_questions: responseCountRef.current,
+      });
+
       // Current module finished
       if (currentModule === 'child') {
         // 아이 기질 완료 → 즉시 아이 리포트 화면으로 이동 (안 A)
@@ -226,6 +248,9 @@ function SurveyContent() {
       setCurrentIndex(0);
       window.scrollTo(0, 0);
     } else if (transitionType === 'finish') {
+      trackEvent('survey_flow_completed', {
+        answered_questions: answeredCount,
+      });
       setIsCalculating(true);
       setTimeout(() => {
         router.replace('/report');

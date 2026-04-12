@@ -8,6 +8,7 @@
 |--------|------|------------|
 | **Vercel** | 호스팅 / 배포 / 환경변수 | https://vercel.com/dashboard |
 | **Supabase** | DB / Auth / Storage | https://supabase.com/dashboard |
+| **Firebase Console** | Analytics / Messaging / Crashlytics | https://console.firebase.google.com |
 | **GitHub** | 소스코드 저장소 | https://github.com/iplepine/gijilai |
 
 ## AI

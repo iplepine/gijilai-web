@@ -11,6 +11,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { db } from '@/lib/db';
 import { getRandomExamples } from '@/data/consultExamples';
 import { useLocale } from '@/i18n/LocaleProvider';
+import { trackEvent } from '@/lib/analytics';
 
 type Step = 'INPUT' | 'DIAGNOSTIC' | 'RESULT';
 
@@ -193,6 +194,11 @@ function ConsultContent() {
         }
 
         const fullProblem = problemDesc;
+        trackEvent('consult_started', {
+            has_child_report: hasChildReport,
+            has_subscription: hasSubscription,
+            is_followup: !!sessionIdParam,
+        });
 
         setIsLoading(true);
         try {

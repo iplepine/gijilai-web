@@ -21,6 +21,7 @@ import { Radar, Bar } from 'react-chartjs-2';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
+import { trackEvent } from '@/lib/analytics';
 import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
@@ -183,6 +184,14 @@ function ReportContent() {
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
   };
+
+  useEffect(() => {
+    trackEvent('report_viewed', {
+      tab: activeTab,
+      child_only: isChildOnly,
+      has_saved_report: !!reportId,
+    });
+  }, [activeTab, isChildOnly, reportId]);
 
 
   // 리포트 포맷 검증: 필수 필드가 있는지 확인

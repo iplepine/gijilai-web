@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
@@ -33,10 +34,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         // 2. Listen for Auth Changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+
+            if (event === 'SIGNED_IN') {
+                trackEvent('login_success', {
+                    provider: session?.user?.app_metadata?.provider ?? 'unknown',
+                });
+            }
+
+            if (event === 'SIGNED_OUT') {
+                trackEvent('logout');
+            }
         });
 
         return () => subscription.unsubscribe();

@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { trackEvent } from '@/lib/analytics';
 import { useAppStore } from '@/store/useAppStore';
 import { Concern, CONCERN_LABELS } from '@/types';
 import { useLocale } from '@/i18n/LocaleProvider';
@@ -60,6 +61,12 @@ export default function IntakePage() {
 
   const handleSubmit = () => {
     if (validate()) {
+      trackEvent('intake_completed', {
+        child_gender: intake.gender,
+        concern_count: intake.concerns.length,
+        privacy_agreed: intake.privacyAgreed,
+        disclaimer_agreed: intake.disclaimerAgreed,
+      });
       resetSurveyOnly();
       router.replace('/survey');
     }

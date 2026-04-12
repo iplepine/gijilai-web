@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { trackEvent } from '@/lib/analytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
@@ -94,6 +95,12 @@ export default function PaymentPage() {
 
   const handlePaymentStart = async () => {
     if (!user) return;
+
+    trackEvent('payment_started', {
+      pay_method: payMethod,
+      used_coupon: useCoupon,
+      final_amount: finalAmount,
+    });
 
     // 쿠폰으로 전액 할인
     if (useCoupon && availableCoupon && finalAmount === 0) {
@@ -195,6 +202,11 @@ export default function PaymentPage() {
   };
 
   const handlePaymentSuccess = () => {
+    trackEvent('payment_completed', {
+      pay_method: payMethod,
+      final_amount: finalAmount,
+      used_coupon: useCoupon,
+    });
     setStatus('analyzing');
   };
 

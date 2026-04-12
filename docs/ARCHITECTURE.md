@@ -1,7 +1,7 @@
 # 아키텍처
 
 시스템 구조 및 컴포넌트 책임 정의.
-최종 동기화: 2026-04-01
+최종 동기화: 2026-04-12
 
 ## 개요
 
@@ -150,6 +150,12 @@ app/src/components/
 - **용도**: 소셜 로그인 (OAuth), 공유 기능
 - **프로토콜**: JavaScript SDK (layout.tsx에서 주입)
 - **인증**: Supabase Auth에 설정된 App Key
+
+### Firebase
+- **용도**: 웹/모바일 분석, 푸시 알림, 크래시 수집 (`Firebase Analytics`, `FCM`, `Crashlytics`)
+- **프로토콜**: 웹은 Google tag 기반 Measurement ID 연동, 모바일은 FlutterFire SDK + Android/iOS 네이티브 Firebase SDK
+- **인증**: `gijilai_app/android/app/google-services.json`, `gijilai_app/ios/Runner/GoogleService-Info.plist`
+- **웹 구성**: `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` 환경변수로 초기화, `app/src/lib/analytics.ts`와 `app/src/components/analytics/FirebaseAnalytics.tsx`에서 페이지뷰/핵심 이벤트 전송
 
 ## 데이터 흐름
 
