@@ -204,23 +204,16 @@ export default function ConsultationDetailPage() {
                                                         </div>
                                                     )}
                                                     {Array.isArray(rx.questionAnalysis) && rx.questionAnalysis.length > 0 && (
-                                                        <div className="space-y-2.5">
-                                                            <div className="text-[11px] font-bold text-slate-400">
+                                                        <div className="bg-white dark:bg-surface-dark rounded-2xl p-5 border border-[#EACCA4]/30 space-y-3">
+                                                            <div className="text-[12px] font-bold text-[#D08B5B] flex items-center gap-1.5">
+                                                                <span className="material-symbols-outlined text-[16px]">quiz</span>
                                                                 {t('consult.questionAnalysis')}
                                                             </div>
                                                             {rx.questionAnalysis.map((qa: any, index: number) => (
-                                                                <div key={index} className="rounded-xl bg-background-light dark:bg-background-dark px-4 py-3 space-y-2">
-                                                                    <div>
-                                                                        <p className="text-[11px] font-bold text-[#D08B5B] mb-1">{t('common.question')}</p>
-                                                                        <p className="text-[12px] text-text-main dark:text-gray-200 leading-relaxed">{qa.question}</p>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-[11px] font-bold text-secondary mb-1">{t('common.answer')}</p>
-                                                                        <p className="text-[12px] text-text-main dark:text-gray-200 leading-relaxed">{qa.answer}</p>
-                                                                    </div>
-                                                                    <div className="pt-2 border-t border-black/5 dark:border-white/10">
-                                                                        <p className="text-[12px] text-text-sub dark:text-gray-300 leading-relaxed">{qa.analysis}</p>
-                                                                    </div>
+                                                                <div key={index} className="space-y-1">
+                                                                    <p className="text-[11px] text-text-sub dark:text-gray-500">Q. {qa.question}</p>
+                                                                    <p className="text-[12px] font-medium text-text-main dark:text-gray-200 pl-3 border-l-2 border-secondary/40">{qa.answer}</p>
+                                                                    <p className="text-[12px] text-[#D08B5B] leading-relaxed">{qa.analysis}</p>
                                                                 </div>
                                                             ))}
                                                         </div>
