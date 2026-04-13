@@ -286,6 +286,7 @@
     "childAndMe": "Child and me",
     "prescriptionLabel": "Heart Prescription",
     "actionItems": "Action items",
+    "selectedAction": "Selected",
     "actionTask": "Practice task",
     "addConsult": "Add consultation",
     "resolvedMsg": "This concern is resolved",

@@ -17,6 +17,7 @@ export default function ConsultationDetailPage() {
 
     const [session, setSession] = useState<(SessionData & { childName?: string }) | null>(null);
     const [consults, setConsults] = useState<any[]>([]);
+    const [practiceItemsByConsult, setPracticeItemsByConsult] = useState<Record<string, Array<{ title: string; status: string }>>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -27,7 +28,7 @@ export default function ConsultationDetailPage() {
     const loadData = async () => {
         if (!user || !id) return;
         try {
-            const [{ data: sessionData }, { data: consultsData }, children] = await Promise.all([
+            const [{ data: sessionData }, { data: consultsData }, { data: practicesData }, children] = await Promise.all([
                 supabase
                     .from('consultation_sessions')
                     .select('*')
@@ -39,6 +40,10 @@ export default function ConsultationDetailPage() {
                     .select('*')
                     .eq('session_id', id)
                     .order('created_at', { ascending: true }),
+                supabase
+                    .from('practice_items')
+                    .select('consultation_id, title, status')
+                    .eq('session_id', id),
                 db.getChildren(user.id),
             ]);
 
@@ -47,6 +52,13 @@ export default function ConsultationDetailPage() {
                 setSession({ ...sessionData, childName } as SessionData & { childName?: string });
             }
             setConsults(consultsData || []);
+            const groupedPractices = (practicesData || []).reduce((acc: Record<string, Array<{ title: string; status: string }>>, practice: any) => {
+                if (!practice.consultation_id) return acc;
+                if (!acc[practice.consultation_id]) acc[practice.consultation_id] = [];
+                acc[practice.consultation_id].push({ title: practice.title, status: practice.status });
+                return acc;
+            }, {});
+            setPracticeItemsByConsult(groupedPractices);
         } catch (e) {
             console.error('Failed to load consultation detail:', e);
         } finally {
@@ -143,6 +155,7 @@ export default function ConsultationDetailPage() {
                             <div className="space-y-4">
                                 {consults.map((item: any, i: number) => {
                                     const rx = item.ai_prescription;
+                                    const selectedPracticeTitles = new Set((practiceItemsByConsult[item.id] || []).map(practice => practice.title));
                                     return (
                                         <div key={item.id} className="space-y-3">
                                             {/* 날짜 뱃지 */}
@@ -229,23 +242,38 @@ export default function ConsultationDetailPage() {
                                                         {t('consult.actionItems')}
                                                     </div>
                                                     {rx.actionItems.map((ai: any, j: number) => {
+                                                        const isSelectedPractice = selectedPracticeTitles.has(ai.title);
                                                         const isMagic = ai.title === t('consult.magicWord') || ai.duration === 1;
                                                         return isMagic ? (
                                                             <div key={j} className="bg-[#519E8A] rounded-xl p-4 text-white relative overflow-hidden">
                                                                 <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
                                                                 <div className="relative z-10">
-                                                                    <div className="flex items-center gap-1 mb-2">
-                                                                        <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
-                                                                        <span className="text-[12px] font-black">{ai.title}</span>
+                                                                    <div className="flex items-center justify-between gap-2 mb-2">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                                                                            <span className="text-[12px] font-black">{ai.title}</span>
+                                                                        </div>
+                                                                        {isSelectedPractice && (
+                                                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white/20">
+                                                                                {t('consult.selectedAction')}
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                     <p className="text-[14px] font-bold leading-relaxed">&ldquo;{ai.description}&rdquo;</p>
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div key={j} className="bg-white dark:bg-surface-dark rounded-xl p-4 border border-primary/10 space-y-2">
-                                                                <div>
-                                                                    <p className="text-[13px] font-bold text-text-main dark:text-gray-200">{ai.title}</p>
-                                                                    <span className="text-[11px] text-text-sub">{ai.duration}{t('common.days')}</span>
+                                                            <div key={j} className={`rounded-xl p-4 border space-y-2 ${isSelectedPractice ? 'bg-primary/5 border-primary/25' : 'bg-white dark:bg-surface-dark border-primary/10'}`}>
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <div>
+                                                                        <p className="text-[13px] font-bold text-text-main dark:text-gray-200">{ai.title}</p>
+                                                                        <span className="text-[11px] text-text-sub">{ai.duration}{t('common.days')}</span>
+                                                                    </div>
+                                                                    {isSelectedPractice && (
+                                                                        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+                                                                            {t('consult.selectedAction')}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <p className="text-[12px] text-text-main dark:text-gray-300 leading-relaxed">{ai.description}</p>
                                                                 {ai.encouragement && (
