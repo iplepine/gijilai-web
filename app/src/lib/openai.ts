@@ -4,6 +4,8 @@ import {
     CHILD_REPORT_PROMPT,
     HARMONY_REPORT_PROMPT,
 } from '@/lib/prompts';
+import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
+import { Question } from '@/types/survey';
 
 const apiKey = process.env.OPENAI_API_KEY;
 
@@ -17,18 +19,35 @@ export const openai = new OpenAI({
 
 export type ReportType = 'PARENT' | 'CHILD' | 'HARMONY';
 
-import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
+type TemperamentScores = { NS: number; HA: number; RD: number; P: number };
+type TemperamentSummary = { label: string; keywords: string[] };
+type ChildInfo = { name: string; gender: string; birthDate: string };
+type ReportPayload = {
+    userName: string;
+    type: ReportType;
+    surveyDetails: string;
+    scores?: TemperamentScores;
+    childScores?: TemperamentScores;
+    parentScores?: TemperamentScores;
+    childType?: TemperamentSummary;
+    parentType?: TemperamentSummary;
+    childInfo?: {
+        name: string;
+        gender: string;
+        age: string;
+    };
+};
 
 export const generateReport = async (
     userName: string,
-    scores: any,
+    scores: TemperamentScores,
     type: ReportType,
     systemPrompt?: string,
     answers?: { questionId: string; score: number }[],
-    parentScores?: { NS: number; HA: number; RD: number; P: number },
-    childType?: { label: string; keywords: string[] },
-    parentType?: { label: string; keywords: string[] },
-    childInfo?: { name: string, gender: string, birthDate: string } | null
+    parentScores?: TemperamentScores,
+    childType?: TemperamentSummary,
+    parentType?: TemperamentSummary,
+    childInfo?: ChildInfo | null
 ) => {
     let defaultPrompt = CHILD_REPORT_PROMPT;
     if (type === 'PARENT') defaultPrompt = PARENT_REPORT_PROMPT;
@@ -39,7 +58,7 @@ export const generateReport = async (
     // Scan and Format Q&A
     let formattedQnA = '';
     if (answers && answers.length > 0) {
-        let questions = CHILD_QUESTIONS;
+        let questions: Question[] = CHILD_QUESTIONS;
         if (type === 'PARENT') questions = PARENT_QUESTIONS;
         if (type === 'HARMONY') questions = [...CHILD_QUESTIONS, ...PARENT_QUESTIONS, ...PARENTING_STYLE_QUESTIONS];
 
@@ -56,7 +75,7 @@ export const generateReport = async (
         }).filter(Boolean).join('\n\n');
     }
 
-    const payload: any = { userName, type, surveyDetails: formattedQnA };
+    const payload: ReportPayload = { userName, type, surveyDetails: formattedQnA };
 
     if (childInfo) {
         const calculateAgeMonths = (birthDate: string) => {
@@ -106,24 +125,26 @@ export const generateReport = async (
     if (!content) return null;
 
     try {
-        const parsed = JSON.parse(content);
+        const parsed = JSON.parse(content) as Record<string, unknown>;
         console.log('[generateReport] Parsed keys:', JSON.stringify(Object.keys(parsed)));
 
         // CHILD 리포트: dimensions가 analysis 밖에 있으면 안으로 이동
-        if (type === 'CHILD' && parsed.analysis) {
-            if (!parsed.analysis.dimensions && parsed.dimensions) {
-                parsed.analysis.dimensions = parsed.dimensions;
+        const analysis = (parsed.analysis ?? null) as Record<string, unknown> | null;
+
+        if (type === 'CHILD' && analysis) {
+            if (!analysis.dimensions && parsed.dimensions) {
+                analysis.dimensions = parsed.dimensions;
                 delete parsed.dimensions;
                 console.log('[generateReport] Moved top-level dimensions into analysis');
             }
             // insight가 analysis 밖에 있으면 안으로 이동
-            if (!parsed.analysis.insight && parsed.insight) {
-                parsed.analysis.insight = parsed.insight;
+            if (!analysis.insight && parsed.insight) {
+                analysis.insight = parsed.insight;
                 delete parsed.insight;
             }
             // strengths가 analysis 밖에 있으면 안으로 이동
-            if (!parsed.analysis.strengths && parsed.strengths) {
-                parsed.analysis.strengths = parsed.strengths;
+            if (!analysis.strengths && parsed.strengths) {
+                analysis.strengths = parsed.strengths;
                 delete parsed.strengths;
             }
         }
@@ -141,8 +162,11 @@ export const generateReport = async (
             console.log('[generateReport] Constructed analysis from top-level fields');
         }
 
-        if (parsed.analysis?.dimensions) {
-            console.log('[generateReport] dimensions keys:', JSON.stringify(Object.keys(parsed.analysis.dimensions)));
+        const normalizedAnalysis = (parsed.analysis ?? null) as Record<string, unknown> | null;
+        const dimensions = (normalizedAnalysis?.dimensions ?? null) as Record<string, unknown> | null;
+
+        if (dimensions) {
+            console.log('[generateReport] dimensions keys:', JSON.stringify(Object.keys(dimensions)));
         } else {
             console.warn('[generateReport] WARNING: analysis.dimensions is missing after normalization!');
         }

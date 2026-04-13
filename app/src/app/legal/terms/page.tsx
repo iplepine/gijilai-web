@@ -19,8 +19,8 @@ export default function TermsPage() {
                             <section>
                                 <h3 className="font-bold text-navy dark:text-white text-base mb-2">제2조 (용어의 정의)</h3>
                                 <p>본 약관에서 사용하는 용어의 정의는 다음과 같습니다.<br />
-                                    1. "회원"이란 회사와 서비스 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 자를 말합니다.<br />
-                                    2. "기질 검사"란 회사가 제공하는 아동 및 양육자의 심리적 반응성 검사를 의미합니다.</p>
+                                    1. &quot;회원&quot;이란 회사와 서비스 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 자를 말합니다.<br />
+                                    2. &quot;기질 검사&quot;란 회사가 제공하는 아동 및 양육자의 심리적 반응성 검사를 의미합니다.</p>
                             </section>
                             <section>
                                 <h3 className="font-bold text-navy dark:text-white text-base mb-2">제3조 (약관의 효력 및 변경)</h3>

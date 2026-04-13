@@ -1,36 +1,38 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Icon } from '@/components/ui/Icon';
 import Link from 'next/link';
 
+function parseHashParams() {
+    if (typeof window === 'undefined' || !window.location.hash) {
+        return {};
+    }
+
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const parsed: Record<string, string> = {};
+    params.forEach((value, key) => {
+        parsed[key] = value;
+    });
+    return parsed;
+}
+
 function ErrorContent() {
     const searchParams = useSearchParams();
-    const [fragmentParams, setFragmentParams] = useState<Record<string, string>>({});
-    const router = useRouter();
+    const [fragmentParams] = useState<Record<string, string>>(() => parseHashParams());
 
     useEffect(() => {
-        // Parse fragment (#) parameters
-        if (typeof window !== 'undefined' && window.location.hash) {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-            const parsed: Record<string, string> = {};
-            params.forEach((value, key) => {
-                parsed[key] = value;
-            });
-            setFragmentParams(parsed);
-
-            // If we have an access_token, it means the login actually succeeded (Implicit Flow fallback)
-            // Try to recover and redirect home
-            if (parsed.access_token) {
-                const timer = setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
-                return () => clearTimeout(timer);
-            }
+        // If we have an access_token, it means the login actually succeeded (Implicit Flow fallback)
+        // Try to recover and redirect home
+        if (fragmentParams.access_token) {
+            const timer = setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+            return () => clearTimeout(timer);
         }
-    }, []);
+    }, [fragmentParams]);
 
     const error = searchParams.get('error') || fragmentParams.error;
     const description = searchParams.get('description') || fragmentParams.error_description;

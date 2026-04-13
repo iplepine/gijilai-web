@@ -62,15 +62,14 @@ export default function LandingPage() {
     const ALL_TYPES = [...CHILD_TYPES.map(t => ({ ...t, kind: 'child' as const })), ...PARENT_TYPES.map(t => ({ ...t, kind: 'parent' as const }))];
     const QUESTIONS = { child: t('landing.childQuestion'), parent: t('landing.parentQuestion') };
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [mounted, setMounted] = useState(false);
+    const [mounted] = useState(() => typeof window !== 'undefined');
 
     useEffect(() => {
-        setMounted(true);
         const interval = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % ALL_TYPES.length);
         }, 1800);
         return () => clearInterval(interval);
-    }, []);
+    }, [ALL_TYPES.length]);
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark overflow-x-hidden">

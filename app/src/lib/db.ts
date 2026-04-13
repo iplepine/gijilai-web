@@ -134,7 +134,7 @@ export const db = {
         if (error) throw error;
 
         // type별 최신 1건만 추출
-        const latest: Record<string, any> = {};
+        const latest: Partial<Record<SurveyData['type'], SurveyData>> = {};
         for (const row of (data || [])) {
             if (!latest[row.type]) {
                 latest[row.type] = row;

@@ -12,7 +12,7 @@ export default function PrivacyPage() {
                     <div className="bg-white dark:bg-surface-dark rounded-[2rem] p-6 shadow-soft border border-gray-100 dark:border-gray-800 overflow-y-auto" style={{ maxHeight: '75vh' }}>
                         <h2 className="text-xl font-bold mb-6 mt-2">아이기질 개인정보 처리방침</h2>
                         <div className="space-y-6 text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
-                            <p>본 방침은 '아이기질'(이하 "회사") 서비스에서 수집하는 개인정보의 항목, 목적 및 보호 정책에 대해 안내합니다.</p>
+                            <p>본 방침은 &apos;아이기질&apos;(이하 &quot;회사&quot;) 서비스에서 수집하는 개인정보의 항목, 목적 및 보호 정책에 대해 안내합니다.</p>
                             <section>
                                 <h3 className="font-bold text-navy dark:text-white text-base mb-2">1. 수집하는 개인정보 항목</h3>
                                 <p className="mb-2">회사는 서비스 제공을 위해 아래와 같은 정보를 수집합니다.</p>

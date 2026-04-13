@@ -1,16 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Icon } from './Icon';
 
 export function DarkModeToggle() {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    // 초기 상태 확인
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    setIsDark(isDarkMode);
-  }, []);
+  const [isDark, setIsDark] = useState(() => (
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  ));
 
   const toggleDarkMode = () => {
     const newIsDark = !isDark;

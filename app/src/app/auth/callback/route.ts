@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${errorParam}&description=${errorDescription}`)
     }
 
-    let response = NextResponse.redirect(`${origin}${next}`)
+    const response = NextResponse.redirect(`${origin}${next}`)
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

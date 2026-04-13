@@ -163,7 +163,7 @@ function SharePageContent() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-7">
                 <h3 className="text-2xl font-bold text-white mb-2 break-keep leading-snug">
                   {eunNeun(childName)}<br />
-                  <span style={{ color: '#A8D8B9' }}>"{temperamentInfo?.label || '열정 탐험가'}"</span>
+                  <span style={{ color: '#A8D8B9' }}>&quot;{temperamentInfo?.label || '열정 탐험가'}&quot;</span>
                 </h3>
                 <p className="text-sm text-white/80 leading-relaxed font-medium break-keep">
                   {temperamentInfo?.desc || t('share.defaultDesc')}

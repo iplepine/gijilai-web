@@ -16,6 +16,7 @@ import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/
 import { useSurveyStore } from '@/store/surveyStore';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
 import { useLocale } from '@/i18n/LocaleProvider';
+import { checkCooldown } from '@/lib/dateUtils';
 
 export default function HomePage() {
   const router = useRouter();
@@ -238,7 +239,6 @@ export default function HomePage() {
   // Cooldown Check
   useEffect(() => {
     if (mainChild && reports.length > 0) {
-      const { checkCooldown } = require('@/lib/dateUtils');
       // 해당 아이의 가장 최근 리포트 찾기
       const childReports = reports.filter(r => r.child_id === mainChild.id && r.type === 'CHILD');
       if (childReports.length > 0) {

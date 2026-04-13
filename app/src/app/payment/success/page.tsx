@@ -11,30 +11,27 @@ function SuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t } = useLocale();
-    const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+    const paymentId = searchParams.get('paymentId');
+    const [status, setStatus] = useState<'loading' | 'success' | 'error'>(() => paymentId ? 'loading' : 'error');
 
     useEffect(() => {
-        const paymentId = searchParams.get('paymentId');
+        if (!paymentId) return;
 
-        if (paymentId) {
-            fetch('/api/payment/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId }),
+        fetch('/api/payment/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentId }),
+        })
+            .then(res => {
+                if (res.ok) {
+                    setStatus('success');
+                    setTimeout(() => router.push('/report'), 2000);
+                } else {
+                    setStatus('error');
+                }
             })
-                .then(res => {
-                    if (res.ok) {
-                        setStatus('success');
-                        setTimeout(() => router.push('/report'), 2000);
-                    } else {
-                        setStatus('error');
-                    }
-                })
-                .catch(() => setStatus('error'));
-        } else {
-            setStatus('error');
-        }
-    }, [searchParams, router]);
+            .catch(() => setStatus('error'));
+    }, [paymentId, router]);
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">

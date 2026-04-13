@@ -57,10 +57,12 @@ function SurveyContent() {
     // 이미 스토어에 완료된 응답이 있으면 체크 불필요
     if (Object.keys(atqResponses).length >= PARENT_QUESTIONS.length) {
       parentSkipCheckedRef.current = true;
-      // 바로 양육태도로 스킵
-      setCurrentModule('parenting');
-      setCurrentIndex(0);
-      return;
+      const timer = setTimeout(() => {
+        // 바로 양육태도로 스킵
+        setCurrentModule('parenting');
+        setCurrentIndex(0);
+      }, 0);
+      return () => clearTimeout(timer);
     }
     parentSkipCheckedRef.current = true;
 
@@ -89,9 +91,11 @@ function SurveyContent() {
     if (currentModule !== 'parenting' || !user || styleSkipCheckedRef.current) return;
     if (Object.keys(parentingResponses).length >= PARENTING_STYLE_QUESTIONS.length) {
       styleSkipCheckedRef.current = true;
-      setIsCalculating(true);
-      setTimeout(() => router.replace('/report'), 2000);
-      return;
+      const timer = setTimeout(() => {
+        setIsCalculating(true);
+        setTimeout(() => router.replace('/report'), 2000);
+      }, 0);
+      return () => clearTimeout(timer);
     }
     styleSkipCheckedRef.current = true;
 

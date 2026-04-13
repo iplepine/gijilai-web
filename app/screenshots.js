@@ -1,4 +1,5 @@
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
+
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
@@ -24,7 +25,8 @@ const { chromium } = require('playwright');
       await page.screenshot({ path: `/tmp/${route.name}_dark.png` });
       await page.emulateMedia({ colorScheme: 'light' });
     } catch (e) {
-      console.log('Failed:', route.name, e.message);
+      const message = e instanceof Error ? e.message : String(e);
+      console.log('Failed:', route.name, message);
     }
   }
   await browser.close();

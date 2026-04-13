@@ -38,7 +38,7 @@ export function DailyMissionCard({ mission, onComplete }: DailyMissionCardProps)
                 {/* Content */}
                 <div className="flex-1">
                     <div className="flex justify-between items-start mb-1">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Today's Mission</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Today&apos;s Mission</span>
                         {completed && <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">{t('home.completed')}</span>}
                     </div>
 

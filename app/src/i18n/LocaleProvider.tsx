@@ -1,11 +1,18 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { Locale, defaultLocale } from './config';
 import ko from './messages/ko.json';
 import en from './messages/en.json';
 
-const messages: Record<Locale, Record<string, any>> = { ko, en };
+type LocaleMessageTree = {
+  [key: string]: string | LocaleMessageTree;
+};
+
+const messages: Record<Locale, LocaleMessageTree> = {
+  ko: ko as LocaleMessageTree,
+  en: en as LocaleMessageTree,
+};
 
 interface LocaleContextType {
   locale: Locale;
@@ -31,7 +38,7 @@ function detectLocale(): Locale {
   return browserLang.startsWith('ko') ? 'ko' : 'en';
 }
 
-function getNestedValue(obj: Record<string, any>, path: string): string | undefined {
+function getNestedValue(obj: LocaleMessageTree, path: string): string | undefined {
   const result = path.split('.').reduce<unknown>((acc, key) => {
     if (acc && typeof acc === 'object') return (acc as Record<string, unknown>)[key];
     return undefined;
@@ -40,11 +47,7 @@ function getNestedValue(obj: Record<string, any>, path: string): string | undefi
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(defaultLocale);
-
-  useEffect(() => {
-    setLocale(detectLocale());
-  }, []);
+  const [locale] = useState<Locale>(() => detectLocale());
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     let value = getNestedValue(messages[locale], key) ?? getNestedValue(messages[defaultLocale], key) ?? key;
