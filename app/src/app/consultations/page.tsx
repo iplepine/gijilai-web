@@ -12,6 +12,7 @@ import { useLocale } from '@/i18n/LocaleProvider';
 interface SessionWithMeta extends SessionData {
     consultCount: number;
     latestDate: string;
+    latestProblem?: string;
     latestMagicWord?: string;
     childName?: string;
 }
@@ -51,6 +52,7 @@ export default function RecordsPage() {
                     ...s,
                     consultCount: sessionConsults.length,
                     latestDate: latest?.created_at || s.created_at,
+                    latestProblem: latest?.problem_description,
                     latestMagicWord: latest?.ai_prescription?.magicWord,
                     childName: (childData || []).find((c: any) => c.id === s.child_id)?.name,
                 };
@@ -69,6 +71,7 @@ export default function RecordsPage() {
                     updated_at: c.created_at,
                     consultCount: 1,
                     latestDate: c.created_at,
+                    latestProblem: c.problem_description,
                     latestMagicWord: c.ai_prescription?.magicWord,
                     childName: (childData || []).find((ch: any) => ch.id === c.child_id)?.name,
                 });
@@ -160,10 +163,10 @@ function SessionCard({ session, statusLabel, onSelect }: {
             onClick={onSelect}
             className="w-full text-left bg-white dark:bg-surface-dark rounded-2xl p-5 border border-primary/10 active:scale-[0.99] transition-all"
         >
-            <div className="flex justify-between items-start mb-2">
-                <div className="flex-1">
+            <div className="flex justify-between items-start gap-3">
+                <div className="flex-1 min-w-0">
                     <h4 className="text-[15px] font-bold text-text-main dark:text-white">{session.title}</h4>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         <span className="text-[11px] text-text-sub">
                             {new Date(session.latestDate).toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US')}
                         </span>
@@ -175,14 +178,30 @@ function SessionCard({ session, statusLabel, onSelect }: {
                         )}
                     </div>
                 </div>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${label.color}`}>
-                    {label.text}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${label.color}`}>
+                        {label.text}
+                    </span>
+                    <span className="material-symbols-outlined text-[18px] text-text-sub/40">chevron_right</span>
+                </div>
             </div>
+
+            {session.latestProblem && (
+                <div className="mt-3 rounded-xl bg-[#FFF8F1] dark:bg-primary/5 px-4 py-3 border border-[#F4D7B3]/70 dark:border-primary/10">
+                    <p className="text-[11px] font-bold text-[#D08B5B] mb-1">{t('consult.todaysConcern')}</p>
+                    <p className="text-[13px] text-text-main dark:text-white leading-relaxed line-clamp-2 break-keep">
+                        &ldquo;{session.latestProblem}&rdquo;
+                    </p>
+                </div>
+            )}
+
             {session.latestMagicWord && (
-                <p className="text-[12px] text-secondary mt-2 line-clamp-1 font-bold">
-                    &ldquo;{session.latestMagicWord}&rdquo;
-                </p>
+                <div className="mt-3 flex items-start gap-1.5 text-secondary">
+                    <span className="material-symbols-outlined text-[14px] mt-0.5 shrink-0">record_voice_over</span>
+                    <p className="text-[12px] line-clamp-1 font-bold leading-relaxed">
+                        &ldquo;{session.latestMagicWord}&rdquo;
+                    </p>
+                </div>
             )}
         </button>
     );
