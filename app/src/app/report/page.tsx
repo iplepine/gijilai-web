@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState, useEffect, useRef, Suspense } from 'react';
+import React, { useMemo, useState, useEffect, useRef, Suspense, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { CHILD_QUESTIONS, PARENT_QUESTIONS, PARENTING_STYLE_QUESTIONS } from '@/data/questions';
@@ -13,11 +14,8 @@ import {
   Filler,
   Tooltip,
   Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale
 } from 'chart.js';
-import { Radar, Bar } from 'react-chartjs-2';
+import { Radar } from 'react-chartjs-2';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
@@ -26,9 +24,24 @@ import { TemperamentScorer } from '@/lib/TemperamentScorer';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { db } from '@/lib/db';
 import { supabase } from '@/lib/supabase';
 import { useLocale } from '@/i18n/LocaleProvider';
+import {
+  asChildAiReport,
+  asHarmonyAiReport,
+  asParentAiReport,
+  getParentSectionContent,
+  sanitizeQuotedText,
+  type ChildAiReport,
+  type HarmonyAiReport,
+  type ParentingStyleScores,
+  type ParentAiReport,
+  type ReportApiPayload,
+  type ReportDates,
+  type ReportScoreKey,
+  type ReportTab,
+  type TemperamentScores,
+} from '@/lib/report';
 
 ChartJS.register(
   RadialLinearScale,
@@ -37,9 +50,6 @@ ChartJS.register(
   Filler,
   Tooltip,
   Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale
 );
 
 function ReportContent() {
@@ -50,24 +60,19 @@ function ReportContent() {
 
   const { user } = useAuth();
   const { t } = useLocale();
-  const [activeTab, setActiveTab] = useState<'child' | 'parent' | 'parenting'>('child');
+  const [activeTab, setActiveTab] = useState<ReportTab>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, selectedChildId } = useAppStore();
 
-  const [childAiReport, setChildAiReport] = useState<any>(null);
-  const [parentAiReport, setParentAiReport] = useState<any>(null);
-  const [harmonyAiReport, setHarmonyAiReport] = useState<any>(null);
+  const [childAiReport, setChildAiReport] = useState<ChildAiReport | null>(null);
+  const [parentAiReport, setParentAiReport] = useState<ParentAiReport | null>(null);
+  const [harmonyAiReport, setHarmonyAiReport] = useState<HarmonyAiReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const generatingRef = useRef<Set<string>>(new Set());
-  const [reportDates, setReportDates] = useState<Record<string, string>>({});
+  const [reportDates, setReportDates] = useState<ReportDates>({});
 
   // DB에서 로드된 {t('common.points')}수 데이터 (상세 보기용)
-  const [savedChildScores, setSavedChildScores] = useState<any>(null);
-  const [savedParentScores, setSavedParentScores] = useState<any>(null);
-  const [savedStyleScores, setSavedStyleScores] = useState<any>(null);
-
-  // DB Sync States
-  const [dbChildId, setDbChildId] = useState<string | null>(null);
-  const [dbSurveyIds, setDbSurveyIds] = useState<Record<string, string>>({});
+  const [savedChildScores, setSavedChildScores] = useState<TemperamentScores | null>(null);
+  const [savedParentScores, setSavedParentScores] = useState<TemperamentScores | null>(null);
 
   useEffect(() => {
     if (tabParam === 'parent') {
@@ -77,22 +82,13 @@ function ReportContent() {
     } else if (tabParam === 'parenting') {
       setActiveTab('parenting');
     } else if (!tabParam) {
-      // 기본 탭: 양육태도 설문까지 완료 시 기질맞춤양육, 아니면 아이진단
-      const styleComplete = PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
       setActiveTab('child');
     }
   }, [tabParam, parentingResponses]);
 
   const reportId = searchParams.get('id');
 
-  // URL ID가 있을 경우 DB에서 리포트 로드
-  useEffect(() => {
-    if (reportId && user) {
-      loadSavedReport(reportId);
-    }
-  }, [reportId, user]);
-
-  const loadSavedReport = async (id: string) => {
+  const loadSavedReport = useCallback(async (id: string) => {
     setIsGenerating(true);
     try {
       const { data, error } = await supabase
@@ -103,7 +99,6 @@ function ReportContent() {
 
       if (error) throw error;
       if (data) {
-        const analysis = data.analysis_json;
         const surveyData = data.surveys;
         const childData = data.children;
 
@@ -116,25 +111,15 @@ function ReportContent() {
         }
 
         if (data.type === 'CHILD') {
-          setChildAiReport(analysis);
-          setSavedChildScores(surveyData?.scores);
-          setDbChildId(data.child_id);
-          setDbSurveyIds(prev => ({ ...prev, CHILD: data.survey_id }));
-
+          setChildAiReport(asChildAiReport(data.analysis_json));
+          setSavedChildScores((surveyData?.scores as TemperamentScores | null) ?? null);
           setActiveTab('child');
         } else if (data.type === 'PARENT') {
-          setParentAiReport(analysis);
-          setSavedParentScores(surveyData?.scores);
-          setDbChildId(data.child_id);
-          setDbSurveyIds(prev => ({ ...prev, PARENT: data.survey_id }));
-
+          setParentAiReport(asParentAiReport(data.analysis_json));
+          setSavedParentScores((surveyData?.scores as TemperamentScores | null) ?? null);
           setActiveTab('parent');
         } else if (data.type === 'HARMONY') {
-          setHarmonyAiReport(analysis);
-          setDbChildId(data.child_id);
-          setDbSurveyIds(prev => ({ ...prev, PARENTING_STYLE: data.survey_id }));
-          // 조화 분석 시에는 아이/양육자 {t('common.points')}수가 모두 필요할 수 있으므로 저장된 데이터가 있다면 복원
-
+          setHarmonyAiReport(asHarmonyAiReport(data.analysis_json));
           setActiveTab('parenting');
         }
       }
@@ -144,7 +129,14 @@ function ReportContent() {
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [t]);
+
+  // URL ID가 있을 경우 DB에서 리포트 로드
+  useEffect(() => {
+    if (reportId && user) {
+      void loadSavedReport(reportId);
+    }
+  }, [loadSavedReport, reportId, user]);
 
   // 선택된 아이가 바뀌면 리포트 초기화 (다자녀 전환 시)
   const prevChildIdRef = useRef(selectedChildId);
@@ -161,25 +153,25 @@ function ReportContent() {
   useEffect(() => {
     const hasCbq = Object.keys(cbqResponses).length > 0 || !!savedChildScores;
     if (!isGenerating && !reportId && hasCbq && !childAiReport) {
-      generateChildAIReport();
+      void generateChildAIReport();
     }
-  }, [cbqResponses, savedChildScores, childAiReport]);
+  }, [cbqResponses, childAiReport, generateChildAIReport, isGenerating, reportId, savedChildScores]);
 
   // 양육자 탭 진입 시 자동 생성
   useEffect(() => {
     const hasAtq = Object.keys(atqResponses).length > 0 || !!savedParentScores;
     if (activeTab === 'parent' && !isGenerating && !reportId && hasAtq && !parentAiReport) {
-      generateParentAIReport();
+      void generateParentAIReport();
     }
-  }, [activeTab, atqResponses, savedParentScores, parentAiReport]);
+  }, [activeTab, atqResponses, generateParentAIReport, isGenerating, parentAiReport, reportId, savedParentScores]);
 
   // 기질맞춤양육 탭 진입 시 자동 생성
   useEffect(() => {
     const styleComplete = PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
     if (activeTab === 'parenting' && !isGenerating && !reportId && !harmonyAiReport && styleComplete) {
-      generateHarmonyAIReport();
+      void generateHarmonyAIReport();
     }
-  }, [activeTab, harmonyAiReport, parentingResponses]);
+  }, [activeTab, generateHarmonyAIReport, harmonyAiReport, isGenerating, parentingResponses, reportId]);
 
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
@@ -195,19 +187,20 @@ function ReportContent() {
 
 
   // 리포트 포맷 검증: 필수 필드가 있는지 확인
-  const isValidReport = (report: any, type: string): boolean => {
+  const isValidReport = useCallback((report: unknown, type: string): boolean => {
     if (!report || typeof report !== 'object') return false;
-    if (type === 'CHILD') return !!(report.intro && report.analysis);
-    if (type === 'PARENT') return !!(report.intro && (report.dimensions || report.sections));
-    if (type === 'HARMONY') return !!(report.harmonyTitle || report.compatibilityScore);
+    const value = report as Record<string, unknown>;
+    if (type === 'CHILD') return !!(value.intro && value.analysis);
+    if (type === 'PARENT') return !!(value.intro && (value.dimensions || value.sections));
+    if (type === 'HARMONY') return !!(value.harmonyTitle || value.compatibilityScore);
     return false;
-  };
+  }, []);
 
   // 공통 API 호출 함수 (포맷 불일치 시 자동 재생성)
   // API에서 반환된 리포트 ID 저장 (공유 등에 활용)
   const [childReportId, setChildReportId] = useState<string | null>(null);
 
-  const fetchReport = async (payload: any): Promise<{ report: any; reportId?: string; createdAt: string } | null> => {
+  const fetchReport = useCallback(async (payload: ReportApiPayload): Promise<{ report: unknown; reportId?: string; createdAt: string } | null> => {
     const res = await fetch('/api/llm/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -229,9 +222,9 @@ function ReportContent() {
     }
 
     return { report: data.report, reportId: data.reportId, createdAt: data.createdAt };
-  };
+  }, [intake, isValidReport, selectedChildId]);
 
-  const generateChildAIReport = async (refresh = false) => {
+  const generateChildAIReport = useCallback(async (refresh = false) => {
     if (generatingRef.current.has('CHILD')) return;
     generatingRef.current.add('CHILD');
     setIsGenerating(true);
@@ -244,10 +237,7 @@ function ReportContent() {
         childType: { label: childType.label, keywords: childType.keywords, desc: childType.desc }
       });
       if (result) {
-        console.log('[ChildReport] report keys:', Object.keys(result.report));
-        console.log('[ChildReport] analysis:', result.report.analysis ? Object.keys(result.report.analysis) : 'NO ANALYSIS');
-        console.log('[ChildReport] dimensions:', result.report.analysis?.dimensions ? Object.keys(result.report.analysis.dimensions) : 'NO DIMENSIONS');
-        setChildAiReport(result.report);
+        setChildAiReport(asChildAiReport(result.report));
         if (result.reportId) setChildReportId(result.reportId);
         setReportDates(prev => ({ ...prev, child: result.createdAt }));
       }
@@ -258,9 +248,9 @@ function ReportContent() {
       generatingRef.current.delete('CHILD');
       setIsGenerating(generatingRef.current.size > 0);
     }
-  };
+  }, [cbqResponses, childScores, childType.desc, childType.keywords, childType.label, fetchReport, intake.childName, t]);
 
-  const generateParentAIReport = async (refresh = false) => {
+  const generateParentAIReport = useCallback(async (refresh = false) => {
     if (generatingRef.current.has('PARENT')) return;
     generatingRef.current.add('PARENT');
     setIsGenerating(true);
@@ -273,7 +263,7 @@ function ReportContent() {
         parentType: { label: parentType.label, keywords: parentType.keywords }
       });
       if (result) {
-        setParentAiReport(result.report);
+        setParentAiReport(asParentAiReport(result.report));
         setReportDates(prev => ({ ...prev, parent: result.createdAt }));
       }
     } catch (error) {
@@ -283,9 +273,9 @@ function ReportContent() {
       generatingRef.current.delete('PARENT');
       setIsGenerating(generatingRef.current.size > 0);
     }
-  };
+  }, [atqResponses, fetchReport, parentScores, parentType.keywords, parentType.label, t]);
 
-  const generateHarmonyAIReport = async (refresh = false) => {
+  const generateHarmonyAIReport = useCallback(async (refresh = false) => {
     if (generatingRef.current.has('HARMONY')) return;
     generatingRef.current.add('HARMONY');
     setIsGenerating(true);
@@ -303,7 +293,7 @@ function ReportContent() {
         parentType: { label: parentType.label, keywords: parentType.keywords }
       });
       if (result) {
-        setHarmonyAiReport(result.report);
+        setHarmonyAiReport(asHarmonyAiReport(result.report));
         setReportDates(prev => ({ ...prev, parenting: result.createdAt }));
       }
     } catch (error) {
@@ -313,21 +303,20 @@ function ReportContent() {
       generatingRef.current.delete('HARMONY');
       setIsGenerating(generatingRef.current.size > 0);
     }
-  };
+  }, [atqResponses, cbqResponses, childScores, childType.keywords, childType.label, fetchReport, intake.childName, parentScores, parentType.keywords, parentType.label, parentingResponses, styleScores, t]);
 
   const childScores = useMemo(() => {
     if (savedChildScores) return savedChildScores;
-    return TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
+    return TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses);
   }, [cbqResponses, savedChildScores]);
 
   const parentScores = useMemo(() => {
     if (savedParentScores) return savedParentScores;
-    return TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses as any);
+    return TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses);
   }, [atqResponses, savedParentScores]);
 
   // Parenting Style Scores
-  const styleScores = useMemo(() => {
-    if (savedStyleScores) return savedStyleScores;
+  const styleScores = useMemo<ParentingStyleScores>(() => {
     const scores = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
     const counts = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
 
@@ -350,7 +339,6 @@ function ReportContent() {
 
   // Temperament Classification
   const childType = useMemo(() => TemperamentClassifier.analyzeChild(childScores), [childScores]);
-  const harmony = useMemo(() => TemperamentClassifier.analyzeHarmony(childScores, parentScores), [childScores, parentScores]);
 
   const isStyleSurveyComplete = useMemo(() => {
     return PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
@@ -430,72 +418,6 @@ function ReportContent() {
     }
   };
 
-  const barData = {
-    labels: [t('report.parentingEfficacy'), t('report.autonomySupport'), t('report.emotionalResponsiveness')],
-    datasets: [
-      {
-        data: [styleScores.Efficacy, styleScores.Autonomy, styleScores.Responsiveness],
-        backgroundColor: ['#FFD93D', '#6C5CE7', '#FF6B6B'],
-        borderRadius: 8,
-        barThickness: 32,
-      }
-    ]
-  };
-
-  // Temperament Harmony Index (THI) Logic
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-        grid: { display: false },
-        ticks: { font: { size: 10 } }
-      },
-      x: {
-        grid: { display: false },
-        ticks: { font: { size: 11, weight: 'bold' as const } }
-      }
-    },
-    plugins: {
-      legend: { display: false }
-    }
-  };
-
-  const ghiScore = useMemo(() => {
-    const diff =
-      Math.abs(childScores.NS - parentScores.NS) +
-      Math.abs(childScores.HA - parentScores.HA) +
-      Math.abs(childScores.RD - parentScores.RD) +
-      Math.abs(childScores.P - parentScores.P);
-    return diff / 4;
-  }, [childScores, parentScores]);
-
-  const analysisResult = useMemo(() => {
-    let type = 'NORMAL';
-    let message = '서로 다른 기질이지만, 양육자의 노력으로 균형을 맞춰가고 있습니다.';
-    const isHighGHI = ghiScore >= 40;
-    const isConflictPattern = childScores.NS >= 70 && parentScores.HA >= 70;
-
-    if (isHighGHI || isConflictPattern) {
-      if (styleScores.Autonomy >= 70) {
-        type = 'MITIGATED';
-        message = '기질적인 차이가 크지만, 양육자의 높은 [자율성 지지] 덕분을 통해 아이가 이를 건강하게 극복하고 있습니다.';
-      } else if (styleScores.Responsiveness <= 50) {
-        type = 'CRISIS';
-        message = '현재 기질적 갈등이 심화되고 있습니다. 아이의 마음을 먼저 읽어주는 [정서적 반응성]을 높이는 노력이 필요합니다.';
-      } else {
-        message = '기질 차이로 인한 갈등 가능성이 있습니다. 서로의 다름을 인정하는 대화가 필요합니다.';
-      }
-    }
-    return { type, message };
-  }, [ghiScore, childScores, parentScores, styleScores]);
-
-  const ghiColor = ghiScore < 25 ? 'text-teal-600' : (ghiScore < 55 ? 'text-indigo-600' : 'text-rose-500');
-  const ghiBg = ghiScore < 25 ? 'bg-teal-500' : (ghiScore < 55 ? 'bg-indigo-500' : 'bg-rose-500');
-  const ghiLabel = ghiScore < 25 ? '안정적 조화' : (ghiScore < 55 ? '균형 잡힌 관계' : '주의 깊은 관찰 필요');
-
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center font-body">
       <div className="w-full max-w-md bg-background-light dark:bg-background-dark h-full min-h-screen flex flex-col shadow-2xl overflow-x-hidden relative">
@@ -518,13 +440,13 @@ function ReportContent() {
               <div key={activeTab} className="animate-in fade-in duration-500">
                 {activeTab === 'child' ? (
                   isChildSurveyComplete ? (
-                    <img src={childType.image} alt={childType.label} className="w-full aspect-[4/3] object-cover" />
+                    <Image src={childType.image} alt={childType.label} width={800} height={600} className="w-full aspect-[4/3] object-cover" />
                   ) : (
                     <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#FFF8F0] to-[#FFF3E4] dark:from-surface-dark dark:to-background-dark" />
                   )
                 ) : activeTab === 'parent' ? (
                   isParentSurveyComplete ? (
-                    <img src={parentType.image} alt={parentType.label} className="w-full aspect-[4/3] object-cover" />
+                    <Image src={parentType.image} alt={parentType.label} width={800} height={600} className="w-full aspect-[4/3] object-cover" />
                   ) : (
                     <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#E8F5E9] to-[#C8E6C9] dark:from-surface-dark dark:to-background-dark" />
                   )
@@ -532,10 +454,10 @@ function ReportContent() {
                   <div className="w-full aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-[#F5EDE4] to-[#E8DDD3] dark:from-surface-dark dark:to-background-dark flex items-center justify-center">
                     <div className="relative w-full h-full flex items-center justify-center">
                       <div className="w-[57%] h-[90%] rounded-2xl overflow-hidden border-4 border-white shadow-xl rotate-[-3deg] z-10 -mt-8">
-                        <img src={childType.image} alt={childType.label} className="w-full h-full object-cover" />
+                        <Image src={childType.image} alt={childType.label} width={500} height={700} className="w-full h-full object-cover" />
                       </div>
                       <div className="w-[50%] h-[82%] rounded-2xl overflow-hidden border-4 border-white shadow-lg rotate-[5deg] -ml-[9%] -mt-4 z-0">
-                        <img src={parentType.image} alt={parentType.label} className="w-full h-full object-cover" />
+                        <Image src={parentType.image} alt={parentType.label} width={500} height={700} className="w-full h-full object-cover" />
                       </div>
                     </div>
                   </div>
@@ -730,7 +652,7 @@ function ReportContent() {
                             { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', icon: '\uD83D\uDC99' },
                             { key: 'P', label: t('report.persistenceName'), color: '#D4805E', icon: '\u231B' },
                           ] as const).map(dim => {
-                            const text = (childAiReport.analysis?.dimensions as any)?.[dim.key];
+                            const text = childAiReport.analysis?.dimensions?.[dim.key as ReportScoreKey];
                             if (!text) return null;
                             return (
                               <div key={dim.key} className="space-y-1.5">
@@ -755,7 +677,7 @@ function ReportContent() {
                             <Icon name="favorite" size="sm" /> {t('report.hiddenFeelings')}
                           </p>
                           {Array.isArray(childAiReport.analysis.insight) ? (
-                            childAiReport.analysis.insight.map((item: any, idx: number) => (
+                            childAiReport.analysis.insight.map((item, idx: number) => (
                               <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
                                 <p className="text-[11px] font-black text-primary/70">{item.scene}</p>
                                 <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">
@@ -791,7 +713,7 @@ function ReportContent() {
                           <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                             <Icon name="lightbulb" size="sm" /> {t('report.parentingGuide')}
                           </p>
-                          {childAiReport.parentingTips.map((tip: any, idx: number) => (
+                          {childAiReport.parentingTips.map((tip, idx: number) => (
                             <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
                               <h6 className="font-bold text-text-main dark:text-white mb-3 text-[14px]">
                                 {tip.situation}
@@ -815,10 +737,10 @@ function ReportContent() {
                           <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                             <Icon name="record_voice_over" size="sm" /> {t('report.magicWord')}
                           </p>
-                          {childAiReport.scripts.map((s: any, idx: number) => (
+                          {childAiReport.scripts.map((s, idx: number) => (
                             <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
                               <p className="text-[12px] font-bold text-text-sub">{s.situation}</p>
-                              <p className="text-[16px] font-black text-primary leading-snug break-keep">&ldquo;{s.script.replace(/^[""\u201C]+|[""\u201D]+$/g, '')}&rdquo;</p>
+                              <p className="text-[16px] font-black text-primary leading-snug break-keep">&ldquo;{sanitizeQuotedText(s.script)}&rdquo;</p>
                               <p className="text-[13px] text-text-sub leading-relaxed break-keep">{s.guide}</p>
                             </div>
                           ))}
@@ -832,7 +754,7 @@ function ReportContent() {
                             {new Date(reportDates.child).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} {t('common.analysis')}
                           </p>
                           <button
-                            onClick={() => { setChildAiReport(null); generateChildAIReport(true); }}
+                            onClick={() => { setChildAiReport(null); void generateChildAIReport(true); }}
                             disabled={isGenerating}
                             className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
                           >
@@ -917,7 +839,7 @@ function ReportContent() {
                           { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', icon: '\uD83D\uDC99' },
                           { key: 'P', label: t('report.persistenceName'), color: '#D4805E', icon: '\u231B' },
                         ] as const).map(dim => {
-                          const text = (parentAiReport.dimensions as any)?.[dim.key];
+                          const text = parentAiReport.dimensions?.[dim.key as ReportScoreKey];
                           if (!text) return null;
                           return (
                             <div key={dim.key} className="space-y-1.5">
@@ -936,13 +858,13 @@ function ReportContent() {
                     )}
 
                     {/* 4. 내가 가장 빛나는 순간 */}
-                    {(parentAiReport.shining || parentAiReport.sections?.find((s: any) => s.id === 'shining')) && (
+                    {(parentAiReport.shining || getParentSectionContent(parentAiReport, 'shining')) && (
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
                           <Icon name="auto_awesome" size="sm" /> {t('report.shiningMoment')}
                         </p>
                         <p className="text-[14px] text-text-main dark:text-slate-300 leading-[1.85] break-keep whitespace-pre-wrap">
-                          {parentAiReport.shining || parentAiReport.sections?.find((s: any) => s.id === 'shining')?.content}
+                          {parentAiReport.shining || getParentSectionContent(parentAiReport, 'shining')}
                         </p>
                       </section>
                     )}
@@ -953,7 +875,7 @@ function ReportContent() {
                         <p className="text-[12px] font-black text-primary flex items-center gap-1.5 px-1">
                           <Icon name="child_care" size="sm" /> {t('report.parentingTemperament')}
                         </p>
-                        {parentAiReport.parentingStyle.map((item: any, idx: number) => (
+                        {parentAiReport.parentingStyle.map((item, idx: number) => (
                           <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
                             <p className="text-[11px] font-black text-primary/70">{item.scene}</p>
                             <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">
@@ -965,13 +887,13 @@ function ReportContent() {
                     )}
 
                     {/* 6. 에너지 고갈 신호 */}
-                    {(parentAiReport.vulnerability || parentAiReport.sections?.find((s: any) => s.id === 'vulnerability')) && (
+                    {(parentAiReport.vulnerability || getParentSectionContent(parentAiReport, 'vulnerability')) && (
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2.5">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
                           <Icon name="battery_alert" size="sm" /> {t('report.energyWarning')}
                         </p>
                         <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep whitespace-pre-wrap">
-                          {parentAiReport.vulnerability || parentAiReport.sections?.find((s: any) => s.id === 'vulnerability')?.content}
+                          {parentAiReport.vulnerability || getParentSectionContent(parentAiReport, 'vulnerability')}
                         </p>
                       </section>
                     )}
@@ -982,7 +904,7 @@ function ReportContent() {
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                           <Icon name="lightbulb" size="sm" /> {t('report.mindNutrient')}
                         </p>
-                        {parentAiReport.solutions.map((sol: any, idx: number) => (
+                        {parentAiReport.solutions.map((sol, idx: number) => (
                           <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
                             <h6 className="font-bold text-text-main dark:text-white text-[14px]">{sol.name}</h6>
                             <p className="text-[14px] text-text-sub dark:text-slate-400 leading-relaxed break-keep">{sol.action}</p>
@@ -1011,7 +933,7 @@ function ReportContent() {
                           {new Date(reportDates.parent).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 분석
                         </p>
                         <button
-                          onClick={() => { setParentAiReport(null); generateParentAIReport(true); }}
+                          onClick={() => { setParentAiReport(null); void generateParentAIReport(true); }}
                           disabled={isGenerating}
                           className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
                         >
@@ -1149,7 +1071,7 @@ function ReportContent() {
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                               <Icon name="school" size="sm" /> {t('report.parentingPrinciples')}
                             </p>
-                            {harmonyAiReport.parentingPrinciples.map((p: any, idx: number) => (
+                            {harmonyAiReport.parentingPrinciples.map((p, idx: number) => (
                               <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
                                 <h4 className="font-bold text-text-main dark:text-white text-[14px]">{idx + 1}. {p.title}</h4>
                                 <p className="text-[14px] text-text-sub dark:text-slate-400 leading-relaxed break-keep">{p.why}</p>
@@ -1174,7 +1096,7 @@ function ReportContent() {
                             <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                               <Icon name="lightbulb" size="sm" /> {t('report.situationalTips')}
                             </p>
-                            {harmonyAiReport.situationalTips.map((tip: any, idx: number) => (
+                            {harmonyAiReport.situationalTips.map((tip, idx: number) => (
                               <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-3">
                                 <h4 className="font-bold text-text-main dark:text-white text-[14px]">{tip.situation}</h4>
                                 <div className="bg-teal-50 dark:bg-teal-900/10 rounded-lg p-3 border border-teal-100">
@@ -1190,7 +1112,7 @@ function ReportContent() {
                                   <p className="text-[12px] text-green-800 dark:text-green-300 break-keep">{tip.betterResponse}</p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                                  <p className="text-[13px] text-text-main dark:text-white font-bold italic break-keep">&ldquo;{tip.script.replace(/^[""\u201C]+|[""\u201D]+$/g, '')}&rdquo;</p>
+                                  <p className="text-[13px] text-text-main dark:text-white font-bold italic break-keep">&ldquo;{sanitizeQuotedText(tip.script)}&rdquo;</p>
                                 </div>
                               </div>
                             ))}
@@ -1236,7 +1158,7 @@ function ReportContent() {
                           {new Date(reportDates.parenting).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 분석
                         </p>
                         <button
-                          onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setHarmonyAiReport(null); generateHarmonyAIReport(true); }}
+                          onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setHarmonyAiReport(null); void generateHarmonyAIReport(true); }}
                           disabled={isGenerating}
                           className="text-[11px] text-text-sub/50 hover:text-primary font-medium transition-colors disabled:opacity-40"
                         >
