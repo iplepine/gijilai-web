@@ -194,44 +194,44 @@ export default function PricingPage() {
       <div className="w-full max-w-md min-h-screen flex flex-col shadow-2xl">
         <Navbar title={t('pricing.title')} showBack />
 
-        <div className="flex-1 overflow-y-auto px-6 pt-8 pb-32 space-y-8">
+        <div className="flex-1 overflow-y-auto px-5 pt-7 pb-32 space-y-6">
           {/* Header */}
           <section className="text-center space-y-2">
-            <h2 className="text-2xl font-bold break-keep">
+            <h2 className="text-[19px] leading-[1.35] font-bold break-keep px-3">
               {t('pricing.headline')}
             </h2>
-            <p className="text-text-sub text-sm">
+            <p className="text-text-sub text-[13px] leading-relaxed px-2">
               {t('pricing.subtitle')}
             </p>
           </section>
 
           {/* Plan Card — [연 구독] 재활성화 시: grid grid-cols-2 gap-3으로 변경, YEARLY 카드 추가 */}
           <section>
-            <div className="p-6 rounded-2xl border-2 border-primary bg-primary/5 text-center relative">
+            <div className="px-5 py-6 rounded-[28px] border-[1.5px] border-primary bg-primary/5 text-center relative">
               {isFirstSubscription && (
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[10px] font-bold px-3.5 py-1 rounded-full whitespace-nowrap">
                   {t('pricing.firstMonthOff')}
                 </span>
               )}
-              <p className="text-xs font-bold text-text-sub mb-2">
+              <p className="text-[11px] font-bold text-text-sub mb-2">
                 {t('pricing.monthly')}
               </p>
               {isFirstSubscription ? (
                 <>
-                  <p className="text-3xl font-black text-text-main dark:text-white">
+                  <p className="text-[34px] leading-none font-black tracking-[-0.03em] text-text-main dark:text-white">
                     {formatPrice(FIRST_MONTH_PRICES[currency], currency)}
                   </p>
-                  <p className="text-sm text-text-sub mt-1">
+                  <p className="text-[13px] text-text-sub mt-2">
                     <span className="line-through">{monthlyPrice}</span>
                     {t('pricing.perFirstMonth')}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-3xl font-black text-text-main dark:text-white">
+                  <p className="text-[34px] leading-none font-black tracking-[-0.03em] text-text-main dark:text-white">
                     {monthlyPrice}
                   </p>
-                  <p className="text-sm text-text-sub mt-1">
+                  <p className="text-[13px] text-text-sub mt-2">
                     {t('pricing.perMonth')}
                   </p>
                 </>
@@ -240,8 +240,8 @@ export default function PricingPage() {
           </section>
 
           {/* Benefits */}
-          <section className="bg-white dark:bg-surface-dark rounded-2xl p-6 space-y-4 border border-beige-main/20">
-            <h3 className="text-sm font-bold text-text-main dark:text-white">
+          <section className="bg-white dark:bg-surface-dark rounded-[28px] px-5 py-6 space-y-3.5 border border-beige-main/20">
+            <h3 className="text-[13px] font-bold text-text-main dark:text-white">
               {t('pricing.benefits')}
             </h3>
             {[
@@ -251,10 +251,10 @@ export default function PricingPage() {
               { icon: 'speed', key: 'pricing.noCooldown' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-primary/8 flex items-center justify-center shrink-0">
                   <Icon name={item.icon} size="sm" className="text-primary text-[18px]" />
                 </div>
-                <span className="text-sm text-text-main dark:text-white">
+                <span className="text-[13px] font-medium text-text-main dark:text-white leading-snug">
                   {t(item.key)}
                 </span>
               </div>
@@ -264,11 +264,11 @@ export default function PricingPage() {
           {/* 결제수단 선택 (한국 웹만 — 앱에서는 Apple/Google이 처리) */}
           {locale === 'ko' && !isApp && (
             <section className="space-y-3">
-              <h3 className="text-sm font-bold text-text-main dark:text-white">{t('pricing.payMethod')}</h3>
+              <h3 className="text-[13px] font-bold text-text-main dark:text-white">{t('pricing.payMethod')}</h3>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setPayMethod('CARD')}
-                  className={`p-3 rounded-2xl border-2 transition-all text-center ${
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
                     payMethod === 'CARD'
                       ? 'border-primary bg-primary/5'
                       : 'border-gray-100 bg-white dark:bg-surface-dark dark:border-gray-700'
@@ -280,7 +280,7 @@ export default function PricingPage() {
                 </button>
                 <button
                   onClick={() => setPayMethod('TOSSPAY')}
-                  className={`p-3 rounded-2xl border-2 transition-all text-center ${
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
                     payMethod === 'TOSSPAY'
                       ? 'border-[#0064FF] bg-[#0064FF]/5'
                       : 'border-gray-100 bg-white dark:bg-surface-dark dark:border-gray-700'
@@ -292,7 +292,7 @@ export default function PricingPage() {
                 </button>
                 <button
                   onClick={() => setPayMethod('NAVERPAY')}
-                  className={`p-3 rounded-2xl border-2 transition-all text-center ${
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
                     payMethod === 'NAVERPAY'
                       ? 'border-[#03C75A] bg-[#03C75A]/5'
                       : 'border-gray-100 bg-white dark:bg-surface-dark dark:border-gray-700'
@@ -309,14 +309,14 @@ export default function PricingPage() {
         </div>
 
         {/* CTA */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30 max-w-md mx-auto w-full">
+        <div className="absolute bottom-0 left-0 right-0 px-5 pt-4 pb-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30 max-w-md mx-auto w-full">
           <Button
             variant="primary"
             size="lg"
             fullWidth
             onClick={handleSubscribe}
             disabled={loading || !user}
-            className="h-16 rounded-2xl text-lg font-bold shadow-glow"
+            className="h-14 rounded-xl text-[15px] font-bold shadow-glow"
           >
             {loading ? (
               <div className="flex items-center gap-2">
