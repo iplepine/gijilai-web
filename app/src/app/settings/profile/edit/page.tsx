@@ -16,7 +16,6 @@ export default function ProfileEditPage() {
     const [fullName, setFullName] = useState('');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [avatarError, setAvatarError] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -96,13 +95,12 @@ export default function ProfileEditPage() {
                             onClick={() => fileInputRef.current?.click()}
                             className="size-28 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden cursor-pointer relative group"
                         >
-                            {!avatarError && avatarUrl ? (
-                                <img
-                                    src={avatarUrl}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
-                                    onError={() => setAvatarError(true)}
+                            {avatarUrl ? (
+                                <div
+                                    role="img"
+                                    aria-label={t('settings.editProfile')}
+                                    className="w-full h-full bg-cover bg-center"
+                                    style={{ backgroundImage: `url("${avatarUrl}")` }}
                                 />
                             ) : (
                                 <span className="material-symbols-outlined text-[48px]">person</span>

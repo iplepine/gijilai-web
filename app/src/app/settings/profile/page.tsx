@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db, UserProfile, ChildProfile } from '@/lib/db';
-import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/store/useAppStore';
 import { useSurveyStore } from '@/store/surveyStore';
 import BottomNav from '@/components/layout/BottomNav';
@@ -21,7 +20,6 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [children, setChildren] = useState<ChildProfile[]>([]);
     const [loading, setLoading] = useState(true);
-    const [avatarError, setAvatarError] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
@@ -102,13 +100,12 @@ export default function ProfilePage() {
                     <section className="bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-soft border border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-4">
                             <div className="size-20 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary border-4 border-white dark:border-gray-800 shadow-sm overflow-hidden">
-                                {!avatarError && user?.user_metadata?.avatar_url ? (
-                                    <img
-                                        src={user.user_metadata.avatar_url}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                        referrerPolicy="no-referrer"
-                                        onError={() => setAvatarError(true)}
+                                {user?.user_metadata?.avatar_url ? (
+                                    <div
+                                        role="img"
+                                        aria-label={t('settings.myInfo')}
+                                        className="w-full h-full bg-cover bg-center"
+                                        style={{ backgroundImage: `url("${user.user_metadata.avatar_url}")` }}
                                     />
                                 ) : (
                                     <span className="material-symbols-outlined text-4xl">person</span>
@@ -143,7 +140,12 @@ export default function ProfilePage() {
                                     <div className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all active:scale-[0.99]">
                                         <div className="size-12 rounded-xl bg-primary/5 flex items-center justify-center overflow-hidden">
                                             {child.image_url ? (
-                                                <img src={child.image_url} alt={child.name} className="w-full h-full object-cover" />
+                                                <div
+                                                    role="img"
+                                                    aria-label={child.name}
+                                                    className="w-full h-full bg-cover bg-center"
+                                                    style={{ backgroundImage: `url("${child.image_url}")` }}
+                                                />
                                             ) : (
                                                 <span className="material-symbols-outlined text-primary">face</span>
                                             )}

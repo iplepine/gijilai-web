@@ -10,8 +10,31 @@ import { useLocale } from '@/i18n/LocaleProvider';
 
 
 declare global {
+  type PortOneBillingKeyMethod = 'CARD' | 'EASY_PAY';
+
+  interface PortOneIssueBillingKeyParams {
+    storeId?: string;
+    channelKey?: string;
+    billingKeyMethod: PortOneBillingKeyMethod;
+    issueId: string;
+    issueName: string;
+    customer: {
+      customerId: string;
+      email?: string;
+    };
+    easyPay?: { provider: 'NAVERPAY' | 'TOSSPAY' };
+  }
+
+  interface PortOneIssueBillingKeyResult {
+    code?: string;
+    message?: string;
+    billingKey?: string;
+  }
+
   interface Window {
-    PortOne?: any;
+    PortOne?: {
+      requestIssueBillingKey: (params: PortOneIssueBillingKeyParams) => Promise<PortOneIssueBillingKeyResult>;
+    };
     PaymentBridge?: { postMessage: (msg: string) => void };
     __iapLoadingDone?: () => void;
   }
@@ -31,6 +54,10 @@ const FIRST_MONTH_PRICES = {
   USD: Math.round(PRICES.MONTHLY.USD * (1 - FIRST_MONTH_DISCOUNT)),
 };
 
+type ExistingSubscriptionSummary = {
+  id: string;
+} | null;
+
 function formatPrice(amount: number, curr: 'KRW' | 'USD'): string {
   if (curr === 'KRW') return `${amount.toLocaleString()}원`;
   return `$${(amount / 100).toFixed(2)}`;
@@ -42,9 +69,11 @@ export default function PricingPage() {
   const { locale, t, currency } = useLocale();
   const [loading, setLoading] = useState(false);
   const [payMethod, setPayMethod] = useState<PayMethodOption>('CARD');
-  const [existingSubscription, setExistingSubscription] = useState<any>(null);
+  const [existingSubscription, setExistingSubscription] = useState<ExistingSubscriptionSummary>(null);
   const [isFirstSubscription, setIsFirstSubscription] = useState(true);
   const [isApp, setIsApp] = useState(false);
+
+  const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : t('common.error');
 
   useEffect(() => {
     // 앱 감지
@@ -113,7 +142,7 @@ export default function PricingPage() {
       }
 
       // 빌링키 발급
-      const issueParams: Record<string, any> = {
+      const issueParams: PortOneIssueBillingKeyParams = {
         storeId,
         channelKey,
         billingKeyMethod,
@@ -157,9 +186,9 @@ export default function PricingPage() {
       }
 
       router.replace('/');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Subscribe error:', error);
-      alert(t('pricing.subscribeError', { message: error.message }));
+      alert(t('pricing.subscribeError', { message: getErrorMessage(error) }));
     } finally {
       setLoading(false);
     }

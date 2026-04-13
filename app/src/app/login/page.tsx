@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
 import { trackEvent } from '@/lib/analytics';
@@ -17,14 +18,19 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
 
+    const getErrorMessage = (error: unknown) => {
+        if (error instanceof Error) return error.message;
+        return t('auth.loginFailed');
+    };
+
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setEmailError('');
         try {
             trackEvent('login_attempt', { provider: 'email' });
             await signInWithEmail(email, password);
-        } catch (error: any) {
-            setEmailError(error?.message || t('auth.loginFailed'));
+        } catch (error) {
+            setEmailError(getErrorMessage(error));
         }
     };
 
@@ -38,7 +44,7 @@ export default function LoginPage() {
         <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-background-dark p-6">
             <div className="w-full max-w-sm text-center">
                 <div className="mb-8 flex justify-center">
-                    <img src="/gijilai_icon.png" alt={t('common.appName')} className="w-16 h-16 rounded-2xl object-contain" />
+                    <Image src="/gijilai_icon.png" alt={t('common.appName')} width={64} height={64} className="w-16 h-16 rounded-2xl object-contain" />
                 </div>
 
                 <h1 className="text-2xl font-bold text-[var(--text-main)] dark:text-white mb-2">

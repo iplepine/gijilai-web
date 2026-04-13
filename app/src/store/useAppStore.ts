@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { IntakeFormData, SurveyResponse, AnalysisResult } from '@/types';
+import type { IntakeFormData, AnalysisResult } from '@/types';
 
 interface AppState {
   // Intake Form

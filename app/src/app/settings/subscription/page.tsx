@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { db, PaymentData } from '@/lib/db';
+import { db, PaymentData, SubscriptionData } from '@/lib/db';
 import { useLocale } from '@/i18n/LocaleProvider';
 
 
@@ -14,10 +14,12 @@ export default function SubscriptionPage() {
   const { t } = useLocale();
   const router = useRouter();
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+
+  const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : t('settings.cancelError');
 
   useEffect(() => {
     if (!user) return;
@@ -38,13 +40,13 @@ export default function SubscriptionPage() {
       const res = await fetch('/api/payment/cancel-subscription', { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        setSubscription((prev: any) => prev ? { ...prev, cancelled_at: new Date().toISOString() } : null);
+        setSubscription((prev) => prev ? { ...prev, cancelled_at: new Date().toISOString() } : null);
         alert(t('settings.cancelSuccess').replace('{date}', new Date(data.activeUntil).toLocaleDateString('ko-KR')));
       } else {
         alert(data.error || t('settings.cancelError'));
       }
-    } catch (e: any) {
-      alert(t('settings.cancelError'));
+    } catch (error) {
+      alert(getErrorMessage(error));
     } finally {
       setCancelling(false);
     }

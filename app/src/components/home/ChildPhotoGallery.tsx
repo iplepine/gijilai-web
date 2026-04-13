@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Icon } from '@/components/ui/Icon';
 
 interface ChildPhotoGalleryProps {
@@ -36,12 +35,11 @@ export function ChildPhotoGallery({ images = [], childName }: ChildPhotoGalleryP
                     key={index}
                     className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'}`}
                 >
-                    {/* Note: In a real app, use next/image with proper blurDataURL. 
-                Using standard img for external URLs without config setup for now to avoid errors. */}
-                    <img
-                        src={src}
-                        alt={`${childName} photo ${index + 1}`}
-                        className="w-full h-full object-cover"
+                    <div
+                        role="img"
+                        aria-label={`${childName} photo ${index + 1}`}
+                        className="w-full h-full bg-cover bg-center"
+                        style={{ backgroundImage: `url("${src}")` }}
                     />
                     {/* Subtle Overlay for better text visibility if needed */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />

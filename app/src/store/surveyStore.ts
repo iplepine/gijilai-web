@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Answer, Question, SurveyType } from '../types/survey';
+import { SurveyType } from '../types/survey';
 
 interface SurveyState {
     currentStep: number;

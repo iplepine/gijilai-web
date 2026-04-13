@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { trackEvent } from '@/lib/analytics';
@@ -102,10 +103,11 @@ export default function LandingPage() {
                     <div className="mt-16 md:mt-20 w-full max-w-[280px] md:max-w-[320px] mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-600">
                         <div className="relative aspect-square rounded-3xl overflow-hidden shadow-card">
                             {mounted && ALL_TYPES.map((type, i) => (
-                                <img
+                                <Image
                                     key={type.src}
                                     src={type.src}
                                     alt={t('landing.temperamentType')}
+                                    fill
                                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
                                         i === currentIndex ? 'opacity-100' : 'opacity-0'
                                     }`}

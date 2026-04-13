@@ -4,8 +4,62 @@ import { createClient } from '@/lib/supabaseServer';
 import { getConsultModel } from '@/lib/consult-model';
 import { getServerFeatureAccess } from '@/lib/access';
 
-function formatObservationsForPrompt(observations: any[]): string {
-    return observations.map((obs: any) => {
+type ObservationPromptItem = {
+    created_at: string;
+    situation: string;
+    my_action: string;
+    child_reaction: string;
+    note?: string | null;
+};
+
+type SessionContextPrescription = {
+    interpretation?: string;
+    magicWord?: string;
+    questionAnalysis?: Array<{
+        question: string;
+        answer: string;
+        analysis: string;
+    }>;
+};
+
+type SessionContextConsultation = {
+    created_at: string;
+    problem_description: string;
+    ai_prescription?: SessionContextPrescription | null;
+};
+
+type SessionContextPractice = {
+    id: string;
+    title: string;
+    duration: number;
+    status: string;
+};
+
+type SessionContextLog = {
+    practice_id: string;
+    done: boolean;
+};
+
+type SessionContextReview = {
+    practice_id: string;
+    content: string;
+};
+
+type SessionContext = {
+    session: { title: string };
+    consultations?: SessionContextConsultation[];
+    practices?: SessionContextPractice[];
+    logs?: SessionContextLog[];
+    reviews?: SessionContextReview[];
+};
+
+type QuestionPromptItem = {
+    id: string;
+    text: string;
+};
+
+function formatObservationsForPrompt(observations: ObservationPromptItem[]): string {
+    return observations.map((obs) => {
         const date = new Date(obs.created_at).toLocaleDateString('ko-KR');
         let entry = `[${date}] 상황: ${obs.situation} → 양육자 행동: ${obs.my_action} → 아이 반응: ${obs.child_reaction}`;
         if (obs.note) {
@@ -15,7 +69,7 @@ function formatObservationsForPrompt(observations: any[]): string {
     }).join('\n');
 }
 
-function formatSessionContextForPrompt(sessionContext: any): string {
+function formatSessionContextForPrompt(sessionContext: SessionContext | null | undefined): string {
     if (!sessionContext) return '';
 
     let context = `\n\n**[이전 상담 맥락 — 추가 상담]**\n`;
@@ -50,9 +104,9 @@ function formatSessionContextForPrompt(sessionContext: any): string {
         const logs = sessionContext.logs || [];
         const reviews = sessionContext.reviews || [];
         for (const p of practices) {
-            const practiceLogs = logs.filter((l: any) => l.practice_id === p.id);
-            const doneDays = practiceLogs.filter((l: any) => l.done).length;
-            const review = reviews.find((r: any) => r.practice_id === p.id);
+            const practiceLogs = logs.filter((l) => l.practice_id === p.id);
+            const doneDays = practiceLogs.filter((l) => l.done).length;
+            const review = reviews.find((r) => r.practice_id === p.id);
             context += `- ${p.title} | ${doneDays}/${p.duration}일 실천 (${p.status})`;
             if (review) context += ` | 회고: ${review.content}`;
             context += `\n`;
@@ -78,7 +132,39 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Subscription required', code: 'SUBSCRIPTION_REQUIRED' }, { status: 402 });
         }
 
-        const { problem, questions, answers, childProfile, parentProfile, childName, childBirthDate, childGender, recentObservations, sessionContext } = await request.json();
+        const {
+            problem,
+            questions,
+            answers,
+            childProfile,
+            parentProfile,
+            childName,
+            childBirthDate,
+            childGender,
+            recentObservations,
+            sessionContext
+        }: {
+            problem?: string;
+            questions?: QuestionPromptItem[];
+            answers?: Record<string, string>;
+            childProfile?: {
+                label: string;
+                keywords: string[];
+                description: string;
+                scores: { NS: number; HA: number; RD: number; P: number };
+            } | null;
+            parentProfile?: {
+                label: string;
+                keywords: string[];
+                description: string;
+                scores: { NS: number; HA: number; RD: number; P: number };
+            } | null;
+            childName?: string;
+            childBirthDate?: string;
+            childGender?: string;
+            recentObservations?: ObservationPromptItem[];
+            sessionContext?: SessionContext | null;
+        } = await request.json();
 
         // 나이 계산
         let childAge = '';
@@ -118,7 +204,7 @@ ${parentProfile ? `- 양육자 기질 유형: ${parentProfile.label} (${parentPr
   - 차원별 점수 (0~100): 자극추구=${parentProfile.scores.NS}, 위험회피=${parentProfile.scores.HA}, 사회적민감성=${parentProfile.scores.RD}, 지속성=${parentProfile.scores.P}` : '- 양육자 기질: 검사 데이터 없음 (보편적 양육자 기질로 분석)'}
 - 고민 상황: ${problem}
 - 문진 질문과 답변:
-${questions && questions.length > 0 ? questions.map((q: any) => `  Q: ${q.text}\n  A: ${answers[q.id] || '(미응답)'}`).join('\n') : JSON.stringify(answers)}${recentObservations && recentObservations.length > 0 ? `
+${questions && questions.length > 0 ? questions.map((q) => `  Q: ${q.text}\n  A: ${answers[q.id] || '(미응답)'}`).join('\n') : JSON.stringify(answers)}${recentObservations && recentObservations.length > 0 ? `
 - 최근 양육 관찰 기록:
 ${formatObservationsForPrompt(recentObservations)}` : ''}${formatSessionContextForPrompt(sessionContext)}
 

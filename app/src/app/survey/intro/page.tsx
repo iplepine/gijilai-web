@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { useSurveyStore } from '@/store/surveyStore';
@@ -45,7 +46,7 @@ export default function IntroPage() {
                         <div className="relative w-52 h-52 mx-auto mb-4">
                             <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
                             <div className="absolute inset-3 rounded-full bg-white dark:bg-surface-dark shadow-lg overflow-hidden">
-                                <img src="/survey_icon.png" alt={t('survey.title')} className="w-full h-full object-cover scale-125" />
+                                <Image src="/survey_icon.png" alt={t('survey.title')} fill className="object-cover scale-125" />
                             </div>
                         </div>
 

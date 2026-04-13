@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
@@ -230,7 +231,7 @@ export default function HomePage() {
                     className="relative w-32 h-32 cursor-pointer group"
                     onClick={handleProfileClick}
                   >
-                    <input
+                      <input
                       type="file"
                       ref={fileInputRef}
                       className="hidden"
@@ -239,9 +240,19 @@ export default function HomePage() {
                     />
                     <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 relative z-10 border-[3px] border-white dark:border-surface-dark shadow-md ring-1 ring-black/5 group-hover:scale-105 transition-transform">
                       {mainChild?.image_url ? (
-                        <img alt={childName} className="w-full h-full object-cover" src={mainChild.image_url} />
+                        <div
+                          role="img"
+                          aria-label={childName}
+                          className="w-full h-full bg-cover bg-center"
+                          style={{ backgroundImage: `url("${mainChild.image_url}")` }}
+                        />
                       ) : temperamentInfo?.child?.image ? (
-                        <img alt={childName} className="w-full h-full object-cover" src={temperamentInfo.child.image} />
+                        <div
+                          role="img"
+                          aria-label={childName}
+                          className="w-full h-full bg-cover bg-center"
+                          style={{ backgroundImage: `url("${temperamentInfo.child.image}")` }}
+                        />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
                           <span className="material-icons-round text-5xl">face</span>
@@ -476,7 +487,7 @@ export default function HomePage() {
 
               <div className="relative z-10 p-8 flex flex-col items-center">
                 <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mb-8 rotate-3 shadow-xl">
-                  <img src="/gijilai_icon.png" alt={t('common.appName')} className="w-16 h-16 object-contain" />
+                  <Image src="/gijilai_icon.png" alt={t('common.appName')} width={64} height={64} className="w-16 h-16 object-contain" />
                 </div>
 
                 <div className="text-center space-y-3 mb-10">
@@ -538,7 +549,7 @@ export default function HomePage() {
             <div className="relative bg-background-light dark:bg-surface-dark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in fade-in zoom-in duration-300">
               <div className="flex flex-col items-center text-center">
                 <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mb-5 shadow-lg animate-bounce-subtle">
-                  <img src="/gijilai_icon.png" alt={t('common.appName')} className="w-12 h-12 object-contain" />
+                  <Image src="/gijilai_icon.png" alt={t('common.appName')} width={48} height={48} className="w-12 h-12 object-contain" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-3 font-display">
                   {t('home.surveyIntroTitle')}

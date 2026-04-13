@@ -48,7 +48,12 @@ export function FamilyGardenHero({
                                     <div className="absolute inset-0 flex items-center justify-center pt-2">
                                         {childImage ? (
                                             <div className="w-16 h-16 shrink-0 aspect-square rounded-full overflow-hidden border-4 border-white shadow-md bg-white">
-                                                <img src={childImage} alt={childName} className="w-full h-full object-cover" />
+                                                <div
+                                                    role="img"
+                                                    aria-label={childName}
+                                                    className="w-full h-full bg-cover bg-center"
+                                                    style={{ backgroundImage: `url("${childImage}")` }}
+                                                />
                                             </div>
                                         ) : (
                                             <Icon name="child_care" className="text-white/40 text-5xl" />

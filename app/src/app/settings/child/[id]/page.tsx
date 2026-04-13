@@ -25,6 +25,11 @@ export default function EditChildPage() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+    const getErrorMessage = (error: unknown) => {
+        if (error instanceof Error) return error.message;
+        return t('common.error');
+    };
+
     useEffect(() => {
         const fetchChild = async () => {
             try {
@@ -57,7 +62,7 @@ export default function EditChildPage() {
         if (childId) {
             fetchChild();
         }
-    }, [childId, router]);
+    }, [childId, router, t]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -79,9 +84,9 @@ export default function EditChildPage() {
                 try {
                     // Force upload new file
                     imageUrl = await db.uploadChildAvatar(avatarFile, user.id);
-                } catch (uploadError: any) {
+                } catch (uploadError) {
                     console.error('Avatar upload failed:', uploadError);
-                    alert(t('settings.photoUploadFailed').replace('{message}', uploadError.message || t('common.error')));
+                    alert(t('settings.photoUploadFailed').replace('{message}', getErrorMessage(uploadError)));
                     return;
                 }
             }
@@ -101,9 +106,9 @@ export default function EditChildPage() {
 
             router.refresh();
             router.replace('/');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error updating child:', error);
-            alert(t('settings.updateFailed').replace('{message}', error.message));
+            alert(t('settings.updateFailed').replace('{message}', getErrorMessage(error)));
         } finally {
             setSaving(false);
         }
@@ -123,7 +128,7 @@ export default function EditChildPage() {
 
             router.refresh();
             router.replace('/');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error deleting child:', error);
             alert(t('settings.deleteFailed'));
             setSaving(false);
@@ -157,7 +162,12 @@ export default function EditChildPage() {
                         <div className="relative group cursor-pointer">
                             <div className="w-32 h-32 rounded-full bg-[#E8F5E9] dark:bg-green-900/30 flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-[0_10px_25px_-5px_rgba(76,175,80,0.15)] overflow-hidden">
                                 {previewUrl ? (
-                                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    <div
+                                        role="img"
+                                        aria-label="Preview"
+                                        className="w-full h-full bg-cover bg-center"
+                                        style={{ backgroundImage: `url("${previewUrl}")` }}
+                                    />
                                 ) : (
                                     <Icon name="child_care" className="text-[#4CAF50]/40 dark:text-[#4CAF50]/20 text-6xl" size="lg" />
                                 )}

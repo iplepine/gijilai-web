@@ -23,6 +23,15 @@ export default function RegisterChildPage() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+    const getErrorMessage = (error: unknown) => {
+        if (error instanceof Error) return error.message;
+        if (typeof error === 'object' && error !== null) {
+            const record = error as Record<string, unknown>;
+            if (typeof record.details === 'string') return record.details;
+        }
+        return t('common.error');
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -72,9 +81,9 @@ export default function RegisterChildPage() {
 
             router.refresh();
             router.replace('/');
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error registering child:', error);
-            alert(`${t('settings.registerFailed')}\n${error.message || error.details || t('common.error')}`);
+            alert(`${t('settings.registerFailed')}\n${getErrorMessage(error)}`);
         } finally {
             setLoading(false);
         }
@@ -91,7 +100,12 @@ export default function RegisterChildPage() {
                         <label className="relative group cursor-pointer">
                             <div className="w-32 h-32 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center border-4 border-white dark:border-surface-dark shadow-md overflow-hidden">
                                 {previewUrl ? (
-                                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    <div
+                                        role="img"
+                                        aria-label="Preview"
+                                        className="w-full h-full bg-cover bg-center"
+                                        style={{ backgroundImage: `url("${previewUrl}")` }}
+                                    />
                                 ) : (
                                     <span className="material-symbols-outlined text-[56px] text-primary/40 dark:text-primary/30">child_care</span>
                                 )}

@@ -1,6 +1,22 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+type SharedReportRow = {
+  id: string;
+  type: string;
+  content: string | null;
+  analysis_json: unknown;
+  created_at: string;
+  children: {
+    name: string;
+    gender: string;
+    birth_date: string;
+  } | null;
+  surveys: {
+    scores: unknown;
+  } | null;
+};
+
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,17 +48,19 @@ export async function GET(
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    if (data.type !== 'CHILD') {
+    const report = data as SharedReportRow;
+
+    if (report.type !== 'CHILD') {
       return NextResponse.json({ error: 'This report type cannot be shared' }, { status: 403 });
     }
 
     return NextResponse.json({
-      id: data.id,
-      type: data.type,
-      analysis: data.analysis_json,
-      createdAt: data.created_at,
-      child: data.children,
-      scores: (data.surveys as any)?.scores,
+      id: report.id,
+      type: report.type,
+      analysis: report.analysis_json,
+      createdAt: report.created_at,
+      child: report.children,
+      scores: report.surveys?.scores ?? null,
     });
   } catch (e) {
     console.error('Failed to load shared report:', e);

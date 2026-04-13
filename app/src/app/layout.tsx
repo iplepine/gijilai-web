@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Jua, Lexend, Noto_Sans_KR } from "next/font/google";
 import Script from "next/script";
 import { FirebaseAnalytics } from "@/components/analytics/FirebaseAnalytics";
 import { AuthProvider } from "@/components/auth/AuthProvider";
@@ -6,6 +7,23 @@ import { ReferralHandler } from "@/components/layout/ReferralHandler";
 import { SurveyRestoreProvider } from "@/components/layout/SurveyRestoreProvider";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
 import "./globals.css";
+
+const displayFont = Jua({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-jua",
+});
+
+const bodyFont = Lexend({
+  subsets: ["latin"],
+  variable: "--font-lexend",
+});
+
+const koreanFont = Noto_Sans_KR({
+  subsets: ["latin"],
+  variable: "--font-noto-kr",
+  weight: ["300", "400", "500", "700"],
+});
 
 export const metadata: Metadata = {
   title: "마음 통역소 | 우리 아이 기질 맞춤 양육 가이드",
@@ -31,16 +49,9 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        {/* Google Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
-          rel="stylesheet"
-        />
-        <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
         {/* Material Symbols */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
@@ -73,7 +84,7 @@ export default function RootLayout({
           </>
         ) : null}
       </head>
-      <body className="antialiased min-h-screen relative font-sans text-slate-800 dark:text-[#E8E2D6]" suppressHydrationWarning>
+      <body className={`${displayFont.variable} ${bodyFont.variable} ${koreanFont.variable} antialiased min-h-screen relative font-sans text-slate-800 dark:text-[#E8E2D6]`} suppressHydrationWarning>
         {/* Background handled by globals.css body style */}
 
         {/* 다크모드 초기화 스크립트 */}
