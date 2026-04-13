@@ -533,7 +533,7 @@ function ConsultContent() {
                                     onChange={(e) => setProblemDesc(e.target.value.slice(0, 500))}
                                     maxLength={500}
                                     placeholder={sessionContext ? t('consult.textareaPlaceholderContinue') : t('consult.textareaPlaceholderFirst')}
-                                    className="w-full h-48 p-5 text-[15px] leading-relaxed rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
+                                    className="w-full h-36 p-5 text-[15px] leading-relaxed rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
                                 />
                                 <div className="flex items-center justify-between mt-2 px-1">
                                     <p className={`text-[12px] transition-opacity duration-300 ${
