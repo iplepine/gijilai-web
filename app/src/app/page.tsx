@@ -34,9 +34,6 @@ export default function HomePage() {
   const [showConsultCTA, setShowConsultCTA] = useState(false);
   const [allMagicWords, setAllMagicWords] = useState<{ word: string; date: string; childId?: string; childName?: string }[]>([]);
   const [magicWordIndex, setMagicWordIndex] = useState(0);
-  const [magicWordPhase, setMagicWordPhase] = useState<'visible' | 'exit' | 'enter'>('visible');
-  const [magicWordDir, setMagicWordDir] = useState<'next' | 'prev'>('next');
-  const magicWordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Gardening State
@@ -97,7 +94,6 @@ export default function HomePage() {
   const handleChildSelect = (index: number) => {
     const child = children[index];
     if (child) setSelectedChildId(child.id);
-    setMagicWordIndex(0);
   };
 
   // 선택된 아이의 마법의 한마디
@@ -106,31 +102,25 @@ export default function HomePage() {
     return allMagicWords.filter(w => w.childId === mainChild.id);
   }, [allMagicWords, mainChild]);
 
-  // 마법의 한마디 전환 (exit → index 변경 → enter → visible)
-  const magicWordIndexRef = useRef(magicWordIndex);
-  magicWordIndexRef.current = magicWordIndex;
-  const magicWordPhaseRef = useRef(magicWordPhase);
-  magicWordPhaseRef.current = magicWordPhase;
-
-  const transitionMagicWord = (getNext: (cur: number) => number, dir: 'next' | 'prev') => {
-    if (magicWordPhaseRef.current !== 'visible') return;
-    setMagicWordDir(dir);
-    setMagicWordPhase('exit');
-    setTimeout(() => {
-      setMagicWordIndex(getNext(magicWordIndexRef.current));
-      setMagicWordPhase('enter');
-      requestAnimationFrame(() => setMagicWordPhase('visible'));
-    }, 300);
-  };
-
-  // 마법의 한마디 자동 롤링 (5초 간격)
+  // 홈 진입 시 최근 한마디 목록에서 하나를 순환 노출
   useEffect(() => {
-    if (magicWords.length <= 1) return;
-    const timer = setInterval(() => {
-      transitionMagicWord(cur => (cur + 1) % magicWords.length, 'next');
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [magicWords.length]);
+    if (magicWords.length === 0) {
+      setMagicWordIndex(0);
+      return;
+    }
+
+    const storageKey = `home-magic-word-index:${mainChild?.id || 'all'}`;
+    let nextIndex = 0;
+
+    if (typeof window !== 'undefined') {
+      const raw = window.localStorage.getItem(storageKey);
+      const previousIndex = raw ? Number(raw) : -1;
+      nextIndex = Number.isFinite(previousIndex) ? (previousIndex + 1) % magicWords.length : 0;
+      window.localStorage.setItem(storageKey, String(nextIndex));
+    }
+
+    setMagicWordIndex(nextIndex);
+  }, [magicWords.length, mainChild?.id]);
 
   const childName = mainChild?.name || t('home.defaultChildName');
 
@@ -546,76 +536,22 @@ export default function HomePage() {
 
                 {/* 마법의 한마디 캐러셀 */}
                 {magicWords.length > 0 && (
-                  <div
-                    className="bg-[#519E8A] rounded-2xl p-5 text-white relative overflow-hidden select-none"
-                    style={{ touchAction: 'pan-y' }}
-                    onTouchStart={(e) => {
-                      e.currentTarget.dataset.startX = String(e.touches[0].clientX);
-                      e.currentTarget.dataset.startY = String(e.touches[0].clientY);
-                    }}
-                    onTouchMove={(e) => {
-                      const startX = Number(e.currentTarget.dataset.startX);
-                      const startY = Number(e.currentTarget.dataset.startY);
-                      const dx = Math.abs(e.touches[0].clientX - startX);
-                      const dy = Math.abs(e.touches[0].clientY - startY);
-                      if (dx > dy && dx > 10) {
-                        e.preventDefault();
-                      }
-                    }}
-                    onTouchEnd={(e) => {
-                      const startX = Number(e.currentTarget.dataset.startX);
-                      const endX = e.changedTouches[0].clientX;
-                      const diff = startX - endX;
-                      if (Math.abs(diff) > 40) {
-                        if (diff > 0 && magicWordIndex < magicWords.length - 1) {
-                          transitionMagicWord(cur => cur + 1, 'next');
-                        } else if (diff < 0 && magicWordIndex > 0) {
-                          transitionMagicWord(cur => cur - 1, 'prev');
-                        }
-                      }
-                    }}
-                  >
+                  <div className="bg-[#519E8A] rounded-2xl p-5 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
                     <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-                          <span className="text-[13px] font-black">{t('home.todaysMagicWord')}</span>
-                        </div>
-                        {magicWords.length > 1 && (
-                          <span className="text-[11px] text-white/60 font-medium">{magicWordIndex + 1} / {magicWords.length}</span>
-                        )}
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                        <span className="text-[13px] font-black">{t('home.todaysMagicWord')}</span>
                       </div>
-                      <div className="overflow-hidden h-[84px] mb-3">
-                        <p
-                          key={magicWordIndex}
-                          className="text-[16px] font-medium leading-relaxed transition-all duration-300 ease-in-out line-clamp-3"
-                          style={{
-                            opacity: magicWordPhase === 'exit' ? 0 : 1,
-                            transform: magicWordPhase === 'exit'
-                              ? `translateX(${magicWordDir === 'next' ? '-20px' : '20px'})`
-                              : magicWordPhase === 'enter'
-                              ? `translateX(${magicWordDir === 'next' ? '20px' : '-20px'})`
-                              : 'translateX(0)',
-                          }}
-                        >
+                      <div className="min-h-[84px] mb-3">
+                        <p className="text-[16px] font-medium leading-relaxed line-clamp-3 break-keep">
                           &ldquo;{magicWords[magicWordIndex].word}&rdquo;
                         </p>
                       </div>
-                      <p
-                        className="text-[11px] text-white/60 transition-opacity duration-300"
-                        style={{ opacity: magicWordPhase === 'exit' ? 0 : 1 }}
-                      >
+                      <p className="text-[11px] text-white/60">
                         {new Date(magicWords[magicWordIndex].date).toLocaleDateString('ko-KR')}
                         {magicWords[magicWordIndex].childName && ` · ${magicWords[magicWordIndex].childName}`}
                       </p>
-                      {magicWords.length > 1 && (
-                        <div className="flex justify-center gap-1.5 mt-3">
-                          {magicWords.map((_, i) => (
-                            <div key={i} className={`h-1.5 rounded-full transition-all ${i === magicWordIndex ? 'bg-white w-4' : 'bg-white/30 w-1.5'}`} />
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
