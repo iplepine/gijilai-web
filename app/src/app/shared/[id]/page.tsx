@@ -1,22 +1,40 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import { Icon } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { TemperamentClassifier } from '@/lib/TemperamentClassifier';
-import { eunNeun } from '@/lib/koreanUtils';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
 import { useLocale } from '@/i18n/LocaleProvider';
 
+type TemperamentScores = { NS: number; HA: number; RD: number; P: number };
+type InsightItem = { scene: string; content: string };
+type ParentingTip = { situation: string; tips?: string[] };
+type ScriptItem = { situation: string; script: string; guide: string };
+type SharedAnalysis = {
+  label?: string;
+  desc?: string;
+  intro?: string;
+  scores?: TemperamentScores;
+  analysis?: {
+    dimensions?: Record<'NS' | 'HA' | 'RD' | 'P', string | undefined>;
+    insight?: string | InsightItem[];
+    strengths?: string;
+  };
+  parentingTips?: ParentingTip[];
+  scripts?: ScriptItem[];
+};
+
 interface SharedReport {
   id: string;
   type: string;
-  analysis: any;
+  analysis: SharedAnalysis;
   createdAt: string;
   child: { name: string; gender: string; birth_date: string } | null;
-  scores: any;
+  scores: TemperamentScores | null;
 }
 
 export default function SharedReportPage() {
@@ -49,7 +67,7 @@ export default function SharedReportPage() {
       }
     }
     load();
-  }, [reportId]);
+  }, [reportId, t]);
 
   // Check if logged-in user has their own report
   useEffect(() => {
@@ -118,7 +136,7 @@ export default function SharedReportPage() {
           {/* Hero Image */}
           <div className="relative">
             {childType.image && (
-              <img src={childType.image} alt={childType.label} className="w-full aspect-[4/3] object-cover" />
+              <Image src={childType.image} alt={childType.label} className="w-full aspect-[4/3] object-cover" width={1200} height={900} />
             )}
             {!childType.image && (
               <div className="w-full aspect-[4/3] bg-gradient-to-b from-[#FFF8F0] to-[#FFF3E4]" />
@@ -225,7 +243,7 @@ export default function SharedReportPage() {
                   <Icon name="favorite" size="sm" /> {t('report.hiddenFeelings')}
                 </p>
                 {Array.isArray(analysis.analysis.insight) ? (
-                  analysis.analysis.insight.map((item: any, idx: number) => (
+                  analysis.analysis.insight.map((item: InsightItem, idx: number) => (
                     <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
                       <p className="text-[11px] font-black text-primary/70">{item.scene}</p>
                       <p className="text-[14px] text-text-sub dark:text-slate-400 leading-[1.85] break-keep">
@@ -261,7 +279,7 @@ export default function SharedReportPage() {
                 <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                   <Icon name="lightbulb" size="sm" /> {t('report.parentingGuide')}
                 </p>
-                {analysis.parentingTips.map((tip: any, idx: number) => (
+                {analysis.parentingTips.map((tip: ParentingTip, idx: number) => (
                   <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10">
                     <h6 className="font-bold text-text-main dark:text-white mb-3 text-[14px]">
                       {tip.situation}
@@ -285,7 +303,7 @@ export default function SharedReportPage() {
                 <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5 px-1">
                   <Icon name="record_voice_over" size="sm" /> {t('report.magicWord')}
                 </p>
-                {analysis.scripts.map((s: any, idx: number) => (
+                {analysis.scripts.map((s: ScriptItem, idx: number) => (
                   <div key={idx} className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-5 shadow-card border border-beige-main/10 space-y-2">
                     <p className="text-[12px] font-bold text-text-sub">{s.situation}</p>
                     <p className="text-[16px] font-black text-primary leading-snug break-keep">&ldquo;{s.script.replace(/^[""\u201C]+|[""\u201D]+$/g, '')}&rdquo;</p>

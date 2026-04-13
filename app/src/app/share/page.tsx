@@ -13,12 +13,28 @@ import { CHILD_QUESTIONS } from '@/data/questions';
 import { eunNeun } from '@/lib/koreanUtils';
 import { Suspense } from 'react';
 import { useLocale } from '@/i18n/LocaleProvider';
+import type { Json } from '@/types/supabase';
+
+type SharedAnalysis = {
+  label?: string;
+  desc?: string;
+  intro?: string;
+  scores?: { NS: number; HA: number; RD: number; P: number };
+  analysis?: {
+    strengths?: string;
+  };
+};
+
+function parseAnalysis(value: Json | null): SharedAnalysis | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as unknown as SharedAnalysis;
+}
 
 function SharePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { intake, cbqResponses, atqResponses } = useAppStore();
+  const { intake, cbqResponses } = useAppStore();
   const { t } = useLocale();
   const [copied, setCopied] = useState(false);
 
@@ -67,7 +83,7 @@ function SharePageContent() {
   // Calculate Temperament from DB report or local store
   const temperamentInfo = (() => {
     if (report?.analysis_json) {
-      const analysis = report.analysis_json as any;
+      const analysis = parseAnalysis(report.analysis_json);
       if (analysis.label && analysis.desc) {
         if (analysis.scores) {
           const classified = TemperamentClassifier.analyzeChild(analysis.scores);
@@ -78,7 +94,7 @@ function SharePageContent() {
     }
 
     if (!cbqResponses || Object.keys(cbqResponses).length === 0) return null;
-    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses as any);
+    const scores = TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses);
     const classified = TemperamentClassifier.analyzeChild(scores);
     return { label: classified.label, desc: classified.desc, image: classified.image, intro: undefined, strengths: undefined };
   })();
@@ -141,7 +157,7 @@ function SharePageContent() {
         ].filter(Boolean).join('\n\n'),
         url: getShareUrl(),
       });
-    } catch (err) {
+    } catch {
       // User cancelled share - ignore
     }
   };

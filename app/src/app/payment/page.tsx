@@ -1,34 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { trackEvent } from '@/lib/analytics';
-import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { db } from '@/lib/db';
 import { useLocale } from '@/i18n/LocaleProvider';
 
 declare global {
   interface Window {
-    PortOne?: any;
+    PortOne?: {
+      requestPayment: (params: Record<string, unknown>) => Promise<{ code?: string; message?: string }>;
+    };
+    PaymentBridge?: {
+      postMessage: (message: string) => void;
+    };
+    onPaymentComplete?: (data: { status?: string }) => void;
   }
 }
 
 type LoadingStatus = 'idle' | 'paying' | 'analyzing' | 'complete';
 type PayMethodOption = 'CARD' | 'TOSSPAY' | 'NAVERPAY';
+type Coupon = { id: string; discount_amount: number };
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
 
 export default function PaymentPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { intake } = useAppStore();
   const { t } = useLocale();
   const [status, setStatus] = useState<LoadingStatus>('idle');
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [isApp, setIsApp] = useState(false);
-  const [availableCoupon, setAvailableCoupon] = useState<any>(null);
+  const [availableCoupon, setAvailableCoupon] = useState<Coupon | null>(null);
   const [useCoupon, setUseCoupon] = useState(false);
   const [payMethod, setPayMethod] = useState<PayMethodOption>('CARD');
 
@@ -38,6 +48,15 @@ export default function PaymentPage() {
     { icon: 'favorite', text: t('payment.calculatingMatch') },
     { icon: 'lightbulb', text: t('payment.generatingSolution') },
   ];
+
+  const handlePaymentSuccess = useCallback(() => {
+    trackEvent('payment_completed', {
+      pay_method: payMethod,
+      final_amount: finalAmount,
+      used_coupon: useCoupon,
+    });
+    setStatus('analyzing');
+  }, [finalAmount, payMethod, useCoupon]);
 
   useEffect(() => {
     // 글로벌 사용자는 구독 페이지로 리다이렉트
@@ -51,11 +70,11 @@ export default function PaymentPage() {
 
     // Flutter WebView 감지
     const ua = navigator.userAgent.toLowerCase();
-    const isFlutter = ua.includes('gijilai_app') || !!(window as any).PaymentBridge;
+    const isFlutter = ua.includes('gijilai_app') || !!window.PaymentBridge;
     setIsApp(isFlutter);
 
     // Flutter 결제 콜백
-    (window as any).onPaymentComplete = (data: any) => {
+    window.onPaymentComplete = (data: { status?: string }) => {
       if (data.status === 'success') handlePaymentSuccess();
     };
 
@@ -68,8 +87,8 @@ export default function PaymentPage() {
         .catch(() => {});
     }
 
-    return () => { delete (window as any).onPaymentComplete; };
-  }, []);
+    return () => { delete window.onPaymentComplete; };
+  }, [handlePaymentSuccess, router, t, user]);
 
   // 분석 로딩 애니메이션
   useEffect(() => {
@@ -89,7 +108,7 @@ export default function PaymentPage() {
       }, 1500);
       return () => clearInterval(interval);
     }
-  }, [status, router]);
+  }, [status, router, LOADING_MESSAGES.length]);
 
   const finalAmount = useCoupon && availableCoupon ? Math.max(0, 1980 - availableCoupon.discount_amount) : 1980;
 
@@ -116,8 +135,8 @@ export default function PaymentPage() {
 
     // Flutter IAP
     if (isApp) {
-      if ((window as any).PaymentBridge) {
-        (window as any).PaymentBridge.postMessage(JSON.stringify({
+      if (window.PaymentBridge) {
+        window.PaymentBridge.postMessage(JSON.stringify({
           type: 'PAYMENT_REQUEST',
           provider: 'APPLE_GOOGLE',
           amount: 1980,
@@ -148,7 +167,7 @@ export default function PaymentPage() {
         channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP;
       }
 
-      const paymentParams: Record<string, any> = {
+      const paymentParams: Record<string, unknown> = {
         storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID,
         channelKey,
         paymentId,
@@ -192,22 +211,14 @@ export default function PaymentPage() {
       }
 
       handlePaymentSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment error:', error);
       setStatus('idle');
-      if (error.message !== 'User cancelled') {
-        alert(t('payment.paymentFailed', { message: error.message }));
+      const message = getErrorMessage(error, t('payment.paymentFailed', { message: '' }));
+      if (message !== 'User cancelled') {
+        alert(t('payment.paymentFailed', { message }));
       }
     }
-  };
-
-  const handlePaymentSuccess = () => {
-    trackEvent('payment_completed', {
-      pay_method: payMethod,
-      final_amount: finalAmount,
-      used_coupon: useCoupon,
-    });
-    setStatus('analyzing');
   };
 
   return (
