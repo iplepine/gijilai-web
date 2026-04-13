@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 
-export default function SupportPage() {
+function SupportContent() {
     const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
     const faqs = [
@@ -76,5 +76,13 @@ export default function SupportPage() {
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function SupportPage() {
+    return (
+        <Suspense fallback={<div className="bg-background-light dark:bg-background-dark min-h-screen" />}>
+            <SupportContent />
+        </Suspense>
     );
 }

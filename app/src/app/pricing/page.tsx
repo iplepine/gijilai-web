@@ -10,30 +10,10 @@ import { useLocale } from '@/i18n/LocaleProvider';
 
 
 declare global {
-  type PortOneBillingKeyMethod = 'CARD' | 'EASY_PAY';
-
-  interface PortOneIssueBillingKeyParams {
-    storeId?: string;
-    channelKey?: string;
-    billingKeyMethod: PortOneBillingKeyMethod;
-    issueId: string;
-    issueName: string;
-    customer: {
-      customerId: string;
-      email?: string;
-    };
-    easyPay?: { provider: 'NAVERPAY' | 'TOSSPAY' };
-  }
-
-  interface PortOneIssueBillingKeyResult {
-    code?: string;
-    message?: string;
-    billingKey?: string;
-  }
-
   interface Window {
     PortOne?: {
-      requestIssueBillingKey: (params: PortOneIssueBillingKeyParams) => Promise<PortOneIssueBillingKeyResult>;
+      requestPayment?: (params: Record<string, unknown>) => Promise<PortOnePaymentResult>;
+      requestIssueBillingKey?: (params: PortOneIssueBillingKeyParams) => Promise<PortOnePaymentResult>;
     };
     PaymentBridge?: { postMessage: (msg: string) => void };
     __iapLoadingDone?: () => void;
@@ -123,7 +103,7 @@ export default function PricingPage() {
       const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID;
 
       let channelKey: string | undefined;
-      let billingKeyMethod: string;
+      let billingKeyMethod: PortOneIssueBillingKeyParams['billingKeyMethod'];
 
       if (locale === 'ko') {
         if (payMethod === 'NAVERPAY') {
@@ -162,7 +142,11 @@ export default function PricingPage() {
         }
       }
 
-      const issueResult = await window.PortOne.requestIssueBillingKey(issueParams);
+      const issueResult = await window.PortOne.requestIssueBillingKey?.(issueParams);
+
+      if (!issueResult) {
+        throw new Error('빌링키 발급 실패');
+      }
 
       if (issueResult.code) {
         if (issueResult.code === 'PAY_PROCESS_CANCELED') return;

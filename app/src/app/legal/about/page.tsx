@@ -1,8 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 
-export default function AboutPage() {
+function AboutContent() {
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen">
             <div className="max-w-md mx-auto relative min-h-screen flex flex-col">
@@ -54,5 +55,13 @@ export default function AboutPage() {
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function AboutPage() {
+    return (
+        <Suspense fallback={<div className="bg-background-light dark:bg-background-dark min-h-screen" />}>
+            <AboutContent />
+        </Suspense>
     );
 }

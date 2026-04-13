@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { isAnalyticsEnabled, setAnalyticsUser, trackPageView } from '@/lib/analytics';
 
-export function FirebaseAnalytics() {
+function FirebaseAnalyticsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -24,4 +24,12 @@ export function FirebaseAnalytics() {
   }, [user?.id]);
 
   return null;
+}
+
+export function FirebaseAnalytics() {
+  return (
+    <Suspense fallback={null}>
+      <FirebaseAnalyticsContent />
+    </Suspense>
+  );
 }

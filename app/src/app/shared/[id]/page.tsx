@@ -218,7 +218,7 @@ export default function SharedReportPage() {
                   { key: 'RD', label: t('report.rewardDependenceName'), color: '#7B8EC4', icon: '\uD83D\uDC99' },
                   { key: 'P', label: t('report.persistenceName'), color: '#D4805E', icon: '\u231B' },
                 ] as const).map(dim => {
-                  const text = analysis.analysis.dimensions[dim.key];
+                  const text = analysis.analysis?.dimensions?.[dim.key];
                   if (!text) return null;
                   return (
                     <div key={dim.key} className="space-y-1.5">

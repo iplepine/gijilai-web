@@ -7,14 +7,14 @@ type SharedReportRow = {
   content: string | null;
   analysis_json: unknown;
   created_at: string;
-  children: {
+  children: Array<{
     name: string;
     gender: string;
     birth_date: string;
-  } | null;
-  surveys: {
+  }>;
+  surveys: Array<{
     scores: unknown;
-  } | null;
+  }>;
 };
 
 function getSupabaseAdmin() {
@@ -48,7 +48,7 @@ export async function GET(
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    const report = data as SharedReportRow;
+    const report = data as unknown as SharedReportRow;
 
     if (report.type !== 'CHILD') {
       return NextResponse.json({ error: 'This report type cannot be shared' }, { status: 403 });
@@ -59,8 +59,8 @@ export async function GET(
       type: report.type,
       analysis: report.analysis_json,
       createdAt: report.created_at,
-      child: report.children,
-      scores: report.surveys?.scores ?? null,
+      child: report.children[0] ?? null,
+      scores: report.surveys[0]?.scores ?? null,
     });
   } catch (e) {
     console.error('Failed to load shared report:', e);

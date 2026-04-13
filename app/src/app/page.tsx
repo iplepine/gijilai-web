@@ -18,7 +18,7 @@ import { CHILD_QUESTIONS, PARENT_QUESTIONS } from '@/data/questions';
 import { TCI_TERMINOLOGY } from '@/constants/terminology';
 import { useLocale } from '@/i18n/LocaleProvider';
 import { useHomeDashboard } from '@/hooks/useHomeDashboard';
-import { extractReportScores, parseAnswerMap, type TemperamentScores } from '@/lib/home';
+import { extractReportScores, isTemperamentScores, parseAnswerMap, type TemperamentScores } from '@/lib/home';
 
 export default function HomePage() {
   const router = useRouter();
@@ -146,7 +146,7 @@ export default function HomePage() {
 
     if (!childAnswers) return null;
 
-    const scores = 'NS' in childAnswers
+    const scores = isTemperamentScores(childAnswers)
       ? childAnswers
       : TemperamentScorer.calculate(CHILD_QUESTIONS, childAnswers);
 
@@ -174,11 +174,6 @@ export default function HomePage() {
       setUploading(true);
       const imageUrl = await db.uploadChildAvatar(file, user!.id);
       await db.updateChildProfile(mainChild.id, { image_url: imageUrl });
-
-      // Update local state immediately
-      setChildren(prev => prev.map(child =>
-        child.id === mainChild.id ? { ...child, image_url: imageUrl } : child
-      ));
     } catch (error) {
       console.error('Failed to update profile image:', error);
       alert(t('home.imageUploadFailed'));

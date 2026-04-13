@@ -75,6 +75,10 @@ function SharePageContent() {
     if (typeof window !== 'undefined' && window.Kakao) {
       if (!window.Kakao.isInitialized()) {
         const key = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+        if (!key) {
+          console.warn('NEXT_PUBLIC_KAKAO_JS_KEY is not configured');
+          return;
+        }
         window.Kakao.init(key);
       }
     }
@@ -84,7 +88,7 @@ function SharePageContent() {
   const temperamentInfo = (() => {
     if (report?.analysis_json) {
       const analysis = parseAnalysis(report.analysis_json);
-      if (analysis.label && analysis.desc) {
+      if (analysis && analysis.label && analysis.desc) {
         if (analysis.scores) {
           const classified = TemperamentClassifier.analyzeChild(analysis.scores);
           return { label: analysis.label, desc: analysis.desc, image: classified.image, intro: analysis.intro, strengths: analysis.analysis?.strengths };

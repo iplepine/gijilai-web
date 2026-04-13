@@ -1,14 +1,17 @@
 export const TRIAL_DAYS = 7;
 export const FREE_PRACTICE_VISIBLE_COUNT = 1;
 
-type SubscriptionLookupQuery = {
-  select: (...args: unknown[]) => SubscriptionLookupQuery;
+type SubscriptionLookupFilter = {
   eq: (...args: unknown[]) => SubscriptionLookupQuery;
   in: (...args: unknown[]) => SubscriptionLookupQuery;
   gte: (...args: unknown[]) => SubscriptionLookupQuery;
   order: (...args: unknown[]) => SubscriptionLookupQuery;
   limit: (...args: unknown[]) => SubscriptionLookupQuery;
   maybeSingle: () => Promise<{ data: { id: string } | null }>;
+};
+
+type SubscriptionLookupQuery = SubscriptionLookupFilter & {
+  select: (...args: unknown[]) => SubscriptionLookupFilter;
 };
 
 export function getTrialStatus(userCreatedAt: string) {
@@ -37,11 +40,13 @@ export function getFeatureAccess(params: { userCreatedAt?: string | null; hasSub
 }
 
 export async function getServerFeatureAccess(
-  supabase: { from: (table: string) => SubscriptionLookupQuery },
+  supabase: { from: (table: string) => unknown },
   params: { userId: string; userCreatedAt?: string | null }
 ) {
-  const { data: subscription } = await supabase
-    .from('subscriptions')
+  const subscriptionQuery = supabase
+    .from('subscriptions') as SubscriptionLookupQuery;
+
+  const { data: subscription } = await subscriptionQuery
     .select('id')
     .eq('user_id', params.userId)
     .in('status', ['ACTIVE', 'PAST_DUE'])

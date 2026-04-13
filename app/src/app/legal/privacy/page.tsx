@@ -1,8 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 
-export default function PrivacyPage() {
+function PrivacyContent() {
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen">
             <div className="max-w-md mx-auto relative min-h-screen flex flex-col">
@@ -47,5 +48,13 @@ export default function PrivacyPage() {
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function PrivacyPage() {
+    return (
+        <Suspense fallback={<div className="bg-background-light dark:bg-background-dark min-h-screen" />}>
+            <PrivacyContent />
+        </Suspense>
     );
 }

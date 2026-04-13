@@ -123,12 +123,17 @@ export type ReportApiPayload = {
     answers: Array<{ questionId: string; score: number }>;
     refresh?: boolean;
     childId?: string | null;
-    intake: unknown;
     parentScores?: TemperamentScores;
     styleScores?: ParentingStyleScores;
     isPreview?: boolean;
     childType?: { label: string; keywords: string[]; desc?: string };
     parentType?: { label: string; keywords: string[]; desc?: string };
+};
+
+export type ReportApiResult = {
+    report: Json;
+    reportId?: string;
+    createdAt: string;
 };
 
 type JsonRecord = Record<string, Json | undefined>;

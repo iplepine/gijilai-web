@@ -37,6 +37,7 @@ import {
   type ParentingStyleScores,
   type ParentAiReport,
   type ReportApiPayload,
+  type ReportApiResult,
   type ReportDates,
   type ReportScoreKey,
   type ReportTab,
@@ -149,30 +150,6 @@ function ReportContent() {
     }
   }, [selectedChildId]);
 
-  // 아이 진단 탭: 리포트 없으면 자동 생성 (서버가 캐시/생성 분기)
-  useEffect(() => {
-    const hasCbq = Object.keys(cbqResponses).length > 0 || !!savedChildScores;
-    if (!isGenerating && !reportId && hasCbq && !childAiReport) {
-      void generateChildAIReport();
-    }
-  }, [cbqResponses, childAiReport, generateChildAIReport, isGenerating, reportId, savedChildScores]);
-
-  // 양육자 탭 진입 시 자동 생성
-  useEffect(() => {
-    const hasAtq = Object.keys(atqResponses).length > 0 || !!savedParentScores;
-    if (activeTab === 'parent' && !isGenerating && !reportId && hasAtq && !parentAiReport) {
-      void generateParentAIReport();
-    }
-  }, [activeTab, atqResponses, generateParentAIReport, isGenerating, parentAiReport, reportId, savedParentScores]);
-
-  // 기질맞춤양육 탭 진입 시 자동 생성
-  useEffect(() => {
-    const styleComplete = PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
-    if (activeTab === 'parenting' && !isGenerating && !reportId && !harmonyAiReport && styleComplete) {
-      void generateHarmonyAIReport();
-    }
-  }, [activeTab, generateHarmonyAIReport, harmonyAiReport, isGenerating, parentingResponses, reportId]);
-
   const handleTabChange = (tab: 'child' | 'parent' | 'parenting') => {
     setActiveTab(tab);
   };
@@ -200,7 +177,7 @@ function ReportContent() {
   // API에서 반환된 리포트 ID 저장 (공유 등에 활용)
   const [childReportId, setChildReportId] = useState<string | null>(null);
 
-  const fetchReport = useCallback(async (payload: ReportApiPayload): Promise<{ report: unknown; reportId?: string; createdAt: string } | null> => {
+  const fetchReport = useCallback(async (payload: ReportApiPayload): Promise<ReportApiResult | null> => {
     const res = await fetch('/api/llm/report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -223,6 +200,50 @@ function ReportContent() {
 
     return { report: data.report, reportId: data.reportId, createdAt: data.createdAt };
   }, [intake, isValidReport, selectedChildId]);
+
+  const childScores = useMemo(() => {
+    if (savedChildScores) return savedChildScores;
+    return TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses);
+  }, [cbqResponses, savedChildScores]);
+
+  const parentScores = useMemo(() => {
+    if (savedParentScores) return savedParentScores;
+    return TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses);
+  }, [atqResponses, savedParentScores]);
+
+  const styleScores = useMemo<ParentingStyleScores>(() => {
+    const scores = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
+    const counts = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
+
+    PARENTING_STYLE_QUESTIONS.forEach(q => {
+      const answer = parentingResponses[q.id.toString()];
+      if (answer) {
+        const cat = q.category as keyof typeof scores;
+        if (cat in scores) {
+          scores[cat] += answer;
+          counts[cat]++;
+        }
+      }
+    });
+    return {
+      Efficacy: counts.Efficacy > 0 ? Math.round((scores.Efficacy / (counts.Efficacy * 5)) * 100) : 0,
+      Autonomy: counts.Autonomy > 0 ? Math.round((scores.Autonomy / (counts.Autonomy * 5)) * 100) : 0,
+      Responsiveness: counts.Responsiveness > 0 ? Math.round((scores.Responsiveness / (counts.Responsiveness * 5)) * 100) : 0,
+    };
+  }, [parentingResponses]);
+
+  const childType = useMemo(() => TemperamentClassifier.analyzeChild(childScores), [childScores]);
+
+  const isStyleSurveyComplete = useMemo(() => {
+    return PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
+  }, [parentingResponses]);
+
+  const parentType = useMemo(() => TemperamentClassifier.analyzeParent(parentScores), [parentScores]);
+  const isParentSurveyComplete = useMemo(() => Object.keys(atqResponses).length >= PARENT_QUESTIONS.length, [atqResponses]);
+
+  const isChildSurveyComplete = useMemo(() => {
+    return Object.keys(cbqResponses).length > 0 || !!savedChildScores;
+  }, [cbqResponses, savedChildScores]);
 
   const generateChildAIReport = useCallback(async (refresh = false) => {
     if (generatingRef.current.has('CHILD')) return;
@@ -305,51 +326,29 @@ function ReportContent() {
     }
   }, [atqResponses, cbqResponses, childScores, childType.keywords, childType.label, fetchReport, intake.childName, parentScores, parentType.keywords, parentType.label, parentingResponses, styleScores, t]);
 
-  const childScores = useMemo(() => {
-    if (savedChildScores) return savedChildScores;
-    return TemperamentScorer.calculate(CHILD_QUESTIONS, cbqResponses);
-  }, [cbqResponses, savedChildScores]);
-
-  const parentScores = useMemo(() => {
-    if (savedParentScores) return savedParentScores;
-    return TemperamentScorer.calculate(PARENT_QUESTIONS, atqResponses);
-  }, [atqResponses, savedParentScores]);
-
-  // Parenting Style Scores
-  const styleScores = useMemo<ParentingStyleScores>(() => {
-    const scores = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
-    const counts = { Efficacy: 0, Autonomy: 0, Responsiveness: 0 };
-
-    PARENTING_STYLE_QUESTIONS.forEach(q => {
-      const answer = parentingResponses[q.id.toString()];
-      if (answer) {
-        const cat = q.category as keyof typeof scores;
-        if (cat in scores) {
-          scores[cat] += answer;
-          counts[cat]++;
-        }
-      }
-    });
-    return {
-      Efficacy: counts.Efficacy > 0 ? Math.round((scores.Efficacy / (counts.Efficacy * 5)) * 100) : 0,
-      Autonomy: counts.Autonomy > 0 ? Math.round((scores.Autonomy / (counts.Autonomy * 5)) * 100) : 0,
-      Responsiveness: counts.Responsiveness > 0 ? Math.round((scores.Responsiveness / (counts.Responsiveness * 5)) * 100) : 0,
+  // 아이 진단 탭: 리포트 없으면 자동 생성 (서버가 캐시/생성 분기)
+  useEffect(() => {
+    const hasCbq = Object.keys(cbqResponses).length > 0 || !!savedChildScores;
+    if (!isGenerating && !reportId && hasCbq && !childAiReport) {
+      void generateChildAIReport();
     }
-  }, [parentingResponses]);
+  }, [cbqResponses, childAiReport, generateChildAIReport, isGenerating, reportId, savedChildScores]);
 
-  // Temperament Classification
-  const childType = useMemo(() => TemperamentClassifier.analyzeChild(childScores), [childScores]);
+  // 양육자 탭 진입 시 자동 생성
+  useEffect(() => {
+    const hasAtq = Object.keys(atqResponses).length > 0 || !!savedParentScores;
+    if (activeTab === 'parent' && !isGenerating && !reportId && hasAtq && !parentAiReport) {
+      void generateParentAIReport();
+    }
+  }, [activeTab, atqResponses, generateParentAIReport, isGenerating, parentAiReport, reportId, savedParentScores]);
 
-  const isStyleSurveyComplete = useMemo(() => {
-    return PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
-  }, [parentingResponses]);
-
-  const parentType = useMemo(() => TemperamentClassifier.analyzeParent(parentScores), [parentScores]);
-  const isParentSurveyComplete = useMemo(() => Object.keys(atqResponses).length >= PARENT_QUESTIONS.length, [atqResponses]);
-
-  const isChildSurveyComplete = useMemo(() => {
-    return Object.keys(cbqResponses).length > 0 || !!savedChildScores;
-  }, [cbqResponses, savedChildScores]);
+  // 기질맞춤양육 탭 진입 시 자동 생성
+  useEffect(() => {
+    const styleComplete = PARENTING_STYLE_QUESTIONS.every(q => !!parentingResponses[q.id.toString()]);
+    if (activeTab === 'parenting' && !isGenerating && !reportId && !harmonyAiReport && styleComplete) {
+      void generateHarmonyAIReport();
+    }
+  }, [activeTab, generateHarmonyAIReport, harmonyAiReport, isGenerating, parentingResponses, reportId]);
 
   // Radar chart loading animation
   const [animatedRadar, setAnimatedRadar] = useState<number[][]>([[50,50,50,50],[50,50,50,50]]);

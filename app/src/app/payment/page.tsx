@@ -11,9 +11,29 @@ import { db } from '@/lib/db';
 import { useLocale } from '@/i18n/LocaleProvider';
 
 declare global {
+  interface PortOnePaymentResult {
+    code?: string;
+    message?: string;
+    billingKey?: string;
+  }
+
+  interface PortOneIssueBillingKeyParams {
+    storeId?: string;
+    channelKey?: string;
+    billingKeyMethod?: 'CARD' | 'EASY_PAY';
+    issueId?: string;
+    issueName?: string;
+    customer?: {
+      customerId: string;
+      email?: string;
+    };
+    easyPay?: { provider: 'NAVERPAY' | 'TOSSPAY' };
+  }
+
   interface Window {
     PortOne?: {
-      requestPayment: (params: Record<string, unknown>) => Promise<{ code?: string; message?: string }>;
+      requestPayment?: (params: Record<string, unknown>) => Promise<PortOnePaymentResult>;
+      requestIssueBillingKey?: (params: PortOneIssueBillingKeyParams) => Promise<PortOnePaymentResult>;
     };
     PaymentBridge?: {
       postMessage: (message: string) => void;
@@ -48,6 +68,8 @@ export default function PaymentPage() {
     { icon: 'favorite', text: t('payment.calculatingMatch') },
     { icon: 'lightbulb', text: t('payment.generatingSolution') },
   ];
+
+  const finalAmount = useCoupon && availableCoupon ? Math.max(0, 1980 - availableCoupon.discount_amount) : 1980;
 
   const handlePaymentSuccess = useCallback(() => {
     trackEvent('payment_completed', {
@@ -109,8 +131,6 @@ export default function PaymentPage() {
       return () => clearInterval(interval);
     }
   }, [status, router, LOADING_MESSAGES.length]);
-
-  const finalAmount = useCoupon && availableCoupon ? Math.max(0, 1980 - availableCoupon.discount_amount) : 1980;
 
   const handlePaymentStart = async () => {
     if (!user) return;
@@ -183,7 +203,11 @@ export default function PaymentPage() {
         paymentParams.easyPay = { provider: 'TOSSPAY' };
       }
 
-      const result = await window.PortOne.requestPayment(paymentParams);
+      const result = await window.PortOne.requestPayment?.(paymentParams);
+
+      if (!result) {
+        throw new Error(t('payment.paymentFailed', { message: '' }));
+      }
 
       if (result.code) {
         throw new Error(result.message || t('payment.paymentFailed', { message: '' }));
