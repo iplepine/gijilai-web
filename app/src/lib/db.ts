@@ -586,7 +586,7 @@ export const db = {
             .gte('current_period_end', new Date().toISOString())
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
         return data as SubscriptionData | null;
     },
 

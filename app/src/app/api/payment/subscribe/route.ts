@@ -51,7 +51,9 @@ export async function POST(req: Request) {
       .select('id')
       .eq('user_id', session.user.id)
       .in('status', ['ACTIVE', 'PAST_DUE'])
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (existingSub) {
       return NextResponse.json({ error: 'ALREADY_SUBSCRIBED' }, { status: 400 });

@@ -169,7 +169,8 @@ export default function PricingPage() {
         throw new Error(data.error || '구독 생성 실패');
       }
 
-      router.replace('/');
+      router.refresh();
+      router.replace('/settings/subscription');
     } catch (error) {
       console.error('Subscribe error:', error);
       alert(t('pricing.subscribeError', { message: getErrorMessage(error) }));

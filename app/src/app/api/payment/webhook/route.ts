@@ -110,7 +110,9 @@ export async function POST(req: Request) {
               .select('id')
               .eq('user_id', customerId)
               .in('status', ['ACTIVE', 'PAST_DUE'])
-              .single();
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
             if (activeSub) {
               await cancelPayment(paymentId, '이미 활성 구독 존재 — 중복 결제 자동 환불');

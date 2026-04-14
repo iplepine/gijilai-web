@@ -22,7 +22,7 @@ export async function GET() {
       .gte('current_period_end', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // 과거 구독 이력 확인 (첫 달 할인 표시 판단용)
     const { count: pastSubCount } = await supabase
