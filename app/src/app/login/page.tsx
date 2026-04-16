@@ -10,13 +10,15 @@ import { useLocale } from '@/i18n/LocaleProvider';
 
 export default function LoginPage() {
     const { t } = useLocale();
-    const { user, signInWithGoogle, signInWithKakao, signInWithEmail, isLoadingGoogle, isLoadingKakao, isLoadingEmail } = useAuth();
+    const { user, signInWithGoogle, signInWithKakao, signInWithEmail, signUpWithEmail, isLoadingGoogle, isLoadingKakao, isLoadingEmail } = useAuth();
     const router = useRouter();
 
     const [showEmailLogin, setShowEmailLogin] = useState(false);
+    const [emailMode, setEmailMode] = useState<'login' | 'signup'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
+    const [emailMessage, setEmailMessage] = useState('');
 
     const getErrorMessage = (error: unknown) => {
         if (error instanceof Error) return error.message;
@@ -26,7 +28,15 @@ export default function LoginPage() {
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setEmailError('');
+        setEmailMessage('');
         try {
+            if (emailMode === 'signup') {
+                trackEvent('signup_attempt', { provider: 'email' });
+                await signUpWithEmail(email, password);
+                setEmailMessage(t('auth.signupSuccess'));
+                return;
+            }
+
             trackEvent('login_attempt', { provider: 'email' });
             await signInWithEmail(email, password);
         } catch (error) {
@@ -97,13 +107,45 @@ export default function LoginPage() {
                         onClick={() => setShowEmailLogin(!showEmailLogin)}
                         className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                        {t('auth.emailLogin')}
+                        {t('auth.emailAuth')}
                     </button>
                     <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                 </div>
 
                 {showEmailLogin && (
                     <form onSubmit={handleEmailLogin} className="mt-4 space-y-3">
+                        <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-100 dark:bg-surface-dark p-1">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEmailMode('login');
+                                    setEmailError('');
+                                    setEmailMessage('');
+                                }}
+                                className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                                    emailMode === 'login'
+                                        ? 'bg-white dark:bg-gray-700 text-text-main dark:text-white shadow-sm'
+                                        : 'text-gray-500'
+                                }`}
+                            >
+                                {t('common.login')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEmailMode('signup');
+                                    setEmailError('');
+                                    setEmailMessage('');
+                                }}
+                                className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                                    emailMode === 'signup'
+                                        ? 'bg-white dark:bg-gray-700 text-text-main dark:text-white shadow-sm'
+                                        : 'text-gray-500'
+                                }`}
+                            >
+                                {t('auth.signup')}
+                            </button>
+                        </div>
                         <input
                             type="email"
                             value={email}
@@ -123,12 +165,17 @@ export default function LoginPage() {
                         {emailError && (
                             <p className="text-red-500 text-xs">{emailError}</p>
                         )}
+                        {emailMessage && (
+                            <p className="text-primary text-xs leading-relaxed">{emailMessage}</p>
+                        )}
                         <button
                             type="submit"
                             disabled={isLoadingEmail}
                             className="w-full bg-gray-800 dark:bg-gray-700 text-white py-3 rounded-xl font-medium text-sm disabled:opacity-50 transition-all active:scale-[0.98]"
                         >
-                            {isLoadingEmail ? t('auth.loggingIn') : t('common.login')}
+                            {isLoadingEmail
+                                ? emailMode === 'signup' ? t('auth.signingUp') : t('auth.loggingIn')
+                                : emailMode === 'signup' ? t('auth.signup') : t('common.login')}
                         </button>
                     </form>
                 )}

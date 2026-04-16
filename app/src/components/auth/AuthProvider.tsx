@@ -12,6 +12,7 @@ interface AuthContextType {
     signInWithGoogle: () => Promise<void>;
     signInWithKakao: () => Promise<void>;
     signInWithEmail: (email: string, password: string) => Promise<void>;
+    signUpWithEmail: (email: string, password: string) => Promise<void>;
     isLoadingGoogle: boolean;
     isLoadingKakao: boolean;
     isLoadingEmail: boolean;
@@ -107,6 +108,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const signUpWithEmail = async (email: string, password: string) => {
+        setIsLoadingEmail(true);
+        try {
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Email sign up error:', error);
+            throw error;
+        } finally {
+            setIsLoadingEmail(false);
+        }
+    };
+
     const signOut = async () => {
         await supabase.auth.signOut();
     };
@@ -119,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             signInWithGoogle,
             signInWithKakao,
             signInWithEmail,
+            signUpWithEmail,
             isLoadingGoogle,
             isLoadingKakao,
             isLoadingEmail,
