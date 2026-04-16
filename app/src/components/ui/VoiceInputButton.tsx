@@ -70,10 +70,12 @@ export function VoiceInputButton({ value, onChange, maxLength, className = '' }:
     const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
     const baseValueRef = useRef(value);
     const [isSupported, setIsSupported] = useState(false);
+    const [isMobileInput, setIsMobileInput] = useState(false);
     const [isListening, setIsListening] = useState(false);
 
     useEffect(() => {
         const id = window.setTimeout(() => {
+            setIsMobileInput(window.matchMedia('(pointer: coarse)').matches);
             setIsSupported(Boolean(getSpeechRecognition()));
         }, 0);
         return () => window.clearTimeout(id);
@@ -126,6 +128,8 @@ export function VoiceInputButton({ value, onChange, maxLength, className = '' }:
         recognition.start();
         setIsListening(true);
     };
+
+    if (!isMobileInput) return null;
 
     return (
         <button
