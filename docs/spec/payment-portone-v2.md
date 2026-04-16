@@ -178,7 +178,7 @@ locale 결정 순서:
 | 통화 | KRW | USD |
 | 간편결제 | 카카오페이, 토스페이, 네이버페이 | Google Pay, Apple Pay |
 | 카드 결제 | O | O |
-| 포트원 채널 키 | `PORTONE_CHANNEL_KEY_TOSS` | `PORTONE_CHANNEL_KEY_STRIPE` |
+| 포트원 채널 키 | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY` | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_STRIPE` |
 
 ## 7. 결제 플로우
 
@@ -342,8 +342,11 @@ async function getActiveSubscription(userId: string): Promise<Subscription | nul
 | `PORTONE_STORE_ID` | 포트원 상점 ID | O |
 | `PORTONE_API_SECRET` | 포트원 V2 API Secret (서버용) | O |
 | `NEXT_PUBLIC_PORTONE_STORE_ID` | 포트원 상점 ID (클라이언트용) | O |
-| `PORTONE_CHANNEL_KEY_TOSS` | 토스페이먼츠 채널 키 | O |
-| `PORTONE_CHANNEL_KEY_STRIPE` | Stripe 채널 키 | O |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP` | NHN KCP 채널 키 (클라이언트용) | O |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS` | KG 이니시스 채널 키 (클라이언트용) | O |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS` | 토스페이 채널 키 (클라이언트용) | O |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY` | 네이버페이 채널 키 (클라이언트용) | O |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_STRIPE` | Stripe 채널 키 (클라이언트용) | O |
 | `PORTONE_WEBHOOK_SECRET` | 웹훅 검증 시크릿 | O |
 
 제거 대상:
