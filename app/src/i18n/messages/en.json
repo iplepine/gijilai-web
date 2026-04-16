@@ -74,7 +74,11 @@
     "buyerPhone": "Buyer mobile number",
     "buyerPhonePlaceholder": "010-1234-5678",
     "buyerPhoneHelp": "Required for KG Inicis billing key issuance. Used only to open the payment window.",
-    "buyerPhoneRequired": "KG Inicis card billing requires the buyer mobile number.",
+    "buyerPhoneInvalid": "Enter a 10-11 digit mobile number.",
+    "buyerPhoneDialogTitle": "Payment window information",
+    "buyerPhoneDialogDescription": "KG Inicis card billing needs the buyer mobile number before issuing a billing key.",
+    "buyerPhoneCancel": "Cancel",
+    "buyerPhoneContinue": "Continue",
     "subscribeWithPrice": "Start for {price}",
     "subscribeError": "Subscription error: {message}"
   },

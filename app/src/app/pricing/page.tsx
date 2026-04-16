@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/Button';
@@ -74,6 +74,8 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [payMethod, setPayMethod] = useState<PayMethodOption>('KCP_CARD');
   const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerPhoneError, setBuyerPhoneError] = useState('');
+  const [isBuyerPhoneDialogOpen, setIsBuyerPhoneDialogOpen] = useState(false);
   const [existingSubscription, setExistingSubscription] = useState<ExistingSubscriptionSummary>(null);
   const [isFirstSubscription, setIsFirstSubscription] = useState(true);
   const [isApp, setIsApp] = useState(false);
@@ -106,7 +108,7 @@ export default function PricingPage() {
     return () => { window.__iapLoadingDone = undefined; };
   }, [isApp]);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (phoneOverride?: string) => {
     if (!user) return;
 
     // 앱 → IAP (Apple/Google이 결제수단 처리)
@@ -123,6 +125,15 @@ export default function PricingPage() {
 
     // 웹 → PortOne
     if (!window.PortOne) return;
+    const requiresBuyerPhone = locale === 'ko' && payMethod === 'INICIS_CARD';
+    const buyerPhoneDigits = normalizePhoneNumber(phoneOverride ?? buyerPhone);
+
+    if (requiresBuyerPhone && buyerPhoneDigits.length < 10) {
+      setBuyerPhoneError('');
+      setIsBuyerPhoneDialogOpen(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -150,12 +161,6 @@ export default function PricingPage() {
         billingKeyMethod = 'CARD';
       }
 
-      const buyerPhoneDigits = normalizePhoneNumber(buyerPhone);
-      if (locale === 'ko' && payMethod === 'INICIS_CARD' && buyerPhoneDigits.length < 10) {
-        alert(t('pricing.buyerPhoneRequired'));
-        return;
-      }
-
       // 빌링키 발급
       const issueParams: PortOneIssueBillingKeyParams = {
         storeId,
@@ -167,7 +172,7 @@ export default function PricingPage() {
           customerId: user.id,
           fullName: getCustomerName(user),
           ...(user.email ? { email: user.email } : {}),
-          ...(locale === 'ko' && payMethod === 'INICIS_CARD'
+          ...(requiresBuyerPhone
             ? { phoneNumber: formatPhoneNumber(buyerPhoneDigits) }
             : {}),
         },
@@ -216,6 +221,21 @@ export default function PricingPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBuyerPhoneSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const buyerPhoneDigits = normalizePhoneNumber(buyerPhone);
+    if (buyerPhoneDigits.length < 10) {
+      setBuyerPhoneError(t('pricing.buyerPhoneInvalid'));
+      return;
+    }
+
+    const formattedPhone = formatPhoneNumber(buyerPhoneDigits);
+    setBuyerPhone(formattedPhone);
+    setBuyerPhoneError('');
+    setIsBuyerPhoneDialogOpen(false);
+    void handleSubscribe(formattedPhone);
   };
 
   const handleReactivate = async () => {
@@ -421,30 +441,79 @@ export default function PricingPage() {
                   <p className="text-[11px] text-text-sub mt-0.5">{t('pricing.easyPay')}</p>
                 </button>
               </div>
-              {payMethod === 'INICIS_CARD' && (
-                <div className="space-y-2 rounded-2xl border border-[#E84B3C]/20 bg-[#E84B3C]/5 p-4">
-                  <label htmlFor="buyer-phone" className="block text-[13px] font-bold text-text-main dark:text-white">
-                    {t('pricing.buyerPhone')}
-                  </label>
-                  <input
-                    id="buyer-phone"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    value={buyerPhone}
-                    onChange={(event) => setBuyerPhone(formatPhoneNumber(event.target.value))}
-                    placeholder={t('pricing.buyerPhonePlaceholder')}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[15px] font-semibold text-text-main outline-none transition focus:border-[#E84B3C] dark:border-gray-700 dark:bg-surface-dark dark:text-white"
-                  />
-                  <p className="text-[12px] leading-relaxed text-text-sub">
-                    {t('pricing.buyerPhoneHelp')}
-                  </p>
-                </div>
-              )}
             </section>
           )}
 
         </div>
+
+        {isBuyerPhoneDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 px-4 pb-4 sm:items-center sm:pb-0">
+            <form
+              onSubmit={handleBuyerPhoneSubmit}
+              className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-2xl dark:bg-surface-dark"
+            >
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-bold text-text-main dark:text-white">
+                    {t('pricing.buyerPhoneDialogTitle')}
+                  </h2>
+                  <p className="text-[13px] leading-relaxed text-text-sub">
+                    {t('pricing.buyerPhoneDialogDescription')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsBuyerPhoneDialogOpen(false)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-text-sub transition hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+                  aria-label={t('common.close')}
+                >
+                  <Icon name="close" size="sm" className="text-xl" />
+                </button>
+              </div>
+
+              <label htmlFor="buyer-phone-dialog" className="mb-2 block text-[13px] font-bold text-text-main dark:text-white">
+                {t('pricing.buyerPhone')}
+              </label>
+              <input
+                id="buyer-phone-dialog"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={buyerPhone}
+                onChange={(event) => {
+                  setBuyerPhone(formatPhoneNumber(event.target.value));
+                  setBuyerPhoneError('');
+                }}
+                placeholder={t('pricing.buyerPhonePlaceholder')}
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[16px] font-semibold text-text-main outline-none transition focus:border-[#E84B3C] dark:border-gray-700 dark:bg-background-dark dark:text-white"
+                autoFocus
+              />
+              <p className={`mt-2 min-h-5 text-[12px] leading-relaxed ${buyerPhoneError ? 'text-red-500' : 'text-text-sub'}`}>
+                {buyerPhoneError || t('pricing.buyerPhoneHelp')}
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setIsBuyerPhoneDialogOpen(false)}
+                  className="h-12 rounded-xl"
+                >
+                  {t('pricing.buyerPhoneCancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  className="h-12 rounded-xl"
+                >
+                  {t('pricing.buyerPhoneContinue')}
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* CTA */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pt-4 pb-6 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-beige-main/20 z-30 max-w-md mx-auto w-full">
@@ -452,7 +521,7 @@ export default function PricingPage() {
             variant="primary"
             size="lg"
             fullWidth
-            onClick={handleSubscribe}
+            onClick={() => void handleSubscribe()}
             disabled={loading || !user}
             className="h-14 rounded-xl text-[15px] font-bold shadow-glow"
           >
