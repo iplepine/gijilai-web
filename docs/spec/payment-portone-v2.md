@@ -251,6 +251,22 @@ locale 결정 순서:
   → status: EXPIRED로 변경
 ```
 
+### 7.5 해지 철회
+
+```
+[사용자] 설정 > 구독 관리 > 구독 계속하기 버튼
+  ↓
+[클라이언트] POST /api/payment/reactivate-subscription
+  ↓
+[서버] 기간 만료 전 ACTIVE/PAST_DUE + cancelled_at 존재 구독 조회
+  ↓
+[서버] PORTONE 구독이면 subscriptions UPDATE (cancelled_at: null)
+  ↓
+[다음 갱신 cron] 정상 갱신 대상에 포함
+```
+
+해지 철회는 새 구독 생성이나 즉시 결제가 아니라 기존 구독의 해지 예약을 취소하는 동작이다. 앱스토어/플레이스토어 구독은 스토어 구독 관리 화면에서 재활성화한다.
+
 ## 8. 구독 상태 머신
 
 ```
@@ -286,6 +302,7 @@ locale 결정 순서:
 | ACTIVE | 갱신 결제 성공 | ACTIVE | period 갱신, payment 기록 |
 | ACTIVE | 갱신 결제 실패 | PAST_DUE | payment(FAILED) 기록, retry_count = 1 |
 | ACTIVE | 해지 요청 | ACTIVE | cancelled_at 설정 (period 끝까지 유지) |
+| ACTIVE + cancelled_at | 해지 철회 | ACTIVE | cancelled_at null 처리 |
 | ACTIVE | period 만료 + cancelled_at 존재 | EXPIRED | status 변경 |
 | PAST_DUE | 재시도 성공 | ACTIVE | period 갱신, payment 기록 |
 | PAST_DUE | 재시도 실패 (3회 미만) | PAST_DUE | payment(FAILED) 기록, retry_count++ |
@@ -457,7 +474,22 @@ async function getActiveSubscription(userId: string): Promise<Subscription | nul
 **응답 (성공):** `{ success: true, activeUntil: "ISO date string" }`
 **응답 (실패):** `{ error: "NO_ACTIVE_SUBSCRIPTION" }`, status 400
 
-### 12.4 `GET /api/payment/subscription`
+### 12.4 `POST /api/payment/reactivate-subscription`
+
+해지 예약 철회.
+
+**요청:** (body 없음, 세션에서 userId 추출)
+
+**처리:**
+1. Supabase 세션 검증
+2. 기간 만료 전 ACTIVE/PAST_DUE + cancelled_at 존재 구독 조회
+3. PORTONE 구독이면 cancelled_at = null 설정
+4. 앱스토어/플레이스토어 구독이면 스토어 관리 필요 에러
+
+**응답 (성공):** `{ success: true, subscription: { ... } }`
+**응답 (실패):** `{ error: "NO_CANCELLED_SUBSCRIPTION" }`, status 400
+
+### 12.5 `GET /api/payment/subscription`
 
 현재 구독 상태 조회.
 

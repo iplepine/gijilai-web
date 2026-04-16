@@ -36,6 +36,9 @@ const FIRST_MONTH_PRICES = {
 
 type ExistingSubscriptionSummary = {
   id: string;
+  source: 'PORTONE' | 'APPLE_IAP' | 'GOOGLE_PLAY';
+  cancelled_at: string | null;
+  current_period_end: string;
 } | null;
 
 function formatPrice(amount: number, curr: 'KRW' | 'USD'): string {
@@ -52,6 +55,7 @@ export default function PricingPage() {
   const [existingSubscription, setExistingSubscription] = useState<ExistingSubscriptionSummary>(null);
   const [isFirstSubscription, setIsFirstSubscription] = useState(true);
   const [isApp, setIsApp] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : t('common.error');
 
@@ -182,7 +186,60 @@ export default function PricingPage() {
     }
   };
 
+  const handleReactivate = async () => {
+    setReactivating(true);
+    try {
+      const response = await fetch('/api/payment/reactivate-subscription', { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || t('settings.reactivateError'));
+      }
+      setExistingSubscription(data.subscription);
+      router.refresh();
+      router.replace('/settings/subscription');
+    } catch (error) {
+      alert(t('settings.reactivateError'));
+      console.error('Reactivate subscription error:', error);
+    } finally {
+      setReactivating(false);
+    }
+  };
+
   const monthlyPrice = formatPrice(PRICES.MONTHLY[currency], currency);
+
+  if (existingSubscription?.cancelled_at) {
+    return (
+      <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center font-body">
+        <div className="w-full max-w-md min-h-screen flex flex-col shadow-2xl">
+          <Navbar title={t('pricing.title')} showBack />
+          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-4">
+            <Icon name="event_busy" className="text-amber-500 text-5xl" size="lg" />
+            <h2 className="text-2xl font-bold">
+              {t('settings.cancelScheduled')}
+            </h2>
+            <p className="text-text-sub text-sm leading-relaxed">
+              {t('settings.cancelledNotice').replace(
+                '{date}',
+                new Date(existingSubscription.current_period_end).toLocaleDateString('ko-KR')
+              )}
+            </p>
+            {existingSubscription.source === 'PORTONE' ? (
+              <Button variant="primary" onClick={handleReactivate} disabled={reactivating}>
+                {reactivating ? t('pricing.processing') : t('settings.reactivateSubscription')}
+              </Button>
+            ) : (
+              <p className="text-xs text-text-sub bg-white dark:bg-surface-dark rounded-xl p-3">
+                {t('settings.reactivateStoreNotice')}
+              </p>
+            )}
+            <Button variant="secondary" onClick={() => router.replace('/settings/subscription')}>
+              {t('pricing.manageSubscription')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (existingSubscription) {
     return (

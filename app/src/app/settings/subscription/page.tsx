@@ -18,6 +18,7 @@ export default function SubscriptionPage() {
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : t('settings.cancelError');
 
@@ -49,6 +50,24 @@ export default function SubscriptionPage() {
       alert(getErrorMessage(error));
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setReactivating(true);
+    try {
+      const res = await fetch('/api/payment/reactivate-subscription', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setSubscription(data.subscription);
+        alert(t('settings.reactivateSuccess'));
+      } else {
+        alert(data.error || t('settings.reactivateError'));
+      }
+    } catch {
+      alert(t('settings.reactivateError'));
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -111,9 +130,27 @@ export default function SubscriptionPage() {
                 </div>
 
                 {isCancelled ? (
-                  <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-xl">
-                    {t('settings.cancelledNotice').replace('{date}', periodEnd)}
-                  </p>
+                  <div className="space-y-3">
+                    <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-xl">
+                      {t('settings.cancelledNotice').replace('{date}', periodEnd)}
+                    </p>
+                    {subscription.source === 'PORTONE' ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        fullWidth
+                        onClick={handleReactivate}
+                        disabled={reactivating}
+                        className="mt-2"
+                      >
+                        {reactivating ? t('pricing.processing') : t('settings.reactivateSubscription')}
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-text-sub bg-beige-main/20 p-3 rounded-xl">
+                        {t('settings.reactivateStoreNotice')}
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <Button
                     variant="secondary"

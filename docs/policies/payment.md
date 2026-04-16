@@ -47,6 +47,9 @@
 - **갱신 실패**: PAST_DUE 상태. 4일 이내 연속 3회 실패 시 EXPIRED (`MAX_RETRY_COUNT = 3`)
 - **해지**: 기간 만료 해지 (`cancelled_at` 설정, status는 ACTIVE 유지). 다음 갱신 시점에 EXPIRED 처리 (`/api/payment/cancel-subscription`)
   - 해지 API는 `subscriptions` RLS 정책상 사용자 update가 불가능하므로 서버 service role로 `cancelled_at`을 설정한다.
+- **해지 철회**: 기간 만료 전 `cancelled_at`이 있는 PORTONE 구독은 `/api/payment/reactivate-subscription`으로 즉시 해지 예약을 취소한다.
+  - 새 구독을 만들거나 즉시 결제하지 않고 기존 구독의 `cancelled_at`만 `null`로 되돌린다.
+  - 앱스토어/플레이스토어 구독은 스토어 구독 관리 화면에서 재활성화해야 한다.
 - **환불**: 결제 7일 이내 미이용 시 전액 환불 가능 (쿨링오프). 이후 환불 불가. 환불 요청은 devhohouse@gmail.com (`/legal/refund`)
 - **구독 생성 실패 시 자동 환불**: DB 저장 실패 → `cancelPayment`로 즉시 결제 취소
 
