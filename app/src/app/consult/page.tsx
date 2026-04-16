@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/Button';
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton';
 import { Navbar } from '@/components/layout/Navbar';
 import { db, ObservationData, PracticeItemData, PracticeLogData, ChildProfile } from '@/lib/db';
 import { getFeatureAccess } from '@/lib/access';
@@ -547,13 +548,21 @@ function ConsultContent() {
                                     </>
                                 )}
 
-                                <textarea
-                                    value={problemDesc}
-                                    onChange={(e) => setProblemDesc(e.target.value.slice(0, 500))}
-                                    maxLength={500}
-                                    placeholder={sessionContext ? t('consult.textareaPlaceholderContinue') : t('consult.textareaPlaceholderFirst')}
-                                    className="w-full h-36 p-5 text-[15px] leading-relaxed rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        value={problemDesc}
+                                        onChange={(e) => setProblemDesc(e.target.value.slice(0, 500))}
+                                        maxLength={500}
+                                        placeholder={sessionContext ? t('consult.textareaPlaceholderContinue') : t('consult.textareaPlaceholderFirst')}
+                                        className="w-full h-36 p-5 pr-16 text-[15px] leading-relaxed rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
+                                    />
+                                    <VoiceInputButton
+                                        value={problemDesc}
+                                        onChange={setProblemDesc}
+                                        maxLength={500}
+                                        className="absolute bottom-4 right-4"
+                                    />
+                                </div>
                                 <div className="flex items-center justify-between mt-2 px-1">
                                     <p className={`text-[12px] transition-opacity duration-300 ${
                                         problemDesc.length > 0 && problemDesc.length < 30
@@ -669,18 +678,26 @@ function ConsultContent() {
                                             </button>
                                             {opt.freeText && freeTextOptionId === opt.id && (
                                                 <div className="mt-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    <textarea
-                                                        ref={(el) => {
-                                                            if (el) {
-                                                                el.focus();
-                                                                setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-                                                            }
-                                                        }}
-                                                        className="w-full h-32 p-5 text-[15px] rounded-3xl border border-secondary/30 focus:outline-none focus:ring-4 focus:ring-secondary/10 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all"
-                                                        placeholder={t('consult.freeTextPlaceholder')}
-                                                        value={currentTextAnswer}
-                                                        onChange={(e) => setCurrentTextAnswer(e.target.value.slice(0, 300))}
-                                                    />
+                                                    <div className="relative">
+                                                        <textarea
+                                                            ref={(el) => {
+                                                                if (el) {
+                                                                    el.focus();
+                                                                    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                                                                }
+                                                            }}
+                                                            className="w-full h-32 p-5 pr-16 text-[15px] rounded-3xl border border-secondary/30 focus:outline-none focus:ring-4 focus:ring-secondary/10 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all"
+                                                            placeholder={t('consult.freeTextPlaceholder')}
+                                                            value={currentTextAnswer}
+                                                            onChange={(e) => setCurrentTextAnswer(e.target.value.slice(0, 300))}
+                                                        />
+                                                        <VoiceInputButton
+                                                            value={currentTextAnswer}
+                                                            onChange={setCurrentTextAnswer}
+                                                            maxLength={300}
+                                                            className="absolute bottom-4 right-4"
+                                                        />
+                                                    </div>
                                                     <button
                                                         onClick={() => {
                                                             if (currentTextAnswer.trim()) {
@@ -702,12 +719,20 @@ function ConsultContent() {
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <textarea
-                                        className="w-full h-40 p-5 text-[15px] rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
-                                        placeholder={t('consult.freeTextPlaceholder')}
-                                        value={currentTextAnswer}
-                                        onChange={(e) => setCurrentTextAnswer(e.target.value.slice(0, 300))}
-                                    />
+                                    <div className="relative">
+                                        <textarea
+                                            className="w-full h-40 p-5 pr-16 text-[15px] rounded-3xl border border-primary/10 focus:outline-none focus:ring-4 focus:ring-primary/5 resize-none bg-white dark:bg-surface-dark dark:text-white transition-all shadow-inner"
+                                            placeholder={t('consult.freeTextPlaceholder')}
+                                            value={currentTextAnswer}
+                                            onChange={(e) => setCurrentTextAnswer(e.target.value.slice(0, 300))}
+                                        />
+                                        <VoiceInputButton
+                                            value={currentTextAnswer}
+                                            onChange={setCurrentTextAnswer}
+                                            maxLength={300}
+                                            className="absolute bottom-4 right-4"
+                                        />
+                                    </div>
                                     <button
                                         onClick={() => {
                                             if (currentTextAnswer.trim()) {

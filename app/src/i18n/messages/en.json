@@ -31,6 +31,13 @@
     "question": "Question",
     "answer": "Answer"
   },
+  "voice": {
+    "start": "Start voice input",
+    "stop": "Stop voice input",
+    "listening": "Listening",
+    "unsupported": "Voice input is not supported in this browser.",
+    "error": "Voice input could not start. Please check microphone permission."
+  },
   "nav": {
     "home": "Home",
     "practices": "Practice",

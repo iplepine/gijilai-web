@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton';
 import { useLocale } from '@/i18n/LocaleProvider';
 
 interface PracticeReviewModalProps {
@@ -94,14 +95,22 @@ export function PracticeReviewModal({ practiceTitle, doneDays, totalDays, sessio
                     <label className="block text-[13px] font-bold text-text-main dark:text-white mb-3">
                         {t('practices.reviewQuestion')}
                     </label>
-                    <textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value.slice(0, 500))}
-                        maxLength={500}
-                        placeholder={t('practices.reviewPlaceholder')}
-                        className="w-full h-36 p-4 text-[14px] leading-relaxed rounded-2xl border border-secondary/20 focus:outline-none focus:ring-2 focus:ring-secondary/20 resize-none bg-white dark:bg-surface-dark dark:text-white"
-                        autoFocus
-                    />
+                    <div className="relative">
+                        <textarea
+                            value={content}
+                            onChange={(e) => setContent(e.target.value.slice(0, 500))}
+                            maxLength={500}
+                            placeholder={t('practices.reviewPlaceholder')}
+                            className="w-full h-36 p-4 pr-16 text-[14px] leading-relaxed rounded-2xl border border-secondary/20 focus:outline-none focus:ring-2 focus:ring-secondary/20 resize-none bg-white dark:bg-surface-dark dark:text-white"
+                            autoFocus
+                        />
+                        <VoiceInputButton
+                            value={content}
+                            onChange={setContent}
+                            maxLength={500}
+                            className="absolute bottom-4 right-4"
+                        />
+                    </div>
                 </div>
 
                 <div className="p-4 bg-beige-main/5 dark:bg-white/5 flex gap-3">
