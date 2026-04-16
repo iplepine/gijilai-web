@@ -197,12 +197,16 @@ locale 결정 순서:
     fullName: user.name 또는 email local-part,
     email: user.email,
     phoneNumber: KG 이니시스 카드 선택 시 구매자 휴대폰 번호
-  }
+  },
+  redirectUrl: `${origin}/pricing/complete?locale=...&payMethod=...`,
+  windowType: { mobile: "REDIRECTION" },
+  offerPeriod: { interval: "1m" }
 })
   ↓
 [포트원 빌링키 발급창] 카드 정보 입력
   ↓
 [클라이언트] billingKey 수신
+  - 모바일 리디렉션 방식은 `/pricing/complete`에서 query의 billingKey/code/message 처리
   ↓
 [클라이언트] POST /api/payment/subscribe { billingKey, plan, locale }
   ↓

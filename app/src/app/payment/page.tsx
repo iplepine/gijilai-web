@@ -15,6 +15,7 @@ declare global {
     code?: string;
     message?: string;
     billingKey?: string;
+    paymentId?: string;
   }
 
   interface PortOneIssueBillingKeyParams {
@@ -30,6 +31,20 @@ declare global {
       phoneNumber?: string;
     };
     easyPay?: { provider: 'NAVERPAY' | 'TOSSPAY' };
+    redirectUrl?: string;
+    forceRedirect?: boolean;
+    windowType?: {
+      pc?: 'IFRAME' | 'POPUP' | 'REDIRECTION' | 'UI';
+      mobile?: 'IFRAME' | 'POPUP' | 'REDIRECTION' | 'UI';
+    };
+    locale?: 'KO_KR' | 'EN_US';
+    offerPeriod?: {
+      interval?: string;
+      range?: {
+        from?: string;
+        to?: string;
+      };
+    };
   }
 
   interface Window {
@@ -199,6 +214,10 @@ export default function PaymentPage() {
         totalAmount: finalAmount,
         currency: 'KRW',
         payMethod: payMethod === 'KCP_CARD' || payMethod === 'INICIS_CARD' ? 'CARD' : 'EASY_PAY',
+        redirectUrl: `${window.location.origin}/payment/success?paymentId=${encodeURIComponent(paymentId)}`,
+        windowType: {
+          mobile: 'REDIRECTION',
+        },
       };
 
       if (payMethod === 'NAVERPAY') {

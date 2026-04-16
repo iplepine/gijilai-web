@@ -162,6 +162,10 @@ export default function PricingPage() {
       }
 
       // 빌링키 발급
+      const redirectUrl = new URL('/pricing/complete', window.location.origin);
+      redirectUrl.searchParams.set('locale', locale);
+      redirectUrl.searchParams.set('payMethod', payMethod);
+
       const issueParams: PortOneIssueBillingKeyParams = {
         storeId,
         channelKey,
@@ -175,6 +179,14 @@ export default function PricingPage() {
           ...(requiresBuyerPhone
             ? { phoneNumber: formatPhoneNumber(buyerPhoneDigits) }
             : {}),
+        },
+        redirectUrl: redirectUrl.toString(),
+        windowType: {
+          mobile: 'REDIRECTION',
+        },
+        locale: locale === 'ko' ? 'KO_KR' : 'EN_US',
+        offerPeriod: {
+          interval: '1m',
         },
       };
 
