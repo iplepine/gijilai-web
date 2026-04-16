@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'firebase_options.dart';
@@ -89,17 +91,53 @@ class _MainWebViewState extends State<MainWebView> {
 
   WebViewController? _controller;
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
+  StreamSubscription<Uri>? _appLinkSubscription;
   final InAppPurchase _iap = InAppPurchase.instance;
+  final AppLinks _appLinks = AppLinks();
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+  Uri? _pendingAuthCallbackUri;
   DateTime? _lastBackPressedAt;
 
   @override
   void initState() {
     super.initState();
+    _initAppLinks();
     _initIAP();
     _initLocalNotifications();
     _initWebView();
+  }
+
+  Future<void> _initAppLinks() async {
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleIncomingAuthUri(initialUri);
+      }
+
+      _appLinkSubscription = _appLinks.uriLinkStream.listen(
+        (uri) => unawaited(_handleIncomingAuthUri(uri)),
+        onError: (error) {
+          debugPrint('App link stream error: $error');
+          unawaited(
+            FirebaseCrashlytics.instance.recordError(
+              error,
+              StackTrace.current,
+              reason: 'App link stream error',
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint('App links init error: $e');
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'App links init error',
+        ),
+      );
+    }
   }
 
   Future<void> _initLocalNotifications() async {
@@ -143,6 +181,7 @@ class _MainWebViewState extends State<MainWebView> {
     controller
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: _handleNavigationRequest,
           onWebResourceError: (WebResourceError error) {
             debugPrint('WebView error: ${error.description}');
             unawaited(
@@ -164,12 +203,106 @@ class _MainWebViewState extends State<MainWebView> {
         'ReminderBridge',
         onMessageReceived: _onReminderMessage,
       )
+      ..addJavaScriptChannel('AuthBridge', onMessageReceived: _onAuthMessage)
       ..addJavaScriptChannel('ShareBridge', onMessageReceived: _onShareMessage)
       ..loadRequest(Uri.parse(MainWebView.targetUrl));
 
     setState(() {
       _controller = controller;
     });
+    await _consumePendingAuthCallback();
+  }
+
+  NavigationDecision _handleNavigationRequest(NavigationRequest request) {
+    final uri = Uri.tryParse(request.url);
+    if (uri == null) return NavigationDecision.navigate;
+
+    if (_isAuthCallbackUri(uri)) {
+      _handleIncomingAuthUri(uri);
+      return NavigationDecision.prevent;
+    }
+
+    if (_shouldOpenExternally(uri)) {
+      unawaited(_launchExternalUrl(uri));
+      return NavigationDecision.prevent;
+    }
+
+    return NavigationDecision.navigate;
+  }
+
+  bool _shouldOpenExternally(Uri uri) {
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme == 'http' || scheme == 'https' || scheme == 'about') {
+      return false;
+    }
+    return true;
+  }
+
+  bool _isAuthCallbackUri(Uri uri) {
+    return uri.scheme == 'gijilai' &&
+        uri.host == 'auth' &&
+        uri.path.startsWith('/callback');
+  }
+
+  Future<void> _handleIncomingAuthUri(Uri uri) async {
+    if (!_isAuthCallbackUri(uri)) return;
+
+    _pendingAuthCallbackUri = uri;
+    await _consumePendingAuthCallback();
+  }
+
+  Future<void> _consumePendingAuthCallback() async {
+    final uri = _pendingAuthCallbackUri;
+    final controller = _controller;
+    if (uri == null || controller == null) return;
+
+    _pendingAuthCallbackUri = null;
+    final webCallback = Uri.https(
+      'gijilai.com',
+      '/auth/callback',
+      uri.queryParameters,
+    );
+    await controller.loadRequest(webCallback);
+  }
+
+  void _onAuthMessage(JavaScriptMessage message) {
+    try {
+      final data = jsonDecode(message.message);
+      if (data['type'] == 'OAUTH_URL' && data['url'] is String) {
+        final uri = Uri.parse(data['url'] as String);
+        unawaited(_launchExternalUrl(uri));
+      }
+    } catch (e) {
+      debugPrint('AuthBridge parse error: $e');
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'AuthBridge parse error',
+        ),
+      );
+    }
+  }
+
+  Future<void> _launchExternalUrl(Uri uri) async {
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        throw Exception('Unable to launch external URL: $uri');
+      }
+    } catch (e) {
+      debugPrint('External URL launch error: $e');
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'External URL launch error',
+        ),
+      );
+    }
   }
 
   Future<void> _initIAP() async {
@@ -627,7 +760,7 @@ class _MainWebViewState extends State<MainWebView> {
     }
 
     _lastBackPressedAt = now;
-    _showSnackBar("한번 더 누르면 종료됩니다");
+    _showSnackBar('한번 더 누르면 종료됩니다');
   }
 
   bool _isHomeUrl(String? url) {
@@ -636,13 +769,14 @@ class _MainWebViewState extends State<MainWebView> {
 
     final targetUri = Uri.parse(MainWebView.targetUrl);
     final isSameHost = uri.host == targetUri.host;
-    final isHomePath = uri.path.isEmpty || uri.path == "/";
+    final isHomePath = uri.path.isEmpty || uri.path == '/';
     return isSameHost && isHomePath;
   }
 
   @override
   void dispose() {
     _purchaseSubscription?.cancel();
+    _appLinkSubscription?.cancel();
     super.dispose();
   }
 

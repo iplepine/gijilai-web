@@ -5,6 +5,14 @@ import { Session, User } from '@supabase/supabase-js';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 
+declare global {
+    interface Window {
+        AuthBridge?: {
+            postMessage: (message: string) => void;
+        };
+    }
+}
+
 interface AuthContextType {
     session: Session | null;
     user: User | null;
@@ -58,38 +66,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoadingKakao, setIsLoadingKakao] = useState(false);
     const [isLoadingEmail, setIsLoadingEmail] = useState(false);
 
-    const signInWithGoogle = async () => {
-        setIsLoadingGoogle(true);
-        try {
-            await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            });
-        } catch (error) {
-            console.error('Logout error:', error);
-            setIsLoadingGoogle(false);
-        }
+    const isAppWebView = () => (
+        typeof window !== 'undefined' &&
+        window.navigator.userAgent.includes('gijilai_app') &&
+        !!window.AuthBridge
+    );
+
+    const getRedirectTo = () => {
+        if (isAppWebView()) return 'gijilai://auth/callback';
+        return `${window.location.origin}/auth/callback`;
     };
 
-    const signInWithKakao = async () => {
-        setIsLoadingKakao(true);
+    const signInWithOAuthProvider = async (
+        provider: 'google' | 'kakao',
+        setProviderLoading: (loading: boolean) => void,
+        queryParams?: Record<string, string>
+    ) => {
+        setProviderLoading(true);
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'kakao',
+            const useNativeHandoff = isAppWebView();
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider,
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                    queryParams: {
-                        scope: 'profile_nickname,profile_image'
-                    }
+                    redirectTo: getRedirectTo(),
+                    skipBrowserRedirect: useNativeHandoff,
+                    queryParams,
                 },
             });
             if (error) throw error;
+
+            if (useNativeHandoff) {
+                if (!data.url) throw new Error('OAuth URL was not returned');
+                window.AuthBridge?.postMessage(JSON.stringify({
+                    type: 'OAUTH_URL',
+                    provider,
+                    url: data.url,
+                }));
+            }
         } catch (error) {
-            console.error('Kakao sign in error:', error);
-            setIsLoadingKakao(false);
+            console.error(`${provider} sign in error:`, error);
+            setProviderLoading(false);
         }
+    };
+
+    const signInWithGoogle = async () => {
+        await signInWithOAuthProvider('google', setIsLoadingGoogle);
+    };
+
+    const signInWithKakao = async () => {
+        await signInWithOAuthProvider('kakao', setIsLoadingKakao, {
+            scope: 'profile_nickname,profile_image'
+        });
     };
 
     const signInWithEmail = async (email: string, password: string) => {

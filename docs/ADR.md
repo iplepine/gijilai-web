@@ -203,6 +203,12 @@
 - **이유**: 데스크톱에서는 다른 앱 공유 버튼이 기대와 다르게 동작할 수 있고, 앱 WebView에서는 브라우저 Web Share API 지원이 안정적이지 않다. 앱 환경은 네이티브 공유 플러그인을 사용하는 편이 사용자 기대와 플랫폼 동작에 맞다.
 - **대안**: 항상 `navigator.share` 사용 — 앱 WebView에서 동작 보장이 약해 기각. 버튼을 전부 링크 복사로 대체 — 모바일에서 자연스러운 앱 공유 흐름을 잃어 기각
 
+## 2026-04-17 | 앱 소셜 로그인은 AuthBridge와 딥링크로 처리
+
+- **결정**: Flutter 앱 WebView에서 Google/Kakao OAuth를 시작할 때 웹이 `AuthBridge`로 Supabase OAuth URL을 Flutter에 전달하고, Flutter는 외부 앱/브라우저로 인증을 시작한다. 인증 완료 후 `gijilai://auth/callback` 딥링크를 받아 WebView의 `https://gijilai.com/auth/callback`으로 다시 로드해 기존 Supabase 서버 콜백에서 세션 쿠키를 설정한다.
+- **이유**: OAuth를 WebView 안에서 직접 진행하면 카카오톡/구글 앱으로 자연스럽게 넘어가지 않고 웹 로그인 화면이 뜨기 쉽다. 반대로 외부 브라우저에서만 콜백을 끝내면 WebView 쿠키 세션이 생기지 않는다. 외부 인증 + 앱 딥링크 + WebView 콜백 변환이 현재 WebView 쉘 구조에서 세션 일관성과 앱 전환 경험을 함께 만족한다.
+- **대안**: WebView 내부 OAuth 유지 — 앱to앱 전환이 약하고 일부 제공자 정책/UX와 맞지 않아 기각. 완전 네이티브 Google/Kakao SDK 로그인 — 가장 정석이지만 Supabase ID token 연동과 provider별 콘솔 설정이 더 커서 후속 과제로 보류.
+
 ## 2026-04-17 | Android 홈 백키는 2회 입력 종료로 처리
 
 - **결정**: Flutter 앱 WebView가 홈(`/`)을 보고 있을 때 Android 백키를 누르면 첫 번째 입력에는 종료 안내를 띄우고, 3초 안에 두 번째 입력이 들어오면 `SystemNavigator.pop()`으로 앱을 종료한다. 홈이 아닌 URL에서는 기존 WebView 뒤로가기를 우선한다.

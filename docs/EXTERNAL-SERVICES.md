@@ -136,6 +136,14 @@
 - **운영 포인트**
 - 승인된 리디렉션 URI와 Supabase 설정을 함께 맞춰야 함
 
+### Supabase Auth Redirect URLs
+
+- **역할**: 웹/앱 OAuth 완료 후 돌아올 URL 허용 목록
+- **운영 포인트**
+- 웹: `https://gijilai.com/auth/callback`
+- 앱 WebView: `gijilai://auth/callback`
+- 앱 소셜 로그인 장애 시 `gijilai://auth/callback`이 Redirect URL allow list에 포함되어 있는지 먼저 확인
+
 ### GitHub
 
 - **역할**: 소스 저장소, 배포 연계, 변경 이력 관리
