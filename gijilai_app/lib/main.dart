@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -91,6 +92,7 @@ class _MainWebViewState extends State<MainWebView> {
   final InAppPurchase _iap = InAppPurchase.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+  DateTime? _lastBackPressedAt;
 
   @override
   void initState() {
@@ -606,6 +608,38 @@ class _MainWebViewState extends State<MainWebView> {
         .replaceAll('\n', '\\n');
   }
 
+  Future<void> _handleBackPressed(WebViewController controller) async {
+    final currentUrl = await controller.currentUrl();
+
+    if (!_isHomeUrl(currentUrl) && await controller.canGoBack()) {
+      controller.goBack();
+      return;
+    }
+
+    final now = DateTime.now();
+    final shouldExit =
+        _lastBackPressedAt != null &&
+        now.difference(_lastBackPressedAt!) <= const Duration(seconds: 3);
+
+    if (shouldExit) {
+      await SystemNavigator.pop();
+      return;
+    }
+
+    _lastBackPressedAt = now;
+    _showSnackBar("한번 더 누르면 종료됩니다");
+  }
+
+  bool _isHomeUrl(String? url) {
+    final uri = url == null ? null : Uri.tryParse(url);
+    if (uri == null) return false;
+
+    final targetUri = Uri.parse(MainWebView.targetUrl);
+    final isSameHost = uri.host == targetUri.host;
+    final isHomePath = uri.path.isEmpty || uri.path == "/";
+    return isSameHost && isHomePath;
+  }
+
   @override
   void dispose() {
     _purchaseSubscription?.cancel();
@@ -626,9 +660,7 @@ class _MainWebViewState extends State<MainWebView> {
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (didPop) return;
-        if (await controller.canGoBack()) {
-          controller.goBack();
-        }
+        await _handleBackPressed(controller);
       },
       child: Scaffold(
         backgroundColor: Colors.white,

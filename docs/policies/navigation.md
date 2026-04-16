@@ -60,6 +60,8 @@
 - 내부 페이지 전환 시 `router.replace()` 사용 (`router.push()` 대신, WebView 뒤로가기 스택 이슈 방지)
 - 모든 헤더는 absolute positioning으로 타이틀 중앙 정렬
 - 노치/상태표시줄 대응을 위한 상단 여백 통일 (pt-12, pb-4)
+- Android 앱에서 WebView 현재 URL이 홈(`/`)이면 백키 1회 입력 시 "한번 더 누르면 종료됩니다" 안내를 띄우고, 3초 안에 한 번 더 누르면 앱을 종료한다.
+- 홈이 아닌 URL에서는 앱 종료보다 WebView 뒤로가기를 우선한다.
 
 ## 접수 폼
 
