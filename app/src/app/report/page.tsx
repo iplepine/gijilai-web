@@ -69,6 +69,7 @@ function ReportContent() {
   const [parentAiReport, setParentAiReport] = useState<ParentAiReport | null>(null);
   const [harmonyAiReport, setHarmonyAiReport] = useState<HarmonyAiReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reportLoadingStep, setReportLoadingStep] = useState(0);
   const generatingRef = useRef<Set<string>>(new Set());
   const [reportDates, setReportDates] = useState<ReportDates>({});
   const [hasSubscription, setHasSubscription] = useState(false);
@@ -98,6 +99,58 @@ function ReportContent() {
 
   const reportId = searchParams.get('id');
   const showPremiumCta = !!user && !hasSubscription;
+
+  useEffect(() => {
+    if (!isGenerating) {
+      setReportLoadingStep(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setReportLoadingStep((step) => step + 1);
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [isGenerating]);
+
+  const childLoadingSteps = useMemo(() => [
+    t('report.childLoadingStep1'),
+    t('report.childLoadingStep2'),
+    t('report.childLoadingStep3'),
+    t('report.childLoadingStep4'),
+    t('report.childLoadingStep5'),
+  ], [t]);
+
+  const parentLoadingSteps = useMemo(() => [
+    t('report.parentLoadingStep1'),
+    t('report.parentLoadingStep2'),
+    t('report.parentLoadingStep3'),
+    t('report.parentLoadingStep4'),
+    t('report.parentLoadingStep5'),
+  ], [t]);
+
+  const harmonyLoadingSteps = useMemo(() => [
+    t('report.harmonyLoadingStep1'),
+    t('report.harmonyLoadingStep2'),
+    t('report.harmonyLoadingStep3'),
+    t('report.harmonyLoadingStep4'),
+    t('report.harmonyLoadingStep5'),
+  ], [t]);
+
+  const ReportGeneratingState = ({ title, steps }: { title: string; steps: string[] }) => (
+    <div className="py-16 px-6 flex flex-col items-center gap-4 animate-fade-in text-center">
+      <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      <div className="space-y-2">
+        <p className="text-text-sub text-sm font-bold break-keep">{title}</p>
+        <p className="min-h-[22px] text-text-main dark:text-white text-[14px] font-black leading-snug break-keep">
+          {steps[reportLoadingStep % steps.length]}
+        </p>
+        <p className="text-text-sub/60 text-[12px] leading-relaxed break-keep">
+          {t('report.loadingStillWorking')}
+        </p>
+      </div>
+    </div>
+  );
 
   const PremiumContinuationCard = ({ compact = false }: { compact?: boolean }) => (
     <section className="bg-primary rounded-2xl px-6 py-5 text-white shadow-card relative overflow-hidden text-left">
@@ -793,11 +846,7 @@ function ReportContent() {
                       )}
                     </div>
                   ) : (
-                    <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
-                      <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                      <p className="text-text-sub text-sm font-bold">{t('report.analyzingChild')}</p>
-                      <p className="text-text-sub/60 text-[12px]">{t('common.pleaseWait')}</p>
-                    </div>
+                    <ReportGeneratingState title={t('report.analyzingChild')} steps={childLoadingSteps} />
                   )}
 
                   {/* Footer Actions */}
@@ -973,11 +1022,7 @@ function ReportContent() {
                     )}
                   </>
                 ) : (
-                  <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
-                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-text-sub text-sm font-bold">{t('report.analyzingParent')}</p>
-                    <p className="text-text-sub/60 text-[12px]">{t('common.pleaseWait')}</p>
-                  </div>
+                  <ReportGeneratingState title={t('report.analyzingParent')} steps={parentLoadingSteps} />
                 )}
 
                 {/* Footer Actions */}
@@ -1199,11 +1244,7 @@ function ReportContent() {
                     )}
                   </>
                 ) : (
-                  <div className="py-16 flex flex-col items-center gap-4 animate-fade-in">
-                    <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-text-sub text-sm font-bold">{t('report.analyzingHarmony')}</p>
-                    <p className="text-text-sub/60 text-[12px]">{t('common.pleaseWait')}</p>
-                  </div>
+                  <ReportGeneratingState title={t('report.analyzingHarmony')} steps={harmonyLoadingSteps} />
                 )}
 
                 {/* Footer Actions */}
