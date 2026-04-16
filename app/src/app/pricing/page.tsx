@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-type PayMethodOption = 'KCP_CARD' | 'INICIS_CARD' | 'TOSSPAY' | 'NAVERPAY';
+type PayMethodOption = 'KCP_CARD' | 'INICIS_CARD';
 
 const PRICES = {
   MONTHLY: { KRW: 12000, USD: 1199 },
@@ -143,13 +143,7 @@ export default function PricingPage() {
       let billingKeyMethod: PortOneIssueBillingKeyParams['billingKeyMethod'];
 
       if (locale === 'ko') {
-        if (payMethod === 'NAVERPAY') {
-          channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY;
-          billingKeyMethod = 'EASY_PAY';
-        } else if (payMethod === 'TOSSPAY') {
-          channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS;
-          billingKeyMethod = 'EASY_PAY';
-        } else if (payMethod === 'INICIS_CARD') {
+        if (payMethod === 'INICIS_CARD') {
           channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS;
           billingKeyMethod = 'CARD';
         } else {
@@ -189,14 +183,6 @@ export default function PricingPage() {
           interval: '1m',
         },
       };
-
-      if (locale === 'ko') {
-        if (payMethod === 'NAVERPAY') {
-          issueParams.easyPay = { provider: 'NAVERPAY' };
-        } else if (payMethod === 'TOSSPAY') {
-          issueParams.easyPay = { provider: 'TOSSPAY' };
-        }
-      }
 
       const issueResult = await window.PortOne.requestIssueBillingKey?.(issueParams);
 
@@ -428,30 +414,6 @@ export default function PricingPage() {
                   <Icon name="credit_card" size="sm" className={`text-2xl mb-1 ${payMethod === 'INICIS_CARD' ? 'text-[#E84B3C]' : 'text-text-sub'}`} />
                   <p className={`text-sm font-bold ${payMethod === 'INICIS_CARD' ? 'text-[#E84B3C]' : 'text-text-main dark:text-white'}`}>{t('pricing.card')}</p>
                   <p className="text-[11px] text-text-sub mt-0.5">KG Inicis</p>
-                </button>
-                <button
-                  onClick={() => setPayMethod('TOSSPAY')}
-                  className={`p-3 rounded-xl border-2 transition-all text-center ${
-                    payMethod === 'TOSSPAY'
-                      ? 'border-[#0064FF] bg-[#0064FF]/5'
-                      : 'border-gray-100 bg-white dark:bg-surface-dark dark:border-gray-700'
-                  }`}
-                >
-                  <span className={`text-2xl mb-1 inline-block font-black ${payMethod === 'TOSSPAY' ? 'text-[#0064FF]' : 'text-text-sub'}`}>T</span>
-                  <p className={`text-sm font-bold ${payMethod === 'TOSSPAY' ? 'text-[#0064FF]' : 'text-text-main dark:text-white'}`}>토스페이</p>
-                  <p className="text-[11px] text-text-sub mt-0.5">{t('pricing.easyPay')}</p>
-                </button>
-                <button
-                  onClick={() => setPayMethod('NAVERPAY')}
-                  className={`p-3 rounded-xl border-2 transition-all text-center ${
-                    payMethod === 'NAVERPAY'
-                      ? 'border-[#03C75A] bg-[#03C75A]/5'
-                      : 'border-gray-100 bg-white dark:bg-surface-dark dark:border-gray-700'
-                  }`}
-                >
-                  <span className={`text-2xl mb-1 inline-block font-black ${payMethod === 'NAVERPAY' ? 'text-[#03C75A]' : 'text-text-sub'}`}>N</span>
-                  <p className={`text-sm font-bold ${payMethod === 'NAVERPAY' ? 'text-[#03C75A]' : 'text-text-main dark:text-white'}`}>네이버페이</p>
-                  <p className="text-[11px] text-text-sub mt-0.5">{t('pricing.easyPay')}</p>
                 </button>
               </div>
             </section>

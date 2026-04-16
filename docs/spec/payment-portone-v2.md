@@ -174,11 +174,11 @@ locale 결정 순서:
 
 | 속성 | 한국 (ko) | 글로벌 (en) |
 |------|----------|------------|
-| PG사 | `tosspayments` | `stripe` |
+| PG사 | `kcp_v2`, `inicis_v2` | `stripe` |
 | 통화 | KRW | USD |
-| 간편결제 | 카카오페이, 토스페이, 네이버페이 | Google Pay, Apple Pay |
+| 간편결제 | 미노출 (토스페이/네이버페이 심사 거부) | Google Pay, Apple Pay |
 | 카드 결제 | O | O |
-| 포트원 채널 키 | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY` | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_STRIPE` |
+| 포트원 채널 키 | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP`, `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS` | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_STRIPE` |
 
 ## 7. 결제 플로우
 
@@ -372,8 +372,8 @@ async function getActiveSubscription(userId: string): Promise<Subscription | nul
 | `NEXT_PUBLIC_PORTONE_STORE_ID` | 포트원 상점 ID (클라이언트용) | O |
 | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_KCP` | NHN KCP 채널 키 (클라이언트용) | O |
 | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_INICIS` | KG 이니시스 채널 키 (클라이언트용) | O |
-| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS` | 토스페이 채널 키 (클라이언트용) | O |
-| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY` | 네이버페이 채널 키 (클라이언트용) | O |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_TOSS` | 토스페이 채널 키 (심사 거부로 UI 미노출) | X |
+| `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_NAVERPAY` | 네이버페이 채널 키 (심사 거부로 UI 미노출) | X |
 | `NEXT_PUBLIC_PORTONE_CHANNEL_KEY_STRIPE` | Stripe 채널 키 (클라이언트용) | O |
 | `PORTONE_WEBHOOK_SECRET` | 웹훅 검증 시크릿 | O |
 
@@ -457,7 +457,7 @@ async function getActiveSubscription(userId: string): Promise<Subscription | nul
   "billingKey": "string",
   "plan": "MONTHLY | YEARLY",
   "locale": "ko | en",
-  "payMethod": "KCP_CARD | INICIS_CARD | TOSSPAY | NAVERPAY"
+  "payMethod": "KCP_CARD | INICIS_CARD"
 }
 ```
 
@@ -470,7 +470,7 @@ async function getActiveSubscription(userId: string): Promise<Subscription | nul
 6. period 계산: MONTHLY → +30일, YEARLY → +365일
 
 **응답 (성공):** `{ success: true, subscription: { id, plan, currentPeriodEnd } }`
-**응답 (실패):** `{ error: "ALREADY_SUBSCRIBED" | "BILLING_FAILED" | "INVALID_PLAN" }`, status 400
+**응답 (실패):** `{ error: "ALREADY_SUBSCRIBED" | "BILLING_FAILED" | "INVALID_PLAN" | "INVALID_PAY_METHOD" }`, status 400
 
 ### 12.3 `POST /api/payment/cancel-subscription`
 

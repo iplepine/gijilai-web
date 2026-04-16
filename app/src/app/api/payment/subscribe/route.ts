@@ -56,6 +56,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'INVALID_PLAN' }, { status: 400 });
     }
 
+    if (locale === 'ko' && payMethod && !['KCP_CARD', 'INICIS_CARD'].includes(payMethod)) {
+      return NextResponse.json({ error: 'INVALID_PAY_METHOD' }, { status: 400 });
+    }
+
     // 기존 활성 구독 확인
     const { data: existingSub } = await supabase
       .from('subscriptions')
