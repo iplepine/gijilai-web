@@ -27,6 +27,7 @@ import { TCI_TERMINOLOGY } from '@/constants/terminology';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useLocale } from '@/i18n/LocaleProvider';
+import { childNamePossessive, normalizeChildNameParticlesInValue } from '@/lib/koreanUtils';
 import {
   asChildAiReport,
   asHarmonyAiReport,
@@ -61,7 +62,7 @@ function ReportContent() {
   const isChildOnly = searchParams.get('child_only') === 'true';
 
   const { user } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [activeTab, setActiveTab] = useState<ReportTab>('child');
   const { intake, cbqResponses, atqResponses, parentingResponses, selectedChildId } = useAppStore();
 
@@ -99,6 +100,13 @@ function ReportContent() {
 
   const reportId = searchParams.get('id');
   const showPremiumCta = !!user && !hasSubscription;
+  const childName = intake.childName || t('report.child');
+  const childPossessiveName = locale === 'ko' ? childNamePossessive(childName) : childName;
+
+  const normalizeReportTextForName = useCallback(<T,>(report: T, name?: string | null): T => {
+    if (locale !== 'ko' || !name) return report;
+    return normalizeChildNameParticlesInValue(report, name);
+  }, [locale]);
 
   useEffect(() => {
     if (!isGenerating) {
@@ -195,7 +203,7 @@ function ReportContent() {
         }
 
         if (data.type === 'CHILD') {
-          setChildAiReport(asChildAiReport(data.analysis_json));
+          setChildAiReport(normalizeReportTextForName(asChildAiReport(data.analysis_json), childData?.name));
           setSavedChildScores((surveyData?.scores as TemperamentScores | null) ?? null);
           setActiveTab('child');
         } else if (data.type === 'PARENT') {
@@ -203,7 +211,7 @@ function ReportContent() {
           setSavedParentScores((surveyData?.scores as TemperamentScores | null) ?? null);
           setActiveTab('parent');
         } else if (data.type === 'HARMONY') {
-          setHarmonyAiReport(asHarmonyAiReport(data.analysis_json));
+          setHarmonyAiReport(normalizeReportTextForName(asHarmonyAiReport(data.analysis_json), childData?.name));
           setActiveTab('parenting');
         }
       }
@@ -213,7 +221,7 @@ function ReportContent() {
     } finally {
       setIsGenerating(false);
     }
-  }, [t]);
+  }, [normalizeReportTextForName, t]);
 
   // URL ID가 있을 경우 DB에서 리포트 로드
   useEffect(() => {
@@ -341,7 +349,7 @@ function ReportContent() {
         childType: { label: childType.label, keywords: childType.keywords, desc: childType.desc }
       });
       if (result) {
-        setChildAiReport(asChildAiReport(result.report));
+        setChildAiReport(normalizeReportTextForName(asChildAiReport(result.report), intake.childName));
         if (result.reportId) setChildReportId(result.reportId);
         setReportDates(prev => ({ ...prev, child: result.createdAt }));
       }
@@ -352,7 +360,7 @@ function ReportContent() {
       generatingRef.current.delete('CHILD');
       setIsGenerating(generatingRef.current.size > 0);
     }
-  }, [cbqResponses, childScores, childType.desc, childType.keywords, childType.label, fetchReport, intake.childName, t]);
+  }, [cbqResponses, childScores, childType.desc, childType.keywords, childType.label, fetchReport, intake.childName, normalizeReportTextForName, t]);
 
   const generateParentAIReport = useCallback(async (refresh = false) => {
     if (generatingRef.current.has('PARENT')) return;
@@ -397,7 +405,7 @@ function ReportContent() {
         parentType: { label: parentType.label, keywords: parentType.keywords }
       });
       if (result) {
-        setHarmonyAiReport(asHarmonyAiReport(result.report));
+        setHarmonyAiReport(normalizeReportTextForName(asHarmonyAiReport(result.report), intake.childName));
         setReportDates(prev => ({ ...prev, parenting: result.createdAt }));
       }
     } catch (error) {
@@ -407,7 +415,7 @@ function ReportContent() {
       generatingRef.current.delete('HARMONY');
       setIsGenerating(generatingRef.current.size > 0);
     }
-  }, [atqResponses, cbqResponses, childScores, childType.keywords, childType.label, fetchReport, intake.childName, parentScores, parentType.keywords, parentType.label, parentingResponses, styleScores, t]);
+  }, [atqResponses, cbqResponses, childScores, childType.keywords, childType.label, fetchReport, intake.childName, normalizeReportTextForName, parentScores, parentType.keywords, parentType.label, parentingResponses, styleScores, t]);
 
   // 아이 진단 탭: 리포트 없으면 자동 생성 (서버가 캐시/생성 분기)
   useEffect(() => {
@@ -588,7 +596,9 @@ function ReportContent() {
               {activeTab === 'child' ? (
                 isChildSurveyComplete ? (
                   <>
-                    <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}{t('report.childTemperamentType')}</p>
+                    <p className="text-text-sub text-sm font-medium">
+                      {locale === 'ko' ? `${childPossessiveName} 기질 유형` : `${childName}${t('report.childTemperamentType')}`}
+                    </p>
                     <h1 className="text-3xl font-black text-text-main dark:text-white tracking-tight">
                       {childType.label}
                     </h1>
@@ -601,7 +611,9 @@ function ReportContent() {
                   </>
                 ) : (
                   <>
-                    <p className="text-text-sub text-sm font-medium">{intake.childName || '아이'}{t('report.childTemperamentType')}</p>
+                    <p className="text-text-sub text-sm font-medium">
+                      {locale === 'ko' ? `${childPossessiveName} 기질 유형` : `${childName}${t('report.childTemperamentType')}`}
+                    </p>
                     <div className="h-9 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse mx-auto" />
                     <div className="h-4 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mx-auto" />
                   </>
@@ -662,7 +674,7 @@ function ReportContent() {
 
                   <div className="space-y-4">
                     <h2 className="text-2xl font-black text-text-main dark:text-white leading-tight">
-                      {intake.childName || t('report.child')}{t('report.testTime')}
+                      {locale === 'ko' ? `${childPossessiveName} 기질을 알아볼 시간이에요!` : `${childName}${t('report.testTime')}`}
                     </h2>
                     <p className="text-text-sub dark:text-slate-400 text-[15px] leading-relaxed break-keep px-4">
                       {t('report.testTimeDesc')}<br />
@@ -696,7 +708,7 @@ function ReportContent() {
                       {/* 2. 기질 {t('common.points')}수 카드 */}
                       <section className="bg-white dark:bg-surface-dark rounded-2xl px-6 py-6 shadow-card border border-beige-main/10 space-y-5">
                         <p className="text-[12px] font-black text-text-main dark:text-white flex items-center gap-1.5">
-                          <Icon name="bar_chart" size="sm" /> {intake.childName || t('report.child')}{t('report.temperamentScores')}
+                          <Icon name="bar_chart" size="sm" /> {locale === 'ko' ? `${childPossessiveName} 기질 점수` : `${childName}${t('report.temperamentScores')}`}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           {([
