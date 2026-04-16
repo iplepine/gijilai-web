@@ -20,6 +20,11 @@ import { useLocale } from '@/i18n/LocaleProvider';
 import { useHomeDashboard } from '@/hooks/useHomeDashboard';
 import { extractReportScores, isTemperamentScores, parseAnswerMap, type TemperamentScores } from '@/lib/home';
 
+const isAppWebView = () => (
+  typeof window !== 'undefined' &&
+  window.navigator.userAgent.includes('gijilai_app')
+);
+
 export default function HomePage() {
   const router = useRouter();
   const { t } = useLocale();
@@ -164,6 +169,12 @@ export default function HomePage() {
     }
   }, [loading, user, children, intake.childName]);
 
+  useEffect(() => {
+    if (!authLoading && !user && isAppWebView()) {
+      router.replace('/login');
+    }
+  }, [authLoading, user, router]);
+
   const handleProfileClick = () => {
     fileInputRef.current?.click();
   };
@@ -186,6 +197,9 @@ export default function HomePage() {
 
   // Not logged in state (only after auth check completes)
   if (!authLoading && !user) {
+    if (isAppWebView()) {
+      return <HomeLoadingScreen />;
+    }
     return <LandingPage />;
   }
 
