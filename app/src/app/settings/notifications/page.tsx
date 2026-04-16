@@ -22,6 +22,14 @@ const DEFAULT_SETTINGS: NotificationSettings = {
     practiceReminderTime: '20:00',
 };
 
+declare global {
+    interface Window {
+        ReminderBridge?: {
+            postMessage: (message: string) => void;
+        };
+    }
+}
+
 export default function NotificationsPage() {
     const { t } = useLocale();
     const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
@@ -43,6 +51,11 @@ export default function NotificationsPage() {
     useEffect(() => {
         if (!loaded) return;
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        window.ReminderBridge?.postMessage(JSON.stringify({
+            type: 'PRACTICE_REMINDER_SETTINGS',
+            enabled: settings.pushEnabled && settings.practiceReminderEnabled,
+            time: settings.practiceReminderTime,
+        }));
     }, [loaded, settings]);
 
     const updateSetting = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => {

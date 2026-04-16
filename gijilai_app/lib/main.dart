@@ -5,47 +5,51 @@ import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'firebase_options.dart';
 
 Future<void> main() async {
-  await runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+  await runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-      !kDebugMode,
-    );
-    await FirebaseCrashlytics.instance.setCustomKey(
-      'app_platform',
-      defaultTargetPlatform.name,
-    );
-    await FirebaseCrashlytics.instance.setCustomKey(
-      'webview_target',
-      MainWebView.targetUrl,
-    );
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+        !kDebugMode,
+      );
+      await FirebaseCrashlytics.instance.setCustomKey(
+        'app_platform',
+        defaultTargetPlatform.name,
+      );
+      await FirebaseCrashlytics.instance.setCustomKey(
+        'webview_target',
+        MainWebView.targetUrl,
+      );
 
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+
+      runApp(const GijilaiApp());
+    },
+    (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-
-    final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission();
-
-    runApp(const GijilaiApp());
-  }, (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  });
+    },
+  );
 }
 
 class GijilaiApp extends StatelessWidget {
@@ -76,16 +80,48 @@ class MainWebView extends StatefulWidget {
 
 class _MainWebViewState extends State<MainWebView> {
   static const _subscriptionProductId = 'monthly_premium';
+  static const _practiceReminderNotificationId = 1001;
 
   WebViewController? _controller;
   StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
   final InAppPurchase _iap = InAppPurchase.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
     _initIAP();
+    _initLocalNotifications();
     _initWebView();
+  }
+
+  Future<void> _initLocalNotifications() async {
+    try {
+      tz.initializeTimeZones();
+      final timeZoneName =
+          (await FlutterTimezone.getLocalTimezone()).identifier;
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+
+      const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const ios = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
+      const settings = InitializationSettings(android: android, iOS: ios);
+
+      await _localNotifications.initialize(settings);
+    } catch (e) {
+      debugPrint('Local notifications init error: $e');
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Local notifications init error',
+        ),
+      );
+    }
   }
 
   Future<void> _initWebView() async {
@@ -116,6 +152,10 @@ class _MainWebViewState extends State<MainWebView> {
       ..addJavaScriptChannel(
         'PaymentBridge',
         onMessageReceived: _onPaymentMessage,
+      )
+      ..addJavaScriptChannel(
+        'ReminderBridge',
+        onMessageReceived: _onReminderMessage,
       )
       ..loadRequest(Uri.parse(MainWebView.targetUrl));
 
@@ -184,6 +224,113 @@ class _MainWebViewState extends State<MainWebView> {
     }
   }
 
+  Future<void> _onReminderMessage(JavaScriptMessage message) async {
+    try {
+      final data = jsonDecode(message.message) as Map<String, dynamic>;
+      if (data['type'] != 'PRACTICE_REMINDER_SETTINGS') return;
+
+      final enabled = data['enabled'] == true;
+      final time = data['time']?.toString() ?? '20:00';
+      await _schedulePracticeReminder(enabled: enabled, time: time);
+    } catch (e) {
+      debugPrint('ReminderBridge parse error: $e');
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'ReminderBridge parse error',
+        ),
+      );
+    }
+  }
+
+  Future<void> _schedulePracticeReminder({
+    required bool enabled,
+    required String time,
+  }) async {
+    await _localNotifications.cancel(_practiceReminderNotificationId);
+
+    if (!enabled) {
+      _showSnackBar('실천 리마인더가 꺼졌습니다');
+      return;
+    }
+
+    final permissionGranted = await _requestLocalNotificationPermission();
+    if (!permissionGranted) {
+      _showSnackBar('알림 권한이 필요합니다', isError: true);
+      return;
+    }
+
+    final parts = time.split(':');
+    final hour = int.tryParse(parts.first) ?? 20;
+    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+
+    const androidDetails = AndroidNotificationDetails(
+      'practice_reminders',
+      '실천 리마인더',
+      channelDescription: '진행 중인 실천 항목을 매일 떠올릴 수 있도록 알려줍니다.',
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    await _localNotifications.zonedSchedule(
+      _practiceReminderNotificationId,
+      '오늘의 실천을 떠올려볼 시간이에요',
+      '짧게 체크하고 다음 상담에 쓸 변화를 남겨보세요.',
+      _nextInstanceOfTime(hour, minute),
+      const NotificationDetails(android: androidDetails, iOS: iosDetails),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+
+    _showSnackBar('실천 리마인더가 설정되었습니다');
+  }
+
+  Future<bool> _requestLocalNotificationPermission() async {
+    if (Platform.isIOS) {
+      return await _localNotifications
+              .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin
+              >()
+              ?.requestPermissions(alert: true, badge: true, sound: true) ??
+          false;
+    }
+
+    if (Platform.isAndroid) {
+      return await _localNotifications
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >()
+              ?.requestNotificationsPermission() ??
+          true;
+    }
+
+    return true;
+  }
+
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour.clamp(0, 23),
+      minute.clamp(0, 59),
+    );
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
+  }
+
   Future<void> _startPurchase() async {
     final available = await _iap.isAvailable();
     if (!available) {
@@ -249,7 +396,8 @@ class _MainWebViewState extends State<MainWebView> {
 
       // WebView 쿠키/세션을 활용하기 위해 JavaScript fetch로 서버 검증
       // 결과를 window.__iapResult에 저장하여 Flutter에서 읽음
-      final jsCode = '''
+      final jsCode =
+          '''
         (async () => {
           try {
             const r = await fetch('/api/payment/iap', {
@@ -282,9 +430,11 @@ class _MainWebViewState extends State<MainWebView> {
         final cleaned = raw.toString().replaceAll('"', '').replaceAll("'", '');
         if (cleaned.isNotEmpty && cleaned != 'null') {
           // runJavaScriptReturningResult는 JSON 문자열을 이스케이프해서 반환하므로 복원
-          resultJson = await _controller!.runJavaScriptReturningResult(
-            'window.__iapResult',
-          ) as String?;
+          resultJson =
+              await _controller!.runJavaScriptReturningResult(
+                    'window.__iapResult',
+                  )
+                  as String?;
           await _controller!.runJavaScript('delete window.__iapResult;');
           break;
         }
@@ -337,7 +487,9 @@ class _MainWebViewState extends State<MainWebView> {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red.shade700 : const Color(0xFF2F4F3E),
+        backgroundColor: isError
+            ? Colors.red.shade700
+            : const Color(0xFF2F4F3E),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -386,9 +538,7 @@ class _MainWebViewState extends State<MainWebView> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SafeArea(
-          child: WebViewWidget(controller: controller),
-        ),
+        body: SafeArea(child: WebViewWidget(controller: controller)),
       ),
     );
   }
