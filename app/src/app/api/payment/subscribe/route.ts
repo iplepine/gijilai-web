@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabaseServer';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
-import { payWithBillingKey, getAmount, getFirstMonthAmount, cancelPayment } from '@/lib/portone';
+import {
+  payWithBillingKey,
+  getAmount,
+  getFirstMonthAmount,
+  cancelPayment,
+  getPaymentMethodType,
+  getPaymentPgProvider,
+  toPaymentMethodMetadata,
+  type PayMethod,
+} from '@/lib/portone';
 import { computePeriodEnd } from '@/lib/subscription';
 import type { Currency } from '@/lib/portone';
 
@@ -9,6 +18,7 @@ type SubscribeRequest = {
   billingKey?: string;
   plan?: 'MONTHLY';
   locale?: string;
+  payMethod?: PayMethod;
 };
 
 function getSupabaseAdmin() {
@@ -38,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { billingKey, plan, locale } = (await req.json()) as SubscribeRequest;
+    const { billingKey, plan, locale, payMethod } = (await req.json()) as SubscribeRequest;
 
     // [연 구독] 재활성화 시: plan !== 'MONTHLY' → !['MONTHLY', 'YEARLY'].includes(plan)
     if (!billingKey || !plan || plan !== 'MONTHLY') {
@@ -123,7 +133,13 @@ export async function POST(req: Request) {
         status: 'PAID',
         currency,
         amount: firstPayAmount,
+        pg_provider: getPaymentPgProvider(payResult.payment),
+        pay_method: getPaymentMethodType(payResult.payment) ?? (payMethod?.includes('CARD') ? 'CARD' : payMethod ?? null),
         paid_at: now.toISOString(),
+        metadata: toPaymentMethodMetadata(payResult.payment, {
+          selectedPayMethod: payMethod ?? null,
+          isFirstSubscription,
+        }),
       });
 
       return NextResponse.json({

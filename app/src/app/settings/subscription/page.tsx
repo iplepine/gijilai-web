@@ -9,6 +9,76 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { db, PaymentData, SubscriptionData } from '@/lib/db';
 import { useLocale } from '@/i18n/LocaleProvider';
 
+type PaymentMethodMetadata = {
+  paymentMethod?: {
+    type?: string;
+    provider?: string;
+    easyPayMethodType?: string;
+    card?: {
+      name?: string;
+      issuer?: string;
+      publisher?: string;
+      number?: string;
+    };
+  } | null;
+  selectedPayMethod?: string | null;
+  platform?: string | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function readPaymentMetadata(payment: PaymentData): PaymentMethodMetadata {
+  return isRecord(payment.metadata) ? payment.metadata as PaymentMethodMetadata : {};
+}
+
+function safeMaskedCardNumber(value?: string): string | null {
+  if (!value) return null;
+  if (value.includes('*')) return value;
+  return value.replace(/\d(?=\d{4})/g, '*');
+}
+
+function formatCodeLabel(value?: string): string | null {
+  if (!value) return null;
+  if (value === 'TOSSPAY') return 'TossPay';
+  if (value === 'NAVERPAY') return 'Naver Pay';
+  if (value === 'KCP_CARD') return 'NHN KCP';
+  if (value === 'INICIS_CARD') return 'KG Inicis';
+  return value
+    .replace(/^PaymentMethod/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getPaymentMethodLabel(payment: PaymentData, t: (key: string) => string): string | null {
+  const metadata = readPaymentMetadata(payment);
+  const method = metadata.paymentMethod;
+  const selectedPayMethod = metadata.selectedPayMethod ?? payment.pay_method;
+
+  if (method?.type === 'CARD' || payment.pay_method === 'CARD' || selectedPayMethod?.includes('CARD')) {
+    const card = method?.card;
+    const cardName = card?.name || formatCodeLabel(card?.issuer) || formatCodeLabel(card?.publisher);
+    const cardNumber = safeMaskedCardNumber(card?.number);
+    return [t('settings.paymentMethodCard'), cardName, cardNumber].filter(Boolean).join(' · ');
+  }
+
+  if (method?.type === 'EASY_PAY' || payment.pay_method === 'EASY_PAY') {
+    const provider = formatCodeLabel(method?.provider ?? selectedPayMethod ?? undefined);
+    return [provider, t('settings.paymentMethodEasyPay')].filter(Boolean).join(' · ');
+  }
+
+  if (selectedPayMethod === 'applepay' || metadata.platform === 'APPLE_IAP') {
+    return t('settings.paymentMethodAppStore');
+  }
+
+  if (selectedPayMethod === 'googlepay' || metadata.platform === 'GOOGLE_PLAY') {
+    return t('settings.paymentMethodGooglePlay');
+  }
+
+  return formatCodeLabel(payment.pay_method ?? undefined);
+}
+
 
 export default function SubscriptionPage() {
   const { t } = useLocale();
@@ -87,6 +157,8 @@ export default function SubscriptionPage() {
   const planLabel = subscription?.plan === 'MONTHLY' ? t('pricing.monthly') : '';
   const periodEnd = subscription?.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('ko-KR') : '';
   const isCancelled = !!subscription?.cancelled_at;
+  const latestPaidPayment = payments.find((payment) => payment.status === 'PAID');
+  const latestPaymentMethod = latestPaidPayment ? getPaymentMethodLabel(latestPaidPayment, t) : null;
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main dark:text-gray-100 min-h-screen flex flex-col items-center font-body">
@@ -124,9 +196,15 @@ export default function SubscriptionPage() {
                     <span className="font-bold">
                       {subscription.currency === 'KRW'
                         ? `${subscription.amount.toLocaleString()}원`
-                        : `$${(subscription.amount / 100).toFixed(2)}`}
+                      : `$${(subscription.amount / 100).toFixed(2)}`}
                     </span>
                   </div>
+                  {latestPaymentMethod && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-text-sub">{t('settings.paymentMethod')}</span>
+                      <span className="font-bold text-right">{latestPaymentMethod}</span>
+                    </div>
+                  )}
                 </div>
 
                 {isCancelled ? (
@@ -180,27 +258,35 @@ export default function SubscriptionPage() {
             <section className="space-y-3">
               <h3 className="text-sm font-bold text-text-main dark:text-white px-1">{t('settings.paymentHistory')}</h3>
               <div className="space-y-2">
-                {payments.map((p) => (
-                  <div key={p.id} className="bg-white dark:bg-surface-dark rounded-xl p-4 border border-beige-main/10 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-bold text-text-main dark:text-white">
-                        {p.currency === 'KRW' ? `${p.amount.toLocaleString()}원` : `$${(p.amount / 100).toFixed(2)}`}
-                      </p>
-                      <p className="text-[11px] text-text-sub">
-                        {new Date(p.created_at).toLocaleDateString('ko-KR')} · {
-                          p.type === 'ONE_TIME' ? t('settings.paymentReport') : p.type === 'SUBSCRIPTION' ? t('settings.paymentSubscription') : t('settings.paymentRenewal')
-                        }
-                      </p>
+                {payments.map((p) => {
+                  const paymentMethod = getPaymentMethodLabel(p, t);
+                  return (
+                    <div key={p.id} className="bg-white dark:bg-surface-dark rounded-xl p-4 border border-beige-main/10 flex justify-between items-center gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-text-main dark:text-white">
+                          {p.currency === 'KRW' ? `${p.amount.toLocaleString()}원` : `$${(p.amount / 100).toFixed(2)}`}
+                        </p>
+                        <p className="text-[11px] text-text-sub">
+                          {new Date(p.created_at).toLocaleDateString('ko-KR')} · {
+                            p.type === 'ONE_TIME' ? t('settings.paymentReport') : p.type === 'SUBSCRIPTION' ? t('settings.paymentSubscription') : t('settings.paymentRenewal')
+                          }
+                        </p>
+                        {paymentMethod && (
+                          <p className="mt-1 truncate text-[11px] font-medium text-text-sub">
+                            {paymentMethod}
+                          </p>
+                        )}
+                      </div>
+                      <span className={`shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        p.status === 'PAID' ? 'bg-green-100 text-green-700' :
+                        p.status === 'FAILED' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-500'
+                      }`}>
+                        {p.status === 'PAID' ? t('settings.paymentComplete') : p.status === 'FAILED' ? t('settings.paymentFailed') : p.status}
+                      </span>
                     </div>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                      p.status === 'PAID' ? 'bg-green-100 text-green-700' :
-                      p.status === 'FAILED' ? 'bg-red-100 text-red-700' :
-                      'bg-gray-100 text-gray-500'
-                    }`}>
-                      {p.status === 'PAID' ? t('settings.paymentComplete') : p.status === 'FAILED' ? t('settings.paymentFailed') : p.status}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}

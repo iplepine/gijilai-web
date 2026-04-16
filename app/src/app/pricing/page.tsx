@@ -205,6 +205,7 @@ export default function PricingPage() {
           billingKey: issueResult.billingKey,
           plan: 'MONTHLY',
           locale,
+          payMethod,
         }),
       });
 

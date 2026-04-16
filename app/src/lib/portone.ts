@@ -1,4 +1,5 @@
 import { PortOneClient, type PortOneClient as PortOneClientType } from '@portone/server-sdk';
+import type { Json } from '@/types/supabase';
 
 let _portone: PortOneClientType | null = null;
 function getPortone() {
@@ -20,6 +21,35 @@ export const FIRST_MONTH_DISCOUNT = 0.3;
 export type ProductCode = keyof typeof PRICE_TABLE;
 export type Currency = 'KRW' | 'USD';
 export type PayMethod = 'KCP_CARD' | 'INICIS_CARD' | 'TOSSPAY' | 'NAVERPAY';
+export type PaymentMethodSnapshot = {
+  type?: string;
+  provider?: string;
+  easyPayMethodType?: string;
+  card?: {
+    publisher?: string;
+    issuer?: string;
+    brand?: string;
+    type?: string;
+    ownerType?: string;
+    bin?: string;
+    name?: string;
+    number?: string;
+    approvalNumber?: string;
+    installmentMonth?: number;
+  };
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null ? value as Record<string, unknown> : null;
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
 
 export function getAmount(product: ProductCode, currency: Currency): number {
   return PRICE_TABLE[product][currency];
@@ -75,6 +105,62 @@ export async function payWithBillingKey(params: {
     customer: { id: params.customerId },
   });
   return result;
+}
+
+export function getPaymentMethodSnapshot(payment: unknown): PaymentMethodSnapshot | null {
+  const paymentRecord = asRecord(payment);
+  const method = asRecord(paymentRecord?.method);
+  if (!method) return null;
+
+  const type = stringValue(method.type);
+
+  if (type === 'PaymentMethodCard') {
+    const card = asRecord(method.card);
+    const installment = asRecord(method.installment);
+    return {
+      type: 'CARD',
+      card: {
+        publisher: stringValue(card?.publisher),
+        issuer: stringValue(card?.issuer),
+        brand: stringValue(card?.brand),
+        type: stringValue(card?.type),
+        ownerType: stringValue(card?.ownerType),
+        bin: stringValue(card?.bin),
+        name: stringValue(card?.name),
+        number: stringValue(card?.number),
+        approvalNumber: stringValue(method.approvalNumber),
+        installmentMonth: numberValue(installment?.month),
+      },
+    };
+  }
+
+  if (type === 'PaymentMethodEasyPay') {
+    const easyPayMethod = asRecord(method.easyPayMethod);
+    return {
+      type: 'EASY_PAY',
+      provider: stringValue(method.provider),
+      easyPayMethodType: stringValue(easyPayMethod?.type),
+    };
+  }
+
+  return type ? { type } : null;
+}
+
+export function getPaymentMethodType(payment: unknown): string | null {
+  return getPaymentMethodSnapshot(payment)?.type ?? null;
+}
+
+export function getPaymentPgProvider(payment: unknown): string | null {
+  const paymentRecord = asRecord(payment);
+  const channel = asRecord(paymentRecord?.channel);
+  return stringValue(channel?.pgProvider) ?? null;
+}
+
+export function toPaymentMethodMetadata(payment: unknown, extra?: Record<string, Json>): Json {
+  return {
+    ...(extra ?? {}),
+    paymentMethod: getPaymentMethodSnapshot(payment) as Json,
+  };
 }
 
 export async function cancelPayment(paymentId: string, reason: string) {

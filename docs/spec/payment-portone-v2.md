@@ -106,11 +106,11 @@ create table public.payments (
   status text not null default 'PENDING' check (status in ('PENDING', 'PAID', 'FAILED', 'CANCELLED', 'REFUNDED')),
   currency text not null default 'KRW',
   amount integer not null,
-  pg_provider text,                          -- 'tosspayments' | 'stripe'
-  pay_method text,                           -- 'card' | 'kakaopay' | 'tosspay' | 'naverpay' | 'googlepay' | 'applepay'
+  pg_provider text,                          -- PortOne PG provider (예: KCP_V2, INICIS_V2, TOSSPAY_V2)
+  pay_method text,                           -- 'CARD' | 'EASY_PAY' | 'applepay' | 'googlepay' 등
   paid_at timestamptz,
   failed_reason text,
-  metadata jsonb,                            -- 리포트 ID, 쿠폰 ID 등
+  metadata jsonb,                            -- 리포트 ID, 쿠폰 ID, 마스킹된 결제수단 스냅샷 등
   created_at timestamptz default now()
 );
 ```
@@ -560,11 +560,13 @@ async function getActiveSubscription(userId: string): Promise<Subscription | nul
 │  해지해도 2026-04-25까지 이용 가능합니다       │
 │                                             │
 │  ── 결제 이력 ──                             │
-│  2026-03-25  ₩9,900  월 구독  성공           │
+│  2026-03-25  ₩9,900  월 구독  카드 · ****1234 성공 │
 │  2026-03-20  ₩990    리포트   성공           │
 │                                             │
 └─────────────────────────────────────────────┘
 ```
+
+결제 이력은 `payments.pay_method`, `pg_provider`, `metadata.paymentMethod`를 이용해 결제수단을 표시한다. 카드 전체 번호는 저장하지 않으며, PortOne이 반환한 마스킹 카드번호(`method.card.number`)가 있을 때만 표시한다.
 
 ## 14. 정기결제 Cron
 

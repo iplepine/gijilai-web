@@ -44,6 +44,7 @@
 ## 구독 라이프사이클
 
 - **구독 생성**: 빌링키 발급 → 첫 결제 → ACTIVE (`/api/payment/subscribe`)
+- **결제수단 표시**: 결제 이력에는 PG/결제수단과 마스킹된 카드번호만 표시한다. 카드 전체 번호, CVC, 유효기간 등 민감한 카드정보는 저장하지 않는다.
 - **정기 갱신**: cron(`/api/payment/billing`)으로 만료 구독 자동 결제
 - **갱신 실패**: PAST_DUE 상태. 4일 이내 연속 3회 실패 시 EXPIRED (`MAX_RETRY_COUNT = 3`)
 - **해지**: 기간 만료 해지 (`cancelled_at` 설정, status는 ACTIVE 유지). 다음 갱신 시점에 EXPIRED 처리 (`/api/payment/cancel-subscription`)

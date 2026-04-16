@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
-import { payWithBillingKey } from '@/lib/portone';
+import {
+  payWithBillingKey,
+  getPaymentMethodType,
+  getPaymentPgProvider,
+  toPaymentMethodMetadata,
+} from '@/lib/portone';
 import { computePeriodEnd } from '@/lib/subscription';
 import type { Currency } from '@/lib/portone';
 import type { Database } from '@/types/supabase';
@@ -91,7 +96,10 @@ export async function POST(req: Request) {
             status: 'PAID',
             currency,
             amount: sub.amount,
+            pg_provider: getPaymentPgProvider(result.payment),
+            pay_method: getPaymentMethodType(result.payment),
             paid_at: new Date().toISOString(),
+            metadata: toPaymentMethodMetadata(result.payment),
           });
 
           processed++;
