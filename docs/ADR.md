@@ -213,9 +213,9 @@
 
 ## 2026-04-17 | 앱 소셜 로그인은 네이티브 화면과 딥링크로 처리
 
-- **결정**: Flutter 앱 WebView가 `/login`에 도달하면 WebView 위에 네이티브 로그인 화면을 오버레이한다. 네이티브 버튼은 Supabase OAuth authorize URL을 외부 앱/브라우저로 열고, 인증 완료 후 `gijilai://auth/callback` 딥링크를 받아 WebView의 `https://gijilai.com/auth/callback`으로 다시 로드해 기존 Supabase 서버 콜백에서 세션 쿠키를 설정한다. 기존 웹 `AuthBridge` 경로는 fallback으로 유지한다.
-- **이유**: 로그인 진입 화면은 앱다운 경험을 제공해야 하지만, WebView 세션은 기존 Supabase 쿠키 기반으로 유지되어야 한다. 네이티브 화면 + 외부 인증 + 앱 딥링크 + WebView 콜백 변환은 현재 WebView 쉘 구조에서 세션 일관성과 앱 진입 경험을 함께 만족한다.
-- **대안**: WebView 내부 로그인 화면 유지 — 앱 UX가 약하고 OAuth 제공자 정책/UX와 맞지 않아 기각. 완전 네이티브 Google/Kakao SDK 로그인 — 가장 정석이지만 카카오 Native App Key와 Google OAuth 클라이언트 ID 설정이 필요해 후속 과제로 보류.
+- **결정**: Flutter 앱 WebView가 `/login`에 도달하면 WebView 위에 네이티브 로그인 화면을 오버레이한다. 카카오 버튼은 Kakao Flutter SDK 앱투앱 로그인을 먼저 사용하고, Kakao ID 토큰을 `/auth/native-session`으로 전달해 WebView에 Supabase 세션 쿠키를 설정한다. Kakao ID 토큰이 없거나 Google 로그인인 경우 Supabase OAuth authorize URL을 외부 앱/브라우저로 열고, 인증 완료 후 `gijilai://auth/callback` 딥링크를 받아 WebView의 `https://gijilai.com/auth/callback`으로 다시 로드한다. 기존 웹 `AuthBridge` 경로는 fallback으로 유지한다.
+- **이유**: 로그인 진입 화면은 앱다운 경험을 제공해야 하지만, WebView 세션은 기존 Supabase 쿠키 기반으로 유지되어야 한다. 카카오는 앱투앱 로그인을 제공해 사용자가 카카오톡에서 바로 인증할 수 있고, `/auth/native-session` 세션 교환으로 기존 웹 권한/세션 구조를 유지할 수 있다.
+- **대안**: WebView 내부 로그인 화면 유지 — 앱 UX가 약하고 OAuth 제공자 정책/UX와 맞지 않아 기각. 모든 소셜 로그인을 완전 네이티브 SDK로 전환 — Google OAuth 클라이언트 ID 설정과 플랫폼별 검증 범위가 커서 후속 과제로 보류.
 
 ## 2026-04-17 | Android 홈 백키는 2회 입력 종료로 처리
 

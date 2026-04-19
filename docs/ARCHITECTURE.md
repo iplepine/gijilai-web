@@ -1,7 +1,7 @@
 # 아키텍처
 
 시스템 구조 및 컴포넌트 책임 정의.
-최종 동기화: 2026-04-12
+최종 동기화: 2026-04-19
 
 ## 개요
 
@@ -52,7 +52,7 @@
 ### 인증
 - **위치**: `app/src/lib/supabase.ts`, `app/src/lib/supabaseServer.ts`, `app/src/components/auth/AuthProvider.tsx`
 - **역할**: Supabase Auth를 통한 인증 (Google OAuth, Kakao OAuth, 이메일/비밀번호)
-- **앱 WebView**: `/login` 도달 시 Flutter 네이티브 로그인 화면을 오버레이한다. 네이티브 버튼은 Supabase OAuth authorize URL을 외부 앱/브라우저에서 열고, `gijilai://auth/callback` 딥링크를 WebView의 `/auth/callback`으로 변환해 세션 쿠키를 설정한다. 웹 `AuthBridge` 경로는 fallback으로 유지한다.
+- **앱 WebView**: `/login` 도달 시 Flutter 네이티브 로그인 화면을 오버레이한다. 카카오 버튼은 Kakao Flutter SDK 앱투앱 로그인을 먼저 사용하고, Kakao ID 토큰을 `/auth/native-session`으로 전달해 Supabase 세션 쿠키를 WebView에 설정한다. ID 토큰이 없거나 Google 로그인인 경우 Supabase OAuth authorize URL + `gijilai://auth/callback` 딥링크 경로를 사용한다. 웹 `AuthBridge` 경로는 fallback으로 유지한다.
 - **의존**: Supabase Auth
 - **사용처**: API 라우트 (세션 검증), 보호된 페이지
 
@@ -130,6 +130,7 @@ app/src/components/
 | `/api/payment/verify` | POST | 결제 검증 |
 | `/api/payment/webhook` | POST | 포트원 웹훅 |
 | `/api/report/shared/[id]` | GET | 공유 리포트 조회 |
+| `/auth/native-session` | POST | 앱 네이티브 소셜 로그인 토큰을 Supabase 세션 쿠키로 교환 |
 
 ## 외부 의존성
 
@@ -150,9 +151,9 @@ app/src/components/
 - **PG사**: KG 이니시스 (한국 웹 정기결제 운영), NHN KCP (한국 웹 계약 진행 중), Stripe (글로벌 웹), Apple/Google IAP (앱)
 
 ### Kakao SDK
-- **용도**: 소셜 로그인 (OAuth), 공유 기능
-- **프로토콜**: JavaScript SDK (layout.tsx에서 주입)
-- **인증**: Supabase Auth에 설정된 App Key
+- **용도**: 소셜 로그인, 공유 기능
+- **프로토콜**: 웹은 JavaScript SDK, Flutter 앱은 `kakao_flutter_sdk_user`
+- **인증**: 웹 JavaScript 키, 앱 Native App Key, Supabase Auth provider 설정
 
 ### Firebase
 - **용도**: 웹/모바일 분석, 푸시 알림, 크래시 수집 (`Firebase Analytics`, `FCM`, `Crashlytics`)

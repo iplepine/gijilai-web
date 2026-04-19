@@ -13,6 +13,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -26,6 +27,7 @@ Future<void> main() async {
   await runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      KakaoSdk.init(nativeAppKey: '8d63a45bb147379940cda43c72e841d6');
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
@@ -384,6 +386,121 @@ class _MainWebViewState extends State<MainWebView> {
         ),
       );
     }
+  }
+
+  Future<void> _startKakaoNativeLogin() async {
+    if (_authInProgress) return;
+    setState(() {
+      _authInProgress = true;
+    });
+
+    try {
+      OAuthToken token;
+      if (await isKakaoTalkInstalled()) {
+        try {
+          token = await UserApi.instance.loginWithKakaoTalk();
+        } catch (e) {
+          debugPrint('KakaoTalk login failed, fallback to account: $e');
+          token = await UserApi.instance.loginWithKakaoAccount();
+        }
+      } else {
+        token = await UserApi.instance.loginWithKakaoAccount();
+      }
+
+      if (token.idToken == null || token.idToken!.isEmpty) {
+        debugPrint('Kakao ID token was not returned. Falling back to OAuth.');
+        if (mounted) {
+          setState(() {
+            _authInProgress = false;
+          });
+        }
+        await _startNativeOAuth('kakao');
+        return;
+      }
+
+      await _completeNativeSession(
+        provider: 'kakao',
+        idToken: token.idToken!,
+        accessToken: token.accessToken,
+      );
+    } catch (e) {
+      debugPrint('Kakao native login error: $e');
+      if (mounted) {
+        setState(() {
+          _authInProgress = false;
+        });
+      }
+      _showSnackBar('카카오 로그인을 완료할 수 없습니다', isError: true);
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Kakao native login error',
+        ),
+      );
+    }
+  }
+
+  Future<void> _completeNativeSession({
+    required String provider,
+    required String idToken,
+    String? accessToken,
+  }) async {
+    final payload = jsonEncode({
+      'provider': provider,
+      'idToken': idToken,
+      if (accessToken != null && accessToken.isNotEmpty)
+        'accessToken': accessToken,
+    });
+
+    final jsCode =
+        '''
+      (async () => {
+        try {
+          const r = await fetch('/auth/native-session', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: ${_escapeForJsStringLiteral(payload)}
+          });
+          const data = await r.json().catch(() => ({}));
+          window.__nativeAuthResult = JSON.stringify({ ok: r.ok, ...data });
+        } catch (e) {
+          window.__nativeAuthResult = JSON.stringify({ ok: false, error: e.message });
+        }
+      })();
+    ''';
+
+    await _controller!.runJavaScript(jsCode);
+
+    Map<String, dynamic>? result;
+    for (var i = 0; i < 30; i++) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      final raw = await _controller!.runJavaScriptReturningResult(
+        'window.__nativeAuthResult || ""',
+      );
+      if (raw.toString().isNotEmpty && raw.toString() != '""') {
+        var jsonStr = raw.toString();
+        if (jsonStr.startsWith('"') && jsonStr.endsWith('"')) {
+          jsonStr = jsonDecode(jsonStr) as String;
+        }
+        result = jsonDecode(jsonStr) as Map<String, dynamic>;
+        await _controller!.runJavaScript('delete window.__nativeAuthResult;');
+        break;
+      }
+    }
+
+    if (result == null || result['ok'] != true) {
+      throw Exception(result?['error']?.toString() ?? 'Native session failed');
+    }
+
+    if (mounted) {
+      setState(() {
+        _showNativeLogin = false;
+        _authInProgress = false;
+      });
+    }
+    await _controller!.loadRequest(Uri.parse(MainWebView.targetUrl));
   }
 
   Future<void> _initIAP() async {
@@ -822,6 +939,10 @@ class _MainWebViewState extends State<MainWebView> {
         .replaceAll('\n', '\\n');
   }
 
+  String _escapeForJsStringLiteral(String input) {
+    return jsonEncode(input);
+  }
+
   Future<void> _handleBackPressed(WebViewController controller) async {
     final currentUrl = await controller.currentUrl();
 
@@ -885,7 +1006,7 @@ class _MainWebViewState extends State<MainWebView> {
             if (_showNativeLogin)
               NativeLoginScreen(
                 isLoading: _authInProgress,
-                onKakaoPressed: () => _startNativeOAuth('kakao'),
+                onKakaoPressed: _startKakaoNativeLogin,
                 onGooglePressed: () => _startNativeOAuth('google'),
                 onEmailPressed: () {
                   setState(() {

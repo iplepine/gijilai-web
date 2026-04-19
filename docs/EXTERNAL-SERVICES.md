@@ -1,7 +1,7 @@
 # 외부 서비스 인벤토리
 
 프로젝트가 의존하는 외부 서비스와 각 서비스의 책임, 코드 접점, 운영 포인트를 한곳에 정리한 문서.
-최종 동기화: 2026-04-12
+최종 동기화: 2026-04-19
 
 ## 목적
 
@@ -126,8 +126,16 @@
 - `app/src/types/kakao.d.ts`
 - `app/src/components/auth/AuthProvider.tsx`
 - `app/src/app/layout.tsx`
+- `app/src/app/auth/native-session/route.ts`
+- `gijilai_app/lib/main.dart`
+- `gijilai_app/android/app/src/main/AndroidManifest.xml`
+- `gijilai_app/ios/Runner/Info.plist`
 - **운영 포인트**
 - 도메인, JavaScript 키, Redirect URI 불일치가 흔한 장애 원인
+- Flutter 앱 Native App Key: `8d63a45bb147379940cda43c72e841d6`
+- 앱 URL scheme: `kakao8d63a45bb147379940cda43c72e841d6`
+- 앱투앱 로그인 후 Supabase 세션으로 교환하려면 Kakao Developers에서 OpenID Connect를 활성화해 ID 토큰이 발급되어야 한다.
+- Android 앱 키 해시, iOS Bundle ID, 플랫폼별 Redirect URI를 Kakao Developers와 Supabase Auth provider 설정에 함께 등록해야 한다.
 
 ### Google Cloud Console
 
