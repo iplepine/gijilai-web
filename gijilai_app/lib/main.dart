@@ -84,6 +84,7 @@ class MainWebView extends StatefulWidget {
 }
 
 class _MainWebViewState extends State<MainWebView> {
+  static const _supabaseUrl = 'https://gqpedxovfesbusjpjryl.supabase.co';
   static const _subscriptionProductId = 'monthly_premium';
   static const _practiceReminderNotificationId = 1001;
   static const _practiceReminderEnabledKey = 'practice_reminder_enabled';
@@ -98,6 +99,8 @@ class _MainWebViewState extends State<MainWebView> {
       FlutterLocalNotificationsPlugin();
   Uri? _pendingAuthCallbackUri;
   DateTime? _lastBackPressedAt;
+  bool _showNativeLogin = false;
+  bool _authInProgress = false;
 
   @override
   void initState() {
@@ -182,6 +185,7 @@ class _MainWebViewState extends State<MainWebView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: _handleNavigationRequest,
+          onPageFinished: _handlePageFinished,
           onWebResourceError: (WebResourceError error) {
             debugPrint('WebView error: ${error.description}');
             unawaited(
@@ -228,6 +232,20 @@ class _MainWebViewState extends State<MainWebView> {
     }
 
     return NavigationDecision.navigate;
+  }
+
+  void _handlePageFinished(String url) {
+    final uri = Uri.tryParse(url);
+    final shouldShowLogin =
+        uri != null &&
+        uri.host == Uri.parse(MainWebView.targetUrl).host &&
+        uri.path == '/login';
+
+    if (shouldShowLogin != _showNativeLogin && mounted) {
+      setState(() {
+        _showNativeLogin = shouldShowLogin;
+      });
+    }
   }
 
   bool _shouldOpenExternally(Uri uri) {
@@ -286,6 +304,12 @@ class _MainWebViewState extends State<MainWebView> {
       uri.queryParameters,
     );
     await controller.loadRequest(webCallback);
+    if (mounted) {
+      setState(() {
+        _showNativeLogin = false;
+        _authInProgress = false;
+      });
+    }
   }
 
   void _onAuthMessage(JavaScriptMessage message) {
@@ -323,6 +347,40 @@ class _MainWebViewState extends State<MainWebView> {
           e,
           StackTrace.current,
           reason: 'External URL launch error',
+        ),
+      );
+    }
+  }
+
+  Future<void> _startNativeOAuth(String provider) async {
+    if (_authInProgress) return;
+    setState(() {
+      _authInProgress = true;
+    });
+
+    try {
+      final authorizeUri = Uri.parse('$_supabaseUrl/auth/v1/authorize').replace(
+        queryParameters: {
+          'provider': provider,
+          'redirect_to': 'gijilai://auth/callback',
+          if (provider == 'kakao') 'scopes': 'profile_nickname,profile_image',
+        },
+      );
+
+      await _launchExternalUrl(authorizeUri);
+    } catch (e) {
+      debugPrint('Native OAuth start error: $e');
+      if (mounted) {
+        setState(() {
+          _authInProgress = false;
+        });
+      }
+      _showSnackBar('로그인을 시작할 수 없습니다', isError: true);
+      unawaited(
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          StackTrace.current,
+          reason: 'Native OAuth start error',
         ),
       );
     }
@@ -821,7 +879,227 @@ class _MainWebViewState extends State<MainWebView> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SafeArea(child: WebViewWidget(controller: controller)),
+        body: Stack(
+          children: [
+            SafeArea(child: WebViewWidget(controller: controller)),
+            if (_showNativeLogin)
+              NativeLoginScreen(
+                isLoading: _authInProgress,
+                onKakaoPressed: () => _startNativeOAuth('kakao'),
+                onGooglePressed: () => _startNativeOAuth('google'),
+                onEmailPressed: () {
+                  setState(() {
+                    _showNativeLogin = false;
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NativeLoginScreen extends StatelessWidget {
+  const NativeLoginScreen({
+    super.key,
+    required this.isLoading,
+    required this.onKakaoPressed,
+    required this.onGooglePressed,
+    required this.onEmailPressed,
+  });
+
+  final bool isLoading;
+  final VoidCallback onKakaoPressed;
+  final VoidCallback onGooglePressed;
+  final VoidCallback onEmailPressed;
+
+  static const _primary = Color(0xFF2F4F3E);
+  static const _textMain = Color(0xFF26382F);
+  static const _textSub = Color(0xFF7B847E);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFFBFAF6),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            children: [
+              const Spacer(),
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: _primary,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _primary.withValues(alpha: 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.favorite_border_rounded,
+                  color: Color(0xFFEFE5BE),
+                  size: 38,
+                ),
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                '기질아이',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _textMain,
+                  fontSize: 30,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                '아이의 타고난 기질을 이해하고\\n우리 가족에게 맞는 대화를 찾아보세요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _textSub,
+                  fontSize: 15,
+                  height: 1.55,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
+                ),
+              ),
+              const Spacer(),
+              _LoginButton(
+                label: '카카오로 계속하기',
+                backgroundColor: const Color(0xFFFEE500),
+                foregroundColor: const Color(0xFF191919),
+                enabled: !isLoading,
+                icon: const Text(
+                  'K',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Color(0xFF191919),
+                  ),
+                ),
+                onPressed: onKakaoPressed,
+              ),
+              const SizedBox(height: 12),
+              _LoginButton(
+                label: '구글로 계속하기',
+                backgroundColor: Colors.white,
+                foregroundColor: _textMain,
+                borderColor: const Color(0xFFE6E2D8),
+                enabled: !isLoading,
+                icon: const Text(
+                  'G',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Color(0xFF4285F4),
+                  ),
+                ),
+                onPressed: onGooglePressed,
+              ),
+              if (isLoading) ...[
+                const SizedBox(height: 18),
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: _primary,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 28),
+              TextButton(
+                onPressed: isLoading ? null : onEmailPressed,
+                child: const Text(
+                  '이메일로 로그인',
+                  style: TextStyle(
+                    color: _textSub,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '로그인하면 이용약관과 개인정보처리방침에 동의하게 됩니다.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF9A9F99),
+                  fontSize: 12,
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginButton extends StatelessWidget {
+  const _LoginButton({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.icon,
+    required this.onPressed,
+    this.borderColor,
+    this.enabled = true,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final Color? borderColor;
+  final Widget icon;
+  final VoidCallback onPressed;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: FilledButton(
+        onPressed: enabled ? onPressed : null,
+        style: FilledButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          disabledBackgroundColor: backgroundColor.withValues(alpha: 0.55),
+          disabledForegroundColor: foregroundColor.withValues(alpha: 0.55),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: borderColor ?? Colors.transparent),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(width: 24, height: 24, child: Center(child: icon)),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

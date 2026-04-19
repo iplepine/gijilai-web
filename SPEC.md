@@ -214,6 +214,7 @@ const calculateAverage = (scores: number[]): number => {
 
 ### 구현 요구사항
 - 웹 앱은 Firebase에 연결된 Measurement ID를 사용하여 이벤트를 전송한다.
+- Flutter 앱은 `/login` 도달 시 네이티브 로그인 화면을 오버레이하고, OAuth 완료 딥링크를 WebView `/auth/callback`으로 변환해 웹 세션 쿠키와 연결한다.
 - 환경변수 `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`가 없는 경우 추적 코드는 동작하지 않아야 한다.
 - 이벤트에는 개인식별 가능한 자유 텍스트를 넣지 않는다.
 - 페이지 이동 시 `page_view`를 자동으로 기록한다.

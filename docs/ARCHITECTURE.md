@@ -52,7 +52,7 @@
 ### 인증
 - **위치**: `app/src/lib/supabase.ts`, `app/src/lib/supabaseServer.ts`, `app/src/components/auth/AuthProvider.tsx`
 - **역할**: Supabase Auth를 통한 인증 (Google OAuth, Kakao OAuth, 이메일/비밀번호)
-- **앱 WebView**: 소셜 OAuth는 `AuthBridge`로 Flutter에 URL을 전달해 외부 앱/브라우저에서 진행하고, `gijilai://auth/callback` 딥링크를 WebView의 `/auth/callback`으로 변환해 세션 쿠키를 설정한다.
+- **앱 WebView**: `/login` 도달 시 Flutter 네이티브 로그인 화면을 오버레이한다. 네이티브 버튼은 Supabase OAuth authorize URL을 외부 앱/브라우저에서 열고, `gijilai://auth/callback` 딥링크를 WebView의 `/auth/callback`으로 변환해 세션 쿠키를 설정한다. 웹 `AuthBridge` 경로는 fallback으로 유지한다.
 - **의존**: Supabase Auth
 - **사용처**: API 라우트 (세션 검증), 보호된 페이지
 

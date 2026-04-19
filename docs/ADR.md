@@ -211,11 +211,11 @@
 - **이유**: 데스크톱에서는 다른 앱 공유 버튼이 기대와 다르게 동작할 수 있고, 앱 WebView에서는 브라우저 Web Share API 지원이 안정적이지 않다. 앱 환경은 네이티브 공유 플러그인을 사용하는 편이 사용자 기대와 플랫폼 동작에 맞다.
 - **대안**: 항상 `navigator.share` 사용 — 앱 WebView에서 동작 보장이 약해 기각. 버튼을 전부 링크 복사로 대체 — 모바일에서 자연스러운 앱 공유 흐름을 잃어 기각
 
-## 2026-04-17 | 앱 소셜 로그인은 AuthBridge와 딥링크로 처리
+## 2026-04-17 | 앱 소셜 로그인은 네이티브 화면과 딥링크로 처리
 
-- **결정**: Flutter 앱 WebView에서 Google/Kakao OAuth를 시작할 때 웹이 `AuthBridge`로 Supabase OAuth URL을 Flutter에 전달하고, Flutter는 외부 앱/브라우저로 인증을 시작한다. 인증 완료 후 `gijilai://auth/callback` 딥링크를 받아 WebView의 `https://gijilai.com/auth/callback`으로 다시 로드해 기존 Supabase 서버 콜백에서 세션 쿠키를 설정한다.
-- **이유**: OAuth를 WebView 안에서 직접 진행하면 카카오톡/구글 앱으로 자연스럽게 넘어가지 않고 웹 로그인 화면이 뜨기 쉽다. 반대로 외부 브라우저에서만 콜백을 끝내면 WebView 쿠키 세션이 생기지 않는다. 외부 인증 + 앱 딥링크 + WebView 콜백 변환이 현재 WebView 쉘 구조에서 세션 일관성과 앱 전환 경험을 함께 만족한다.
-- **대안**: WebView 내부 OAuth 유지 — 앱to앱 전환이 약하고 일부 제공자 정책/UX와 맞지 않아 기각. 완전 네이티브 Google/Kakao SDK 로그인 — 가장 정석이지만 Supabase ID token 연동과 provider별 콘솔 설정이 더 커서 후속 과제로 보류.
+- **결정**: Flutter 앱 WebView가 `/login`에 도달하면 WebView 위에 네이티브 로그인 화면을 오버레이한다. 네이티브 버튼은 Supabase OAuth authorize URL을 외부 앱/브라우저로 열고, 인증 완료 후 `gijilai://auth/callback` 딥링크를 받아 WebView의 `https://gijilai.com/auth/callback`으로 다시 로드해 기존 Supabase 서버 콜백에서 세션 쿠키를 설정한다. 기존 웹 `AuthBridge` 경로는 fallback으로 유지한다.
+- **이유**: 로그인 진입 화면은 앱다운 경험을 제공해야 하지만, WebView 세션은 기존 Supabase 쿠키 기반으로 유지되어야 한다. 네이티브 화면 + 외부 인증 + 앱 딥링크 + WebView 콜백 변환은 현재 WebView 쉘 구조에서 세션 일관성과 앱 진입 경험을 함께 만족한다.
+- **대안**: WebView 내부 로그인 화면 유지 — 앱 UX가 약하고 OAuth 제공자 정책/UX와 맞지 않아 기각. 완전 네이티브 Google/Kakao SDK 로그인 — 가장 정석이지만 카카오 Native App Key와 Google OAuth 클라이언트 ID 설정이 필요해 후속 과제로 보류.
 
 ## 2026-04-17 | Android 홈 백키는 2회 입력 종료로 처리
 
