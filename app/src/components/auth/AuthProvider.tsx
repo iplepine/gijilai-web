@@ -10,6 +10,7 @@ declare global {
         AuthBridge?: {
             postMessage: (message: string) => void;
         };
+        __authLoadingDone?: () => void;
     }
 }
 
@@ -65,6 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
     const [isLoadingKakao, setIsLoadingKakao] = useState(false);
     const [isLoadingEmail, setIsLoadingEmail] = useState(false);
+
+    useEffect(() => {
+        window.__authLoadingDone = () => {
+            setIsLoadingGoogle(false);
+            setIsLoadingKakao(false);
+        };
+
+        return () => {
+            window.__authLoadingDone = undefined;
+        };
+    }, []);
 
     const isAppWebView = () => (
         typeof window !== 'undefined' &&

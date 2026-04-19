@@ -85,7 +85,7 @@ class MainWebView extends StatefulWidget {
   State<MainWebView> createState() => _MainWebViewState();
 }
 
-class _MainWebViewState extends State<MainWebView> {
+class _MainWebViewState extends State<MainWebView> with WidgetsBindingObserver {
   static const _supabaseUrl = 'https://gqpedxovfesbusjpjryl.supabase.co';
   static const _subscriptionProductId = 'monthly_premium';
   static const _practiceReminderNotificationId = 1001;
@@ -103,14 +103,25 @@ class _MainWebViewState extends State<MainWebView> {
   DateTime? _lastBackPressedAt;
   bool _showNativeLogin = false;
   bool _authInProgress = false;
+  bool _externalAuthInProgress = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initAppLinks();
     _initIAP();
     _initLocalNotifications();
     _initWebView();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !_externalAuthInProgress) {
+      return;
+    }
+
+    unawaited(_resetAuthLoadingAfterCancelledHandoff());
   }
 
   Future<void> _initAppLinks() async {
@@ -300,6 +311,7 @@ class _MainWebViewState extends State<MainWebView> {
     if (uri == null || controller == null) return;
 
     _pendingAuthCallbackUri = null;
+    _externalAuthInProgress = false;
     final webCallback = Uri.https(
       'gijilai.com',
       '/auth/callback',
@@ -319,7 +331,8 @@ class _MainWebViewState extends State<MainWebView> {
       final data = jsonDecode(message.message);
       if (data['type'] == 'OAUTH_URL' && data['url'] is String) {
         final uri = Uri.parse(data['url'] as String);
-        unawaited(_launchExternalUrl(uri));
+        _externalAuthInProgress = true;
+        unawaited(_launchAuthUrlFromBridge(uri));
       }
     } catch (e) {
       debugPrint('AuthBridge parse error: $e');
@@ -333,7 +346,14 @@ class _MainWebViewState extends State<MainWebView> {
     }
   }
 
-  Future<void> _launchExternalUrl(Uri uri) async {
+  Future<void> _launchAuthUrlFromBridge(Uri uri) async {
+    final launched = await _launchExternalUrl(uri);
+    if (!launched) {
+      await _finishCancelledAuthHandoff(showMessage: true);
+    }
+  }
+
+  Future<bool> _launchExternalUrl(Uri uri) async {
     try {
       final launched = await launchUrl(
         uri,
@@ -342,6 +362,7 @@ class _MainWebViewState extends State<MainWebView> {
       if (!launched) {
         throw Exception('Unable to launch external URL: $uri');
       }
+      return true;
     } catch (e) {
       debugPrint('External URL launch error: $e');
       unawaited(
@@ -351,6 +372,7 @@ class _MainWebViewState extends State<MainWebView> {
           reason: 'External URL launch error',
         ),
       );
+      return false;
     }
   }
 
@@ -359,6 +381,7 @@ class _MainWebViewState extends State<MainWebView> {
     setState(() {
       _authInProgress = true;
     });
+    _externalAuthInProgress = true;
 
     try {
       final authorizeUri = Uri.parse('$_supabaseUrl/auth/v1/authorize').replace(
@@ -369,9 +392,13 @@ class _MainWebViewState extends State<MainWebView> {
         },
       );
 
-      await _launchExternalUrl(authorizeUri);
+      final launched = await _launchExternalUrl(authorizeUri);
+      if (!launched) {
+        await _finishCancelledAuthHandoff(showMessage: true);
+      }
     } catch (e) {
       debugPrint('Native OAuth start error: $e');
+      _externalAuthInProgress = false;
       if (mounted) {
         setState(() {
           _authInProgress = false;
@@ -414,6 +441,7 @@ class _MainWebViewState extends State<MainWebView> {
             _authInProgress = false;
           });
         }
+        _externalAuthInProgress = false;
         await _startNativeOAuth('kakao');
         return;
       }
@@ -425,6 +453,7 @@ class _MainWebViewState extends State<MainWebView> {
       );
     } catch (e) {
       debugPrint('Kakao native login error: $e');
+      _externalAuthInProgress = false;
       if (mounted) {
         setState(() {
           _authInProgress = false;
@@ -500,7 +529,28 @@ class _MainWebViewState extends State<MainWebView> {
         _authInProgress = false;
       });
     }
+    _externalAuthInProgress = false;
     await _controller!.loadRequest(Uri.parse(MainWebView.targetUrl));
+  }
+
+  Future<void> _resetAuthLoadingAfterCancelledHandoff() async {
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    if (!_externalAuthInProgress || _pendingAuthCallbackUri != null) return;
+
+    await _finishCancelledAuthHandoff();
+  }
+
+  Future<void> _finishCancelledAuthHandoff({bool showMessage = false}) async {
+    _externalAuthInProgress = false;
+    if (mounted) {
+      setState(() {
+        _authInProgress = false;
+      });
+    }
+    await _notifyWebAuthLoadingDone();
+    if (showMessage) {
+      _showSnackBar('로그인을 시작할 수 없습니다', isError: true);
+    }
   }
 
   Future<void> _initIAP() async {
@@ -932,6 +982,20 @@ class _MainWebViewState extends State<MainWebView> {
     );
   }
 
+  Future<void> _notifyWebAuthLoadingDone() async {
+    try {
+      await _controller?.runJavaScript('''
+        if (window.__authLoadingDone) {
+          window.__authLoadingDone();
+        } else if (window.location.pathname === '/login') {
+          window.location.reload();
+        }
+        ''');
+    } catch (e) {
+      debugPrint('Auth loading reset script error: $e');
+    }
+  }
+
   String _escapeForJs(String input) {
     return input
         .replaceAll('\\', '\\\\')
@@ -977,6 +1041,7 @@ class _MainWebViewState extends State<MainWebView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _purchaseSubscription?.cancel();
     _appLinkSubscription?.cancel();
     super.dispose();

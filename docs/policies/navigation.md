@@ -68,6 +68,7 @@
 - 카카오 버튼은 Kakao Flutter SDK 앱투앱 로그인을 먼저 시도하고, Kakao ID 토큰을 `/auth/native-session`으로 전달해 Supabase 세션 쿠키를 WebView에 설정한다.
 - Kakao ID 토큰이 없거나 Google 로그인을 사용하는 경우 Supabase OAuth authorize URL을 외부 앱/브라우저로 열고, `gijilai://auth/callback` 딥링크를 받아 WebView의 `/auth/callback`으로 다시 로드한다.
 - 기존 웹 `/login`의 `AuthBridge` 경로는 fallback으로 유지한다.
+- 외부 OAuth 앱/브라우저에서 사용자가 로그인하지 않고 앱으로 돌아와 딥링크 콜백이 없는 경우, 앱은 로그인 취소로 간주하고 네이티브/웹 로그인 로딩 상태를 해제해 재시도할 수 있게 한다.
 - Google/Kakao OAuth 도메인으로 WebView가 직접 이동하려는 경우도 `disallowed_useragent` 방지를 위해 외부 앱/브라우저로 강제 전환한다.
 - Supabase Auth Redirect URL allow list에는 `gijilai://auth/callback`을 반드시 포함한다.
 
