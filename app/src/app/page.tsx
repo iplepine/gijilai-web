@@ -511,29 +511,29 @@ export default function HomePage() {
 
         {/* Modal Sections */}
         {showOnboarding && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-4">
             <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"></div>
-            <div className="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-500">
+            <div className="relative bg-white dark:bg-slate-900 w-full max-w-sm max-h-[calc(100dvh-2rem)] rounded-[2rem] overflow-y-auto shadow-2xl animate-in fade-in zoom-in duration-500">
               <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
 
-              <div className="relative z-10 p-8 flex flex-col items-center">
-                <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mb-8 rotate-3 shadow-xl">
-                  <Image src="/gijilai_icon.png" alt={t('common.appName')} width={64} height={64} className="w-16 h-16 object-contain" />
+              <div className="relative z-10 px-6 py-6 flex flex-col items-center">
+                <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-[1.75rem] flex items-center justify-center mb-5 rotate-3 shadow-xl">
+                  <Image src="/gijilai_icon.png" alt={t('common.appName')} width={56} height={56} className="w-14 h-14 object-contain" />
                 </div>
 
-                <div className="text-center space-y-3 mb-10">
-                  <h3 className="text-2xl font-black text-slate-800 dark:text-white font-display break-keep whitespace-pre-line">
+                <div className="text-center space-y-2 mb-6">
+                  <h3 className="text-[22px] leading-tight font-black text-slate-800 dark:text-white font-display break-keep whitespace-pre-line">
                     {t('home.onboardingTitle')}
                   </h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep px-4 whitespace-pre-line">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-keep px-2 whitespace-pre-line">
                     {t('home.onboardingDescription')}
                   </p>
                 </div>
 
-                <div className="w-full space-y-4 mb-10">
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0">
+                <div className="w-full space-y-3 mb-6">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0">
                       <span className="text-lg">🧬</span>
                     </div>
                     <div>
@@ -541,8 +541,8 @@ export default function HomePage() {
                       <p className="text-[11px] text-slate-400 mt-0.5">{t('home.scientificAnalysisDesc')}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
-                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center shrink-0">
                       <span className="text-lg">💬</span>
                     </div>
                     <div>
@@ -558,14 +558,14 @@ export default function HomePage() {
                       setShowOnboarding(false);
                       router.push('/settings/child/new');
                     }}
-                    className="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+                    className="w-full bg-primary text-white font-black py-4 rounded-[1.5rem] shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
                   >
                     <span className="text-lg">{t('home.registerChildInfo')}</span>
                     <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                   </button>
                   <button
                     onClick={() => setShowOnboarding(false)}
-                    className="w-full py-4 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors mt-2"
+                    className="w-full py-3 text-slate-400 text-xs font-bold hover:text-slate-600 transition-colors mt-1"
                   >
                     {t('home.laterButton')}
                   </button>
