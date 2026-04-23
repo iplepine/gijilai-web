@@ -208,3 +208,4 @@ app/src/components/
 | coupons | 할인 쿠폰 (만료일 포함) |
 | subscriptions | 구독 정보 (플랜, 빌링키, 기간, 상태) |
 | payments | 결제 이력 (구독/갱신, 포트원 ID) |
+| subscription_usage_events | 환불 판단용 구독 유료 기능 사용 이력 |

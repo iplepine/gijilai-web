@@ -3,6 +3,7 @@ import { openai } from '@/lib/openai';
 import { createClient } from '@/lib/supabaseServer';
 import { getConsultModel } from '@/lib/consult-model';
 import { getServerFeatureAccess } from '@/lib/access';
+import { recordSubscriptionUsageEvent } from '@/lib/subscription-usage';
 import type { Database } from '@/types/supabase';
 
 type ObservationRow = Database['public']['Tables']['observations']['Row'];
@@ -191,7 +192,18 @@ ${(sessionContext.practices || []).map((p) => {
     });
 
     const content = response.choices[0].message.content;
-    return NextResponse.json(JSON.parse(content || '{"empathy": "", "questions": []}'));
+    const parsed = JSON.parse(content || '{"empathy": "", "questions": []}');
+    await recordSubscriptionUsageEvent({
+      userId: session.user.id,
+      feature: 'AI_CONSULTATION',
+      eventName: 'CONSULT_QUESTIONS_INITIAL',
+      metadata: {
+        hasSessionContext: !!sessionContext,
+        model,
+      },
+    });
+
+    return NextResponse.json(parsed);
   } catch (error) {
     console.error('Error generating initial questions:', error);
     return NextResponse.json(

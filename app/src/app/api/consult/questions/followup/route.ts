@@ -3,6 +3,7 @@ import { openai } from '@/lib/openai';
 import { createClient } from '@/lib/supabaseServer';
 import { getConsultModel } from '@/lib/consult-model';
 import { getServerFeatureAccess } from '@/lib/access';
+import { recordSubscriptionUsageEvent } from '@/lib/subscription-usage';
 
 export async function POST(request: Request) {
     try {
@@ -80,7 +81,18 @@ export async function POST(request: Request) {
         });
 
         const content = response.choices[0].message.content;
-        return NextResponse.json(JSON.parse(content || '{"needsFollowUp": false}'));
+        const parsed = JSON.parse(content || '{"needsFollowUp": false}');
+        await recordSubscriptionUsageEvent({
+            userId: session.user.id,
+            feature: 'AI_CONSULTATION',
+            eventName: 'CONSULT_QUESTIONS_FOLLOWUP',
+            metadata: {
+                needsFollowUp: parsed.needsFollowUp === true,
+                model,
+            },
+        });
+
+        return NextResponse.json(parsed);
     } catch (error) {
         console.error('Error generating follow-up questions:', error);
         return NextResponse.json(

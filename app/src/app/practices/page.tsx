@@ -69,6 +69,16 @@ export default function PracticesPage() {
             setPractices(visiblePractices);
             setTodayLogs(todayLogsData);
 
+            if (subscription && sortedPractices.length > visiblePractices.length) {
+                void fetch('/api/subscription/usage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ eventName: 'PRACTICE_HISTORY_VIEW' }),
+                }).catch((error) => {
+                    console.error('Failed to record practice history usage:', error);
+                });
+            }
+
             // 각 practice의 전체 로그 가져오기
             const practiceIds = practicesData.map(p => p.id);
             if (practiceIds.length > 0) {

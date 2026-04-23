@@ -499,6 +499,41 @@ export interface Database {
                     created_at?: string
                 }
             }
+            subscription_usage_events: {
+                Row: {
+                    id: string
+                    user_id: string
+                    subscription_id: string
+                    feature: 'AI_CONSULTATION' | 'PRACTICE_HISTORY'
+                    event_name: 'CONSULT_QUESTIONS_INITIAL' | 'CONSULT_QUESTIONS_FOLLOWUP' | 'CONSULT_PRESCRIPTION' | 'PRACTICE_HISTORY_VIEW'
+                    resource_type: string | null
+                    resource_id: string | null
+                    metadata: Json
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    subscription_id: string
+                    feature: 'AI_CONSULTATION' | 'PRACTICE_HISTORY'
+                    event_name: 'CONSULT_QUESTIONS_INITIAL' | 'CONSULT_QUESTIONS_FOLLOWUP' | 'CONSULT_PRESCRIPTION' | 'PRACTICE_HISTORY_VIEW'
+                    resource_type?: string | null
+                    resource_id?: string | null
+                    metadata?: Json
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    subscription_id?: string
+                    feature?: 'AI_CONSULTATION' | 'PRACTICE_HISTORY'
+                    event_name?: 'CONSULT_QUESTIONS_INITIAL' | 'CONSULT_QUESTIONS_FOLLOWUP' | 'CONSULT_PRESCRIPTION' | 'PRACTICE_HISTORY_VIEW'
+                    resource_type?: string | null
+                    resource_id?: string | null
+                    metadata?: Json
+                    created_at?: string
+                }
+            }
         }
     }
 }

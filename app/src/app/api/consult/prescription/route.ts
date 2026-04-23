@@ -3,6 +3,7 @@ import { openai } from '@/lib/openai';
 import { createClient } from '@/lib/supabaseServer';
 import { getConsultModel } from '@/lib/consult-model';
 import { getServerFeatureAccess } from '@/lib/access';
+import { recordSubscriptionUsageEvent } from '@/lib/subscription-usage';
 
 type ObservationPromptItem = {
     created_at: string;
@@ -292,6 +293,17 @@ ${!isFollowUp ? `8. **세션 제목 (sessionTitle)**: 이 고민을 한 줄(15�
         if (parsed.actionItems && parsed.actionItems.length > 0 && !parsed.actionItem) {
             parsed.actionItem = parsed.actionItems[0].description;
         }
+
+        await recordSubscriptionUsageEvent({
+            userId: session.user.id,
+            feature: 'AI_CONSULTATION',
+            eventName: 'CONSULT_PRESCRIPTION',
+            metadata: {
+                isFollowUp,
+                model,
+                actionItemCount: Array.isArray(parsed.actionItems) ? parsed.actionItems.length : 0,
+            },
+        });
 
         return NextResponse.json(parsed);
     } catch (error) {
